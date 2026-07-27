@@ -1,4 +1,16 @@
-export type Team = { id: string; name: string };
+export type Team = { id: string; name: string; logo?: string };
+
+/** TDL-очки за место в турнире. */
+export const PLACE_POINTS: Record<number, number> = { 1: 50, 2: 25, 3: 12, 4: 6 };
+
+export type Placement = { place: number; teamName: string; logo?: string; points: number };
+
+export type TournamentRecord = {
+  id: string;
+  title: string;
+  date: string;
+  placements: Placement[];
+};
 
 export type Match = {
   id: string;
