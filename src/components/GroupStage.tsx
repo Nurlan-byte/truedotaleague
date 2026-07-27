@@ -48,7 +48,13 @@ export function GroupStage({ groups, matches, onScore }: Props) {
                     >
                       <td className="px-3 py-2 font-bold text-muted-foreground">{idx + 1}</td>
                       <td className="px-3 py-2 font-medium text-foreground">
-                        {group.find((t) => t.id === row.teamId)?.name}
+                        <span className="flex items-center gap-2">
+                          <TeamLogo
+                            name={group.find((t) => t.id === row.teamId)?.name ?? ""}
+                            logo={group.find((t) => t.id === row.teamId)?.logo}
+                          />
+                          {group.find((t) => t.id === row.teamId)?.name}
+                        </span>
                       </td>
                       <td className="px-3 py-2 text-center text-muted-foreground">{row.played}</td>
                       <td className="px-3 py-2 text-center font-bold text-foreground">{row.points}</td>
