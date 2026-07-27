@@ -9,81 +9,83 @@ type Props = {
 export function GroupStage({ groups, matches, onScore }: Props) {
   if (groups.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Сгенерируйте групповой этап, чтобы увидеть таблицы и матчи.
-      </p>
+      <div className="panel p-5">
+        <p className="text-sm text-muted-foreground">
+          Создайте группы, чтобы ввести результаты матчей и увидеть таблицы.
+        </p>
+      </div>
     );
   }
 
-  const nameOf = (id: string) =>
-    groups.flat().find((t) => t.id === id)?.name ?? "—";
-
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
+    <div className="grid gap-6 md:grid-cols-2">
       {groups.map((group, gi) => {
-        const gm = matches.filter((m) => m.group === gi);
-        const table = standings(group, gm);
+        const groupMatches = matches.filter((m) => m.group === gi);
+        const table = standings(group, groupMatches);
+
         return (
-          <section key={gi} className="panel p-4">
-            <h3 className="mb-3 text-xl">Группа {String.fromCharCode(65 + gi)}</h3>
+          <div key={gi} className="panel p-5">
+            <h3 className="mb-3 text-2xl text-foreground">Группа {gi + 1}</h3>
 
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                  <th className="pb-2 text-left font-medium">Команда</th>
-                  <th className="pb-2 font-medium">И</th>
-                  <th className="pb-2 font-medium">В</th>
-                  <th className="pb-2 font-medium">Н</th>
-                  <th className="pb-2 font-medium">П</th>
-                  <th className="pb-2 font-medium">Разн.</th>
-                  <th className="pb-2 font-medium">О</th>
-                </tr>
-              </thead>
-              <tbody>
-                {table.map((s, i) => (
-                  <tr key={s.teamId} className="border-t border-border">
-                    <td className="py-1.5 text-left">
-                      <span className="mr-2 text-xs text-muted-foreground">{i + 1}</span>
-                      <span className={i < 2 ? "font-semibold text-primary" : ""}>
-                        {nameOf(s.teamId)}
-                      </span>
-                    </td>
-                    <td className="text-center">{s.played}</td>
-                    <td className="text-center">{s.wins}</td>
-                    <td className="text-center">{s.draws}</td>
-                    <td className="text-center">{s.losses}</td>
-                    <td className="text-center">{s.scored - s.conceded}</td>
-                    <td className="text-center font-semibold">{s.points}</td>
+            <div className="mb-5 overflow-hidden rounded-lg border border-border bg-white/50">
+              <table className="w-full text-sm">
+                <thead className="bg-secondary text-secondary-foreground">
+                  <tr>
+                    <th className="px-3 py-2 text-left">#</th>
+                    <th className="px-3 py-2 text-left">Команда</th>
+                    <th className="px-3 py-2 text-center">И</th>
+                    <th className="px-3 py-2 text-center">О</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {table.map((row, idx) => (
+                    <tr
+                      key={row.teamId}
+                      className={`border-b border-border last:border-b-0 ${
+                        idx < 2 ? "bg-win/10" : "bg-transparent"
+                      }`}
+                    >
+                      <td className="px-3 py-2 font-bold text-muted-foreground">{idx + 1}</td>
+                      <td className="px-3 py-2 font-medium text-foreground">
+                        {group.find((t) => t.id === row.teamId)?.name}
+                      </td>
+                      <td className="px-3 py-2 text-center text-muted-foreground">{row.played}</td>
+                      <td className="px-3 py-2 text-center font-bold text-foreground">{row.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-            <div className="mt-4 space-y-2">
-              {gm.map((m) => (
+            <div className="space-y-2">
+              {groupMatches.map((m) => (
                 <div
                   key={m.id}
-                  className="flex items-center gap-2 rounded-md bg-background/40 px-2 py-1.5 text-sm"
+                  className="flex items-center gap-2 rounded-lg border border-border bg-white/50 px-3 py-2"
                 >
-                  <span className="flex-1 truncate text-right">{nameOf(m.teamA)}</span>
+                  <span className="flex-1 truncate text-sm text-foreground">
+                    {group.find((t) => t.id === m.teamA)?.name}
+                  </span>
                   <input
                     inputMode="numeric"
                     value={m.scoreA ?? ""}
                     onChange={(e) => onScore(m.id, "A", e.target.value)}
-                    className="w-9 rounded-md border border-input bg-background/60 px-1 py-0.5 text-center outline-none focus:border-primary"
+                    className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
                   />
-                  <span className="text-muted-foreground">:</span>
+                  <span className="text-xs font-bold text-muted-foreground">:</span>
                   <input
                     inputMode="numeric"
                     value={m.scoreB ?? ""}
                     onChange={(e) => onScore(m.id, "B", e.target.value)}
-                    className="w-9 rounded-md border border-input bg-background/60 px-1 py-0.5 text-center outline-none focus:border-primary"
+                    className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
                   />
-                  <span className="flex-1 truncate">{nameOf(m.teamB)}</span>
+                  <span className="flex-1 truncate text-right text-sm text-foreground">
+                    {group.find((t) => t.id === m.teamB)?.name}
+                  </span>
                 </div>
               ))}
             </div>
-          </section>
+          </div>
         );
       })}
     </div>
