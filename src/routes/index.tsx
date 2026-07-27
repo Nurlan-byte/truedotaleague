@@ -1,11 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Shuffle, Trash2, Users, Swords, LayoutGrid } from "lucide-react";
+import {
+  Plus,
+  Shuffle,
+  Trash2,
+  Users,
+  Swords,
+  LayoutGrid,
+  Trophy,
+  ImagePlus,
+} from "lucide-react";
 import { BracketView } from "@/components/BracketView";
 import { GroupStage } from "@/components/GroupStage";
+import { RankingView } from "@/components/RankingView";
+import { TeamLogo } from "@/components/TeamLogo";
 import {
   buildBracket,
   buildGroups,
+  finalPlacements,
   propagate,
   shuffle,
   standings,
@@ -13,6 +25,7 @@ import {
   type GroupMatch,
   type Match,
   type Team,
+  type TournamentRecord,
 } from "@/lib/tournament";
 
 export const Route = createFileRoute("/")({
@@ -46,6 +59,7 @@ type State = {
   groups: Team[][];
   groupMatches: GroupMatch[];
   groupCount: number;
+  history: TournamentRecord[];
 };
 
 const initial: State = {
@@ -55,11 +69,12 @@ const initial: State = {
   groups: [],
   groupMatches: [],
   groupCount: 2,
+  history: [],
 };
 
 function Index() {
   const [state, setState] = useState<State>(initial);
-  const [tab, setTab] = useState<"groups" | "playoff">("playoff");
+  const [tab, setTab] = useState<"groups" | "playoff" | "rating">("playoff");
   const [name, setName] = useState("");
 
   useEffect(() => {
@@ -140,7 +155,40 @@ function Index() {
     setTab("playoff");
   };
 
-  const resetAll = () => setState(initial);
+  const setLogo = (id: string, file: File | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () =>
+      setState((s) => ({
+        ...s,
+        teams: s.teams.map((t) => (t.id === id ? { ...t, logo: String(reader.result) } : t)),
+        groups: s.groups.map((g) =>
+          g.map((t) => (t.id === id ? { ...t, logo: String(reader.result) } : t)),
+        ),
+      }));
+    reader.readAsDataURL(file);
+  };
+
+  const placements = finalPlacements(state.bracket, state.teams);
+
+  const finishTournament = () => {
+    if (placements.length === 0) return;
+    setState((s) => ({
+      ...s,
+      history: [
+        {
+          id: uid(),
+          title: s.title,
+          date: new Date().toLocaleDateString("ru-RU"),
+          placements,
+        },
+        ...s.history,
+      ],
+    }));
+    setTab("rating");
+  };
+
+  const resetAll = () => setState((s) => ({ ...initial, history: s.history }));
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-8 lg:px-8">
@@ -200,7 +248,21 @@ function Index() {
                 className="flex items-center gap-2 rounded-lg bg-white/50 px-3 py-2 text-sm text-foreground backdrop-blur-sm"
               >
                 <span className="w-5 text-xs font-semibold text-muted-foreground">{i + 1}</span>
+                <TeamLogo name={t.name} logo={t.logo} size="md" />
                 <span className="flex-1 truncate">{t.name}</span>
+                <label
+                  className="cursor-pointer text-muted-foreground transition-colors hover:text-primary"
+                  title="Загрузить логотип"
+                >
+                  <ImagePlus className="size-4" />
+                  <span className="sr-only">Логотип команды {t.name}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setLogo(t.id, e.target.files?.[0])}
+                  />
+                </label>
                 <button
                   onClick={() =>
                     setState((s) => ({ ...s, teams: s.teams.filter((x) => x.id !== t.id) }))
@@ -254,15 +316,27 @@ function Index() {
             >
               Плей-офф из топ-2 групп
             </button>
+
+            <button
+              onClick={finishTournament}
+              disabled={placements.length === 0}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-bold text-accent-foreground shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40"
+            >
+              <Trophy className="size-4" /> Завершить турнир
+            </button>
+            <p className="text-xs text-muted-foreground">
+              Начислим TDL points: 1 место — 50, 2 — 25, 3 — 12, 4 — 6.
+            </p>
           </div>
         </aside>
 
         <section>
-          <div className="mb-5 inline-flex rounded-xl border border-border bg-white/70 p-1 backdrop-blur-sm">
+          <div className="mb-5 inline-flex flex-wrap rounded-xl border border-border bg-white/70 p-1 backdrop-blur-sm">
             {(
               [
                 ["playoff", "Плей-офф", Swords],
                 ["groups", "Группы", LayoutGrid],
+                ["rating", "Рейтинг", Trophy],
               ] as const
             ).map(([key, label, Icon]) => (
               <button
@@ -279,19 +353,21 @@ function Index() {
             ))}
           </div>
 
-          {tab === "playoff" ? (
+          {tab === "playoff" && (
             <BracketView
               matches={state.bracket}
               teams={state.teams}
               onScore={setBracketScore}
             />
-          ) : (
+          )}
+          {tab === "groups" && (
             <GroupStage
               groups={state.groups}
               matches={state.groupMatches}
               onScore={setGroupScore}
             />
           )}
+          {tab === "rating" && <RankingView history={state.history} />}
         </section>
       </div>
     </main>
