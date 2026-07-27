@@ -63,6 +63,9 @@ export function BracketView({ matches, teams, onScore }: Props) {
                               side === "A" ? "border-b" : ""
                             } ${isWinner ? "bg-win/15" : "bg-white/40"}`}
                           >
+                            {teamId && (
+                              <TeamLogo name={nameOf(teamId) ?? ""} logo={teamOf(teamId)?.logo} />
+                            )}
                             <span
                               className={`flex-1 truncate text-sm ${
                                 teamId
