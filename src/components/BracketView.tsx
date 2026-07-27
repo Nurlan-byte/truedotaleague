@@ -19,19 +19,20 @@ export function BracketView({ matches, teams, onScore }: Props) {
     );
   }
 
-  const nameOf = (id: string | null) =>
-    id ? (teams.find((t) => t.id === id)?.name ?? "—") : null;
+  const teamOf = (id: string | null) => (id ? teams.find((t) => t.id === id) : undefined);
+  const nameOf = (id: string | null) => (id ? (teamOf(id)?.name ?? "—") : null);
   const totalRounds = Math.max(...matches.map((m) => m.round));
-  const champion = nameOf(matchWinner(matches.find((m) => m.round === totalRounds)!));
+  const championTeam = teamOf(matchWinner(matches.find((m) => m.round === totalRounds)!));
 
   return (
     <div className="space-y-6">
-      {champion && (
+      {championTeam && (
         <div className="panel glow flex items-center gap-3 px-5 py-4">
           <Trophy className="size-6 text-accent" />
+          <TeamLogo name={championTeam.name} logo={championTeam.logo} size="lg" />
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Чемпион</p>
-            <p className="font-display text-2xl text-foreground">{champion}</p>
+            <p className="font-display text-2xl text-foreground">{championTeam.name}</p>
           </div>
         </div>
       )}
