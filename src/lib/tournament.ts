@@ -35,10 +35,13 @@ export function buildBracket(teams: Team[]): Match[] {
   const n = teams.length;
   if (n < 2) return [];
   const size = 2 ** Math.ceil(Math.log2(n));
-  const slots: (string | null)[] = [
-    ...teams.map((t) => t.id),
-    ...Array(size - n).fill(null),
-  ];
+  const half = size / 2;
+  // Spread byes: first `half` teams take slot A of each match, the rest fill slot B.
+  const slots: (string | null)[] = Array(size).fill(null);
+  teams.forEach((t, i) => {
+    slots[i < half ? i * 2 : (i - half) * 2 + 1] = t.id;
+  });
+
 
   const matches: Match[] = [];
   let round = 1;
