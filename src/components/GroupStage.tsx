@@ -1,4 +1,5 @@
 import { standings, type GroupMatch, type Team } from "@/lib/tournament";
+import { TeamLogo } from "@/components/TeamLogo";
 
 type Props = {
   groups: Team[][];
