@@ -155,7 +155,40 @@ function Index() {
     setTab("playoff");
   };
 
-  const resetAll = () => setState(initial);
+  const setLogo = (id: string, file: File | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () =>
+      setState((s) => ({
+        ...s,
+        teams: s.teams.map((t) => (t.id === id ? { ...t, logo: String(reader.result) } : t)),
+        groups: s.groups.map((g) =>
+          g.map((t) => (t.id === id ? { ...t, logo: String(reader.result) } : t)),
+        ),
+      }));
+    reader.readAsDataURL(file);
+  };
+
+  const placements = finalPlacements(state.bracket, state.teams);
+
+  const finishTournament = () => {
+    if (placements.length === 0) return;
+    setState((s) => ({
+      ...s,
+      history: [
+        {
+          id: uid(),
+          title: s.title,
+          date: new Date().toLocaleDateString("ru-RU"),
+          placements,
+        },
+        ...s.history,
+      ],
+    }));
+    setTab("rating");
+  };
+
+  const resetAll = () => setState((s) => ({ ...initial, history: s.history }));
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-8 lg:px-8">
