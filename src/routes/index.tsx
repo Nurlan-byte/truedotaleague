@@ -316,15 +316,27 @@ function Index() {
             >
               Плей-офф из топ-2 групп
             </button>
+
+            <button
+              onClick={finishTournament}
+              disabled={placements.length === 0}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-bold text-accent-foreground shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40"
+            >
+              <Trophy className="size-4" /> Завершить турнир
+            </button>
+            <p className="text-xs text-muted-foreground">
+              Начислим TDL points: 1 место — 50, 2 — 25, 3 — 12, 4 — 6.
+            </p>
           </div>
         </aside>
 
         <section>
-          <div className="mb-5 inline-flex rounded-xl border border-border bg-white/70 p-1 backdrop-blur-sm">
+          <div className="mb-5 inline-flex flex-wrap rounded-xl border border-border bg-white/70 p-1 backdrop-blur-sm">
             {(
               [
                 ["playoff", "Плей-офф", Swords],
                 ["groups", "Группы", LayoutGrid],
+                ["rating", "Рейтинг", Trophy],
               ] as const
             ).map(([key, label, Icon]) => (
               <button
@@ -341,19 +353,21 @@ function Index() {
             ))}
           </div>
 
-          {tab === "playoff" ? (
+          {tab === "playoff" && (
             <BracketView
               matches={state.bracket}
               teams={state.teams}
               onScore={setBracketScore}
             />
-          ) : (
+          )}
+          {tab === "groups" && (
             <GroupStage
               groups={state.groups}
               matches={state.groupMatches}
               onScore={setGroupScore}
             />
           )}
+          {tab === "rating" && <RankingView history={state.history} />}
         </section>
       </div>
     </main>
