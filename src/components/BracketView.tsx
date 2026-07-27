@@ -10,9 +10,11 @@ type Props = {
 export function BracketView({ matches, teams, onScore }: Props) {
   if (matches.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Добавьте минимум 2 команды и сгенерируйте сетку.
-      </p>
+      <div className="panel p-5">
+        <p className="text-sm text-muted-foreground">
+          Добавьте минимум 2 команды и сгенерируйте сетку.
+        </p>
+      </div>
     );
   }
 
@@ -25,10 +27,10 @@ export function BracketView({ matches, teams, onScore }: Props) {
     <div className="space-y-6">
       {champion && (
         <div className="panel glow flex items-center gap-3 px-5 py-4">
-          <Trophy className="size-6 text-primary" />
+          <Trophy className="size-6 text-accent" />
           <div>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">Чемпион</p>
-            <p className="font-display text-2xl">{champion}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Чемпион</p>
+            <p className="font-display text-2xl text-foreground">{champion}</p>
           </div>
         </div>
       )}
@@ -41,7 +43,7 @@ export function BracketView({ matches, teams, onScore }: Props) {
               .sort((a, b) => a.order - b.order);
             return (
               <div key={round} className="flex w-64 flex-col justify-around gap-4">
-                <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
                   {roundName(round, totalRounds)}
                 </p>
                 {rms.map((m) => {
@@ -57,13 +59,13 @@ export function BracketView({ matches, teams, onScore }: Props) {
                             key={side}
                             className={`flex items-center gap-2 border-border px-3 py-2 ${
                               side === "A" ? "border-b" : ""
-                            } ${isWinner ? "bg-win/10" : ""}`}
+                            } ${isWinner ? "bg-win/15" : "bg-white/40"}`}
                           >
                             <span
                               className={`flex-1 truncate text-sm ${
                                 teamId
                                   ? isWinner
-                                    ? "font-semibold text-win"
+                                    ? "font-bold text-win"
                                     : "text-foreground"
                                   : "text-muted-foreground"
                               }`}
@@ -75,7 +77,7 @@ export function BracketView({ matches, teams, onScore }: Props) {
                               disabled={!teamId}
                               value={score ?? ""}
                               onChange={(e) => onScore(m.id, side, e.target.value)}
-                              className="w-10 rounded-md border border-input bg-background/60 px-1 py-0.5 text-center text-sm outline-none focus:border-primary disabled:opacity-40"
+                              className="w-10 rounded-md border border-input bg-white/80 px-1 py-0.5 text-center text-sm text-foreground outline-none focus:border-primary disabled:opacity-40"
                             />
                           </div>
                         );
