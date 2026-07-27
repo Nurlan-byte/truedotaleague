@@ -1,4 +1,5 @@
 import { matchWinner, roundName, type Match, type Team } from "@/lib/tournament";
+import { TeamLogo } from "@/components/TeamLogo";
 import { Trophy } from "lucide-react";
 
 type Props = {
