@@ -18,13 +18,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Bracketa — сетки турниров, плей-офф и группы" },
+      { title: "TrueDotaLeague — сетки турниров, плей-офф и группы" },
       {
         name: "description",
         content:
           "Создавайте турниры за минуту: список команд, групповой этап с таблицами и сетка плей-офф с автоматическим продвижением победителей.",
       },
-      { property: "og:title", content: "Bracketa — конструктор турнирных сеток" },
+      { property: "og:title", content: "TrueDotaLeague — конструктор турнирных сеток" },
       {
         property: "og:description",
         content:
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const STORAGE_KEY = "bracketa-state";
+const STORAGE_KEY = "tdl-tournament-state";
 
 type State = {
   title: string;
@@ -143,31 +143,33 @@ function Index() {
   const resetAll = () => setState(initial);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
+    <main className="mx-auto min-h-screen max-w-7xl px-4 py-8 lg:px-8">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-primary">Bracketa</p>
-          <h1 className="mt-1 text-4xl leading-none sm:text-5xl">
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.35em] text-primary">
+            TrueDotaLeague
+          </p>
+          <h1 className="mt-1 text-4xl leading-none text-foreground sm:text-6xl">
             Организатор турниров
           </h1>
           <input
             value={state.title}
             onChange={(e) => setState((s) => ({ ...s, title: e.target.value }))}
-            className="mt-3 w-full max-w-sm rounded-md border border-input bg-background/50 px-3 py-1.5 text-sm outline-none focus:border-primary"
+            className="mt-3 w-full max-w-sm rounded-lg border border-input bg-white/70 px-3 py-1.5 text-sm text-foreground outline-none backdrop-blur-sm transition-colors focus:border-primary focus:bg-white"
             aria-label="Название турнира"
           />
         </div>
         <button
           onClick={resetAll}
-          className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
+          className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-destructive hover:text-destructive"
         >
           <Trash2 className="size-4" /> Сбросить турнир
         </button>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
         <aside className="panel h-fit p-5">
-          <h2 className="mb-3 flex items-center gap-2 text-xl">
+          <h2 className="mb-3 flex items-center gap-2 text-2xl text-foreground">
             <Users className="size-5 text-primary" /> Команды ({state.teams.length})
           </h2>
 
@@ -177,11 +179,11 @@ function Index() {
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addTeam(name)}
               placeholder="Название команды"
-              className="min-w-0 flex-1 rounded-md border border-input bg-background/50 px-3 py-2 text-sm outline-none focus:border-primary"
+              className="min-w-0 flex-1 rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none backdrop-blur-sm transition-colors focus:border-primary focus:bg-white"
             />
             <button
               onClick={() => addTeam(name)}
-              className="inline-flex items-center rounded-md bg-primary px-3 text-primary-foreground transition-opacity hover:opacity-90"
+              className="inline-flex items-center rounded-lg bg-primary px-3 text-primary-foreground shadow-sm transition-transform hover:scale-105 active:scale-95"
               aria-label="Добавить команду"
             >
               <Plus className="size-4" />
@@ -195,9 +197,9 @@ function Index() {
             {state.teams.map((t, i) => (
               <li
                 key={t.id}
-                className="flex items-center gap-2 rounded-md bg-background/40 px-3 py-2 text-sm"
+                className="flex items-center gap-2 rounded-lg bg-white/50 px-3 py-2 text-sm text-foreground backdrop-blur-sm"
               >
-                <span className="w-5 text-xs text-muted-foreground">{i + 1}</span>
+                <span className="w-5 text-xs font-semibold text-muted-foreground">{i + 1}</span>
                 <span className="flex-1 truncate">{t.name}</span>
                 <button
                   onClick={() =>
@@ -216,13 +218,13 @@ function Index() {
             <button
               onClick={() => generateBracket(shuffle(state.teams))}
               disabled={state.teams.length < 2}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40"
             >
               <Shuffle className="size-4" /> Сгенерировать плей-офф
             </button>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground" htmlFor="gc">
+              <label className="text-sm font-medium text-muted-foreground" htmlFor="gc">
                 Групп
               </label>
               <input
@@ -234,12 +236,12 @@ function Index() {
                 onChange={(e) =>
                   setState((s) => ({ ...s, groupCount: Number(e.target.value) || 1 }))
                 }
-                className="w-16 rounded-md border border-input bg-background/50 px-2 py-1.5 text-sm outline-none focus:border-primary"
+                className="w-16 rounded-lg border border-input bg-white/70 px-2 py-1.5 text-sm text-foreground outline-none backdrop-blur-sm transition-colors focus:border-primary focus:bg-white"
               />
               <button
                 onClick={generateGroups}
                 disabled={state.teams.length < 2}
-                className="flex-1 rounded-md border border-border px-3 py-2 text-sm transition-colors hover:border-primary disabled:opacity-40"
+                className="flex-1 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm font-medium text-foreground backdrop-blur-sm transition-colors hover:border-primary hover:text-primary disabled:opacity-40"
               >
                 Создать группы
               </button>
@@ -248,7 +250,7 @@ function Index() {
             <button
               onClick={playoffFromGroups}
               disabled={state.groups.length === 0}
-              className="w-full rounded-md border border-border px-3 py-2 text-sm transition-colors hover:border-primary disabled:opacity-40"
+              className="w-full rounded-lg border border-border bg-white/60 px-3 py-2 text-sm font-medium text-foreground backdrop-blur-sm transition-colors hover:border-primary hover:text-primary disabled:opacity-40"
             >
               Плей-офф из топ-2 групп
             </button>
@@ -256,7 +258,7 @@ function Index() {
         </aside>
 
         <section>
-          <div className="mb-5 inline-flex rounded-lg border border-border bg-surface p-1">
+          <div className="mb-5 inline-flex rounded-xl border border-border bg-white/70 p-1 backdrop-blur-sm">
             {(
               [
                 ["playoff", "Плей-офф", Swords],
@@ -266,9 +268,9 @@ function Index() {
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-all ${
                   tab === key
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
