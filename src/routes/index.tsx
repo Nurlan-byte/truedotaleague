@@ -59,6 +59,7 @@ type State = {
   groups: Team[][];
   groupMatches: GroupMatch[];
   groupCount: number;
+  history: TournamentRecord[];
 };
 
 const initial: State = {
@@ -68,11 +69,12 @@ const initial: State = {
   groups: [],
   groupMatches: [],
   groupCount: 2,
+  history: [],
 };
 
 function Index() {
   const [state, setState] = useState<State>(initial);
-  const [tab, setTab] = useState<"groups" | "playoff">("playoff");
+  const [tab, setTab] = useState<"groups" | "playoff" | "rating">("playoff");
   const [name, setName] = useState("");
 
   useEffect(() => {
