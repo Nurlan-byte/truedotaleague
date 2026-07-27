@@ -209,3 +209,67 @@ export function standings(group: Team[], matches: GroupMatch[]): Standing[] {
       y.scored - x.scored,
   );
 }
+
+/** Итоговые места 1-4 по сетке плей-офф. */
+export function finalPlacements(matches: Match[], teams: Team[]): Placement[] {
+  if (matches.length === 0) return [];
+  const totalRounds = Math.max(...matches.map((m) => m.round));
+  const final = matches.find((m) => m.round === totalRounds);
+  if (!final) return [];
+  const champ = matchWinner(final);
+  if (!champ) return [];
+  const runnerUp = final.teamA === champ ? final.teamB : final.teamA;
+
+  const semis = matches.filter((m) => m.round === totalRounds - 1);
+  const semiLosers = semis
+    .map((m) => {
+      const w = matchWinner(m);
+      if (!w) return null;
+      const loser = m.teamA === w ? m.teamB : m.teamA;
+      if (!loser) return null;
+      const diff =
+        (m.teamA === loser ? (m.scoreA ?? 0) - (m.scoreB ?? 0) : (m.scoreB ?? 0) - (m.scoreA ?? 0));
+      return { id: loser, diff };
+    })
+    .filter((x): x is { id: string; diff: number } => !!x)
+    .sort((a, b) => b.diff - a.diff)
+    .map((x) => x.id);
+
+  const ordered = [champ, runnerUp, ...semiLosers].filter(
+    (id): id is string => !!id,
+  );
+
+  return ordered.map((id, i) => {
+    const team = teams.find((t) => t.id === id);
+    return {
+      place: i + 1,
+      teamName: team?.name ?? "—",
+      logo: team?.logo,
+      points: PLACE_POINTS[i + 1] ?? 0,
+    };
+  });
+}
+
+export type RankRow = { teamName: string; logo?: string; points: number; titles: number; events: number };
+
+/** Общий рейтинг команд по всем сохранённым турнирам. */
+export function leaderboard(history: TournamentRecord[]): RankRow[] {
+  const map = new Map<string, RankRow>();
+  for (const t of history) {
+    for (const p of t.placements) {
+      const row = map.get(p.teamName) ?? {
+        teamName: p.teamName,
+        logo: p.logo,
+        points: 0,
+        titles: 0,
+        events: 0,
+      };
+      row.points += p.points;
+      row.events += 1;
+      if (p.place === 1) row.titles += 1;
+      if (!row.logo && p.logo) row.logo = p.logo;
+      map.set(p.teamName, row);
+    }
+  }
+  return [...map.values()].sort((a, b) => b.points - a.points || b.titles - a.titles);
+}
