@@ -248,7 +248,21 @@ function Index() {
                 className="flex items-center gap-2 rounded-lg bg-white/50 px-3 py-2 text-sm text-foreground backdrop-blur-sm"
               >
                 <span className="w-5 text-xs font-semibold text-muted-foreground">{i + 1}</span>
+                <TeamLogo name={t.name} logo={t.logo} size="md" />
                 <span className="flex-1 truncate">{t.name}</span>
+                <label
+                  className="cursor-pointer text-muted-foreground transition-colors hover:text-primary"
+                  title="Загрузить логотип"
+                >
+                  <ImagePlus className="size-4" />
+                  <span className="sr-only">Логотип команды {t.name}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setLogo(t.id, e.target.files?.[0])}
+                  />
+                </label>
                 <button
                   onClick={() =>
                     setState((s) => ({ ...s, teams: s.teams.filter((x) => x.id !== t.id) }))
