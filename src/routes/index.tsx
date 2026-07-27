@@ -1,11 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus, Shuffle, Trash2, Users, Swords, LayoutGrid } from "lucide-react";
+import {
+  Plus,
+  Shuffle,
+  Trash2,
+  Users,
+  Swords,
+  LayoutGrid,
+  Trophy,
+  ImagePlus,
+} from "lucide-react";
 import { BracketView } from "@/components/BracketView";
 import { GroupStage } from "@/components/GroupStage";
+import { RankingView } from "@/components/RankingView";
+import { TeamLogo } from "@/components/TeamLogo";
 import {
   buildBracket,
   buildGroups,
+  finalPlacements,
   propagate,
   shuffle,
   standings,
@@ -13,6 +25,7 @@ import {
   type GroupMatch,
   type Match,
   type Team,
+  type TournamentRecord,
 } from "@/lib/tournament";
 
 export const Route = createFileRoute("/")({
