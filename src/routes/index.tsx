@@ -80,6 +80,8 @@ function Index() {
   const [state, setState] = useState<State>(initial);
   const [tab, setTab] = useState<"groups" | "playoff" | "rating">("playoff");
   const [name, setName] = useState("");
+  const { user, profile, signOut } = useAuth();
+
 
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
