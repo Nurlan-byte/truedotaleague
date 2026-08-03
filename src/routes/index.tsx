@@ -169,13 +169,6 @@ function Index() {
         ...s,
         teams: s.teams.map((t) => (t.id === id ? { ...t, logo } : t)),
         groups: s.groups.map((g) => g.map((t) => (t.id === id ? { ...t, logo } : t))),
-        bracket: s.bracket.map((round) =>
-          round.map((m) => ({
-            ...m,
-            a: m.a && m.a.id === id ? { ...m.a, logo } : m.a,
-            b: m.b && m.b.id === id ? { ...m.b, logo } : m.b,
-          })),
-        ),
       }));
       setLogoError(null);
     } catch (e) {
