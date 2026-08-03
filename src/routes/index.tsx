@@ -17,6 +17,7 @@ import { GroupStage } from "@/components/GroupStage";
 import { RankingView } from "@/components/RankingView";
 import { TeamLogo } from "@/components/TeamLogo";
 import { useAuth } from "@/hooks/use-auth";
+import { fileToLogoDataUrl } from "@/lib/image";
 
 import {
   buildBracket,
@@ -80,6 +81,7 @@ function Index() {
   const [state, setState] = useState<State>(initial);
   const [tab, setTab] = useState<"groups" | "playoff" | "rating">("playoff");
   const [name, setName] = useState("");
+  const [logoError, setLogoError] = useState<string | null>(null);
   const { user, profile, signOut } = useAuth();
 
 
@@ -95,7 +97,11 @@ function Index() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* storage full — keep app usable */
+    }
   }, [state]);
 
   const addTeam = (raw: string) => {
@@ -161,18 +167,19 @@ function Index() {
     setTab("playoff");
   };
 
-  const setLogo = (id: string, file: File | undefined) => {
+  const setLogo = async (id: string, file: File | undefined) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () =>
+    try {
+      const logo = await fileToLogoDataUrl(file);
       setState((s) => ({
         ...s,
-        teams: s.teams.map((t) => (t.id === id ? { ...t, logo: String(reader.result) } : t)),
-        groups: s.groups.map((g) =>
-          g.map((t) => (t.id === id ? { ...t, logo: String(reader.result) } : t)),
-        ),
+        teams: s.teams.map((t) => (t.id === id ? { ...t, logo } : t)),
+        groups: s.groups.map((g) => g.map((t) => (t.id === id ? { ...t, logo } : t))),
       }));
-    reader.readAsDataURL(file);
+      setLogoError(null);
+    } catch (e) {
+      setLogoError(e instanceof Error ? e.message : "Не удалось загрузить логотип");
+    }
   };
 
   const placements = finalPlacements(state.bracket, state.teams);
@@ -266,6 +273,9 @@ function Index() {
               <Plus className="size-4" />
             </button>
           </div>
+          {logoError && (
+            <p className="mt-2 text-xs font-semibold text-destructive">{logoError}</p>
+          )}
           <p className="mt-2 text-xs text-muted-foreground">
             Можно вставить сразу несколько названий через запятую.
           </p>
@@ -289,7 +299,10 @@ function Index() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => setLogo(t.id, e.target.files?.[0])}
+                    onChange={(e) => {
+                      void setLogo(t.id, e.target.files?.[0]);
+                      e.target.value = "";
+                    }}
                   />
                 </label>
                 <button
