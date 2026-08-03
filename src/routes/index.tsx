@@ -211,12 +211,35 @@ function Index() {
             aria-label="Название турнира"
           />
         </div>
-        <button
-          onClick={resetAll}
-          className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-destructive hover:text-destructive"
-        >
-          <Trash2 className="size-4" /> Сбросить турнир
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {user ? (
+            <>
+              <span className="rounded-lg bg-white/70 px-3 py-2 text-sm font-semibold text-foreground backdrop-blur-sm">
+                {profile?.nickname || user.email}
+              </span>
+              <button
+                onClick={signOut}
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary hover:text-primary"
+              >
+                <LogOut className="size-4" /> Выйти
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-105 active:scale-95"
+            >
+              <LogIn className="size-4" /> Регистрация / вход
+            </Link>
+          )}
+          <button
+            onClick={resetAll}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-destructive hover:text-destructive"
+          >
+            <Trash2 className="size-4" /> Сбросить турнир
+          </button>
+        </div>
+
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
