@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Plus,
@@ -9,11 +9,15 @@ import {
   LayoutGrid,
   Trophy,
   ImagePlus,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 import { BracketView } from "@/components/BracketView";
 import { GroupStage } from "@/components/GroupStage";
 import { RankingView } from "@/components/RankingView";
 import { TeamLogo } from "@/components/TeamLogo";
+import { useAuth } from "@/hooks/use-auth";
+
 import {
   buildBracket,
   buildGroups,
