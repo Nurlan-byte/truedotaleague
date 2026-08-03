@@ -161,18 +161,26 @@ function Index() {
     setTab("playoff");
   };
 
-  const setLogo = (id: string, file: File | undefined) => {
+  const setLogo = async (id: string, file: File | undefined) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () =>
+    try {
+      const logo = await fileToLogoDataUrl(file);
       setState((s) => ({
         ...s,
-        teams: s.teams.map((t) => (t.id === id ? { ...t, logo: String(reader.result) } : t)),
-        groups: s.groups.map((g) =>
-          g.map((t) => (t.id === id ? { ...t, logo: String(reader.result) } : t)),
+        teams: s.teams.map((t) => (t.id === id ? { ...t, logo } : t)),
+        groups: s.groups.map((g) => g.map((t) => (t.id === id ? { ...t, logo } : t))),
+        bracket: s.bracket.map((round) =>
+          round.map((m) => ({
+            ...m,
+            a: m.a && m.a.id === id ? { ...m.a, logo } : m.a,
+            b: m.b && m.b.id === id ? { ...m.b, logo } : m.b,
+          })),
         ),
       }));
-    reader.readAsDataURL(file);
+      setLogoError(null);
+    } catch (e) {
+      setLogoError(e instanceof Error ? e.message : "Не удалось загрузить логотип");
+    }
   };
 
   const placements = finalPlacements(state.bracket, state.teams);
