@@ -204,7 +204,7 @@ function Index() {
             TrueDotaLeague
           </p>
           <h1 className="mt-1 text-4xl leading-none text-foreground sm:text-6xl">
-            Организатор турниров
+            Лига по Дота 2
           </h1>
           <input
             value={state.title}
