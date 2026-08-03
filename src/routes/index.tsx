@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Plus,
@@ -9,11 +9,15 @@ import {
   LayoutGrid,
   Trophy,
   ImagePlus,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 import { BracketView } from "@/components/BracketView";
 import { GroupStage } from "@/components/GroupStage";
 import { RankingView } from "@/components/RankingView";
 import { TeamLogo } from "@/components/TeamLogo";
+import { useAuth } from "@/hooks/use-auth";
+
 import {
   buildBracket,
   buildGroups,
@@ -76,6 +80,8 @@ function Index() {
   const [state, setState] = useState<State>(initial);
   const [tab, setTab] = useState<"groups" | "playoff" | "rating">("playoff");
   const [name, setName] = useState("");
+  const { user, profile, signOut } = useAuth();
+
 
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -207,12 +213,35 @@ function Index() {
             aria-label="Название турнира"
           />
         </div>
-        <button
-          onClick={resetAll}
-          className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-destructive hover:text-destructive"
-        >
-          <Trash2 className="size-4" /> Сбросить турнир
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {user ? (
+            <>
+              <span className="rounded-lg bg-white/70 px-3 py-2 text-sm font-semibold text-foreground backdrop-blur-sm">
+                {profile?.nickname || user.email}
+              </span>
+              <button
+                onClick={signOut}
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary hover:text-primary"
+              >
+                <LogOut className="size-4" /> Выйти
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-105 active:scale-95"
+            >
+              <LogIn className="size-4" /> Регистрация / вход
+            </Link>
+          )}
+          <button
+            onClick={resetAll}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-destructive hover:text-destructive"
+          >
+            <Trash2 className="size-4" /> Сбросить турнир
+          </button>
+        </div>
+
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
