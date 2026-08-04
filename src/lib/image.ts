@@ -25,7 +25,7 @@ export function validateLogoFile(file: File): string | null {
   return null;
 }
 
-export async function fileToLogoDataUrl(file: File, size = 96): Promise<string> {
+export async function fileToLogoDataUrl(file: File, size = 128): Promise<string> {
   const err = validateLogoFile(file);
   if (err) throw new Error(err);
 
@@ -43,16 +43,22 @@ export async function fileToLogoDataUrl(file: File, size = 96): Promise<string> 
     el.src = dataUrl;
   });
 
+  // Рисуем ровно size×size: масштаб по меньшей стороне (cover), центрируем.
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d");
   if (!ctx) return dataUrl;
 
+  // Белый фон — чтобы прозрачные PNG не становились чёрными при JPEG-экспорте.
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, size, size);
+
   const scale = Math.max(size / img.width, size / img.height);
   const w = img.width * scale;
   const h = img.height * scale;
+  ctx.imageSmoothingQuality = "high";
   ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
 
-  return canvas.toDataURL("image/jpeg", 0.8);
+  return canvas.toDataURL("image/jpeg", 0.85);
 }
