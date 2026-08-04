@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Save, Trophy, User as UserIcon } from "lucide-react";
+import { ArrowLeft, ImagePlus, Save, Trophy, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogo } from "@/components/TeamLogo";
+import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
