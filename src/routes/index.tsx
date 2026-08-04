@@ -17,7 +17,7 @@ import { GroupStage } from "@/components/GroupStage";
 import { RankingView } from "@/components/RankingView";
 import { TeamLogo } from "@/components/TeamLogo";
 import { useAuth } from "@/hooks/use-auth";
-import { fileToLogoDataUrl } from "@/lib/image";
+import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 
 import {
   buildBracket,
