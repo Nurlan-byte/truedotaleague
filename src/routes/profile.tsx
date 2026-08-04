@@ -142,10 +142,33 @@ function ProfilePage() {
       ) : (
         <div className="panel mt-6 space-y-4 p-5">
           <div className="flex items-center gap-3">
-            <TeamLogo name={nickname || user.email || "?"} logo={avatarUrl ?? undefined} size="md" />
+            <TeamLogo name={nickname || user.email || "?"} logo={avatarUrl ?? undefined} size="lg" />
             <div>
               <p className="text-sm font-bold text-foreground">{nickname || "Без ника"}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
+              <div className="mt-2 flex items-center gap-3">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary hover:text-primary">
+                  <ImagePlus className="size-4" /> {avatarUrl ? "Заменить аватар" : "Загрузить аватар"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (file) void uploadAvatar(file);
+                    }}
+                  />
+                </label>
+                {avatarUrl && (
+                  <button
+                    onClick={() => void saveAvatar(null)}
+                    className="text-xs text-muted-foreground transition-colors hover:text-destructive"
+                  >
+                    Удалить
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
