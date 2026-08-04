@@ -17,7 +17,7 @@ import { GroupStage } from "@/components/GroupStage";
 import { RankingView } from "@/components/RankingView";
 import { TeamLogo } from "@/components/TeamLogo";
 import { useAuth } from "@/hooks/use-auth";
-import { fileToLogoDataUrl } from "@/lib/image";
+import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 
 import {
   buildBracket,
@@ -300,7 +300,15 @@ function Index() {
                     accept="image/*"
                     className="hidden"
                     onChange={(e) => {
-                      void setLogo(t.id, e.target.files?.[0]);
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        const vErr = validateLogoFile(f);
+                        if (vErr) {
+                          setLogoError(vErr);
+                        } else {
+                          void setLogo(t.id, f);
+                        }
+                      }
                       e.target.value = "";
                     }}
                   />

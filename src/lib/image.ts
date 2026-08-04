@@ -1,11 +1,33 @@
 /** Reads an image file and returns a small square data URL suitable for localStorage. */
+
+const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
+const ALLOWED_EXTS = [".png", ".jpg", ".jpeg", ".webp"];
+const MAX_SIZE = 10 * 1024 * 1024; // 10 МБ
+
+export function validateLogoFile(file: File): string | null {
+  const name = file.name.toLowerCase();
+  const extOk = ALLOWED_EXTS.some((ext) => name.endsWith(ext));
+  const typeOk = ALLOWED_TYPES.includes(file.type as (typeof ALLOWED_TYPES)[number]);
+
+  if (!typeOk && !extOk) {
+    return "Поддерживаются только форматы PNG, JPG и WebP.";
+  }
+
+  if (file.size === 0) {
+    return "Файл пустой — выберите другое изображение.";
+  }
+
+  if (file.size > MAX_SIZE) {
+    const mb = (file.size / (1024 * 1024)).toFixed(1);
+    return `Файл слишком большой (${mb} МБ). Максимум — 10 МБ.`;
+  }
+
+  return null;
+}
+
 export async function fileToLogoDataUrl(file: File, size = 96): Promise<string> {
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Файл не является изображением");
-  }
-  if (file.size > 10 * 1024 * 1024) {
-    throw new Error("Файл слишком большой (макс. 10 МБ)");
-  }
+  const err = validateLogoFile(file);
+  if (err) throw new Error(err);
 
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
