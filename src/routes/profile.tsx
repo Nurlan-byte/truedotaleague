@@ -63,6 +63,37 @@ function ProfilePage() {
     };
   }, [user]);
 
+  const saveAvatar = async (value: string | null) => {
+    if (!user) return;
+    setError(null);
+    setStatus(null);
+    const { error: dbError } = await supabase
+      .from("profiles")
+      .update({ avatar_url: value })
+      .eq("id", user.id);
+    if (dbError) {
+      setError("Не удалось сохранить аватар. Попробуйте ещё раз.");
+      return;
+    }
+    setAvatarUrl(value);
+    setStatus(value ? "Аватар обновлён." : "Аватар удалён.");
+  };
+
+  const uploadAvatar = async (file: File) => {
+    const invalid = validateLogoFile(file);
+    if (invalid) {
+      setError(invalid);
+      setStatus(null);
+      return;
+    }
+    try {
+      const dataUrl = await fileToLogoDataUrl(file, 128);
+      await saveAvatar(dataUrl);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось обработать изображение.");
+    }
+  };
+
   const save = async () => {
     if (!user) return;
     setError(null);
