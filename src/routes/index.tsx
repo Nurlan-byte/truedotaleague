@@ -223,9 +223,12 @@ function Index() {
         <div className="flex flex-wrap items-center gap-2">
           {user ? (
             <>
-              <span className="rounded-lg bg-white/70 px-3 py-2 text-sm font-semibold text-foreground backdrop-blur-sm">
+              <Link
+                to="/profile"
+                className="rounded-lg bg-white/70 px-3 py-2 text-sm font-semibold text-foreground backdrop-blur-sm transition-colors hover:text-primary"
+              >
                 {profile?.nickname || user.email}
-              </span>
+              </Link>
               <button
                 onClick={signOut}
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:border-primary hover:text-primary"
@@ -233,6 +236,7 @@ function Index() {
                 <LogOut className="size-4" /> Выйти
               </button>
             </>
+
           ) : (
             <Link
               to="/auth"
