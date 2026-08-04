@@ -1,0 +1,5 @@
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS bio text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS mmr integer,
+  ADD COLUMN IF NOT EXISTS role_position text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS profile_url text NOT NULL DEFAULT '';
