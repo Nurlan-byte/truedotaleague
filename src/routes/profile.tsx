@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Save, Trophy, User as UserIcon } from "lucide-react";
+import { ArrowLeft, ImagePlus, Save, Trophy, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogo } from "@/components/TeamLogo";
+import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -61,6 +62,37 @@ function ProfilePage() {
       active = false;
     };
   }, [user]);
+
+  const saveAvatar = async (value: string | null) => {
+    if (!user) return;
+    setError(null);
+    setStatus(null);
+    const { error: dbError } = await supabase
+      .from("profiles")
+      .update({ avatar_url: value })
+      .eq("id", user.id);
+    if (dbError) {
+      setError("Не удалось сохранить аватар. Попробуйте ещё раз.");
+      return;
+    }
+    setAvatarUrl(value);
+    setStatus(value ? "Аватар обновлён." : "Аватар удалён.");
+  };
+
+  const uploadAvatar = async (file: File) => {
+    const invalid = validateLogoFile(file);
+    if (invalid) {
+      setError(invalid);
+      setStatus(null);
+      return;
+    }
+    try {
+      const dataUrl = await fileToLogoDataUrl(file, 128);
+      await saveAvatar(dataUrl);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось обработать изображение.");
+    }
+  };
 
   const save = async () => {
     if (!user) return;
@@ -142,10 +174,33 @@ function ProfilePage() {
       ) : (
         <div className="panel mt-6 space-y-4 p-5">
           <div className="flex items-center gap-3">
-            <TeamLogo name={nickname || user.email || "?"} logo={avatarUrl ?? undefined} size="md" />
+            <TeamLogo name={nickname || user.email || "?"} logo={avatarUrl ?? undefined} size="lg" />
             <div>
               <p className="text-sm font-bold text-foreground">{nickname || "Без ника"}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
+              <div className="mt-2 flex items-center gap-3">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary hover:text-primary">
+                  <ImagePlus className="size-4" /> {avatarUrl ? "Заменить аватар" : "Загрузить аватар"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (file) void uploadAvatar(file);
+                    }}
+                  />
+                </label>
+                {avatarUrl && (
+                  <button
+                    onClick={() => void saveAvatar(null)}
+                    className="text-xs text-muted-foreground transition-colors hover:text-destructive"
+                  >
+                    Удалить
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
