@@ -221,6 +221,12 @@ function Index() {
           />
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/players"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm font-semibold text-foreground backdrop-blur-sm transition-colors hover:border-primary hover:text-primary"
+          >
+            <Users className="size-4" /> Участники
+          </Link>
           {user ? (
             <>
               <Link
