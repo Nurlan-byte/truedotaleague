@@ -300,7 +300,15 @@ function Index() {
                     accept="image/*"
                     className="hidden"
                     onChange={(e) => {
-                      void setLogo(t.id, e.target.files?.[0]);
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        const vErr = validateLogoFile(f);
+                        if (vErr) {
+                          setLogoError(vErr);
+                        } else {
+                          void setLogo(t.id, f);
+                        }
+                      }
                       e.target.value = "";
                     }}
                   />
