@@ -23,7 +23,7 @@ export const Route = createFileRoute("/profile")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ProfilePage;
+  component: ProfilePage,
 });
 
 const POSITIONS = ["Керри (1)", "Мид (2)", "Хардлайн (3)", "Роумер (4)", "Саппорт (5)"];
