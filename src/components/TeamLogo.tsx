@@ -13,7 +13,7 @@ const sizes = {
 export function TeamLogo({ name, logo, size = "sm" }: Props) {
   const cls = `${sizes[size]} shrink-0 overflow-hidden rounded-full border border-border bg-white/70 object-cover`;
 
-  if (logo) {
+  if (logo && logo.trim() !== "") {
     return <img src={logo} alt={`Логотип ${name}`} loading="lazy" className={cls} />;
   }
 
