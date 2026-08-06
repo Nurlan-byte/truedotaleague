@@ -5,10 +5,11 @@ import { Trophy } from "lucide-react";
 type Props = {
   matches: Match[];
   teams: Team[];
-  onScore: (id: string, side: "A" | "B", value: string) => void;
+  onScore?: (id: string, side: "A" | "B", value: string) => void;
+  readOnly?: boolean;
 };
 
-export function BracketView({ matches, teams, onScore }: Props) {
+export function BracketView({ matches, teams, onScore, readOnly = false }: Props) {
   if (matches.length === 0) {
     return (
       <div className="panel p-5">
