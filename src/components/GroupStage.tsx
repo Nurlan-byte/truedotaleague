@@ -4,10 +4,11 @@ import { TeamLogo } from "@/components/TeamLogo";
 type Props = {
   groups: Team[][];
   matches: GroupMatch[];
-  onScore: (id: string, side: "A" | "B", value: string) => void;
+  onScore?: (id: string, side: "A" | "B", value: string) => void;
+  readOnly?: boolean;
 };
 
-export function GroupStage({ groups, matches, onScore }: Props) {
+export function GroupStage({ groups, matches, onScore, readOnly = false }: Props) {
   if (groups.length === 0) {
     return (
       <div className="panel p-5">
