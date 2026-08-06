@@ -60,6 +60,8 @@ export function useTournamentState() {
     };
   }, []);
 
+  const refresh = useCallback(() => setStateRaw(read()), []);
+
   const setState = useCallback(
     (updater: (s: TournamentState) => TournamentState) => {
       setStateRaw((prev) => {
@@ -160,5 +162,5 @@ export function useTournamentState() {
     reset: () => setState((s) => ({ ...initialState, history: s.history })),
   };
 
-  return { state, ready, actions, placements: finalPlacements(state.bracket, state.teams) };
+  return { state, ready, actions, refresh, placements: finalPlacements(state.bracket, state.teams) };
 }
