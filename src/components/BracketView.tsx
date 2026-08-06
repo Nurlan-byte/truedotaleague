@@ -78,13 +78,19 @@ export function BracketView({ matches, teams, onScore, readOnly = false }: Props
                             >
                               {nameOf(teamId) ?? "Ожидание"}
                             </span>
-                            <input
-                              inputMode="numeric"
-                              disabled={!teamId}
-                              value={score ?? ""}
-                              onChange={(e) => onScore(m.id, side, e.target.value)}
-                              className="w-10 rounded-md border border-input bg-white/80 px-1 py-0.5 text-center text-sm text-foreground outline-none focus:border-primary disabled:opacity-40"
-                            />
+                            {readOnly ? (
+                              <span className="w-10 text-center text-sm font-bold text-foreground">
+                                {score ?? "—"}
+                              </span>
+                            ) : (
+                              <input
+                                inputMode="numeric"
+                                disabled={!teamId}
+                                value={score ?? ""}
+                                onChange={(e) => onScore?.(m.id, side, e.target.value)}
+                                className="w-10 rounded-md border border-input bg-white/80 px-1 py-0.5 text-center text-sm text-foreground outline-none focus:border-primary disabled:opacity-40"
+                              />
+                            )}
                           </div>
                         );
                       })}
