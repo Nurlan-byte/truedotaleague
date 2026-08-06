@@ -32,6 +32,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { isAdmin, checking, user } = useAdmin();
   const { state, actions, placements } = useTournamentState();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"groups" | "playoff">("playoff");
 
   if (checking) {
