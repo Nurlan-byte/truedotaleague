@@ -74,22 +74,35 @@ export function GroupStage({ groups, matches, onScore, readOnly = false }: Props
                   <span className="flex-1 truncate text-sm text-foreground">
                     {group.find((t) => t.id === m.teamA)?.name}
                   </span>
-                  <input
-                    inputMode="numeric"
-                    value={m.scoreA ?? ""}
-                    onChange={(e) => onScore(m.id, "A", e.target.value)}
-                    className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
-                  />
+                  {readOnly ? (
+                    <span className="w-11 text-center text-sm font-bold text-foreground">
+                      {m.scoreA ?? "—"}
+                    </span>
+                  ) : (
+                    <input
+                      inputMode="numeric"
+                      value={m.scoreA ?? ""}
+                      onChange={(e) => onScore?.(m.id, "A", e.target.value)}
+                      className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
+                    />
+                  )}
                   <span className="text-xs font-bold text-muted-foreground">:</span>
-                  <input
-                    inputMode="numeric"
-                    value={m.scoreB ?? ""}
-                    onChange={(e) => onScore(m.id, "B", e.target.value)}
-                    className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
-                  />
+                  {readOnly ? (
+                    <span className="w-11 text-center text-sm font-bold text-foreground">
+                      {m.scoreB ?? "—"}
+                    </span>
+                  ) : (
+                    <input
+                      inputMode="numeric"
+                      value={m.scoreB ?? ""}
+                      onChange={(e) => onScore?.(m.id, "B", e.target.value)}
+                      className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
+                    />
+                  )}
                   <span className="flex-1 truncate text-right text-sm text-foreground">
                     {group.find((t) => t.id === m.teamB)?.name}
                   </span>
+
                 </div>
               ))}
             </div>
