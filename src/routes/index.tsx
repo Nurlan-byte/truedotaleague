@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { LayoutGrid, Lock, Shuffle, Swords, Trash2, Trophy, Users } from "lucide-react";
+import { toast } from "sonner";
 import { BracketView } from "@/components/BracketView";
 import { GroupStage } from "@/components/GroupStage";
 import { useAdmin } from "@/hooks/use-admin";
@@ -135,15 +136,28 @@ function Index() {
           </button>
 
           <button
-            onClick={actions.finishTournament}
-            disabled={placements.length === 0}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-bold text-accent-foreground shadow-sm disabled:opacity-40"
+            onClick={() => {
+              if (placements.length === 0) {
+                toast.error("Турнир ещё не завершён", {
+                  description:
+                    "Сначала сгенерируйте плей-офф и внесите счёт финала — тогда определятся места 1–4.",
+                });
+                return;
+              }
+              actions.finishTournament();
+              toast.success(`Турнир «${state.title}» сохранён`, {
+                description: `Чемпион: ${placements[0].teamName}. TDL points начислены.`,
+              });
+              navigate({ to: "/tournaments" });
+            }}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-bold text-accent-foreground shadow-sm"
           >
             <Trophy className="size-4" /> Завершить турнир
           </button>
           <p className="text-xs text-muted-foreground">
             TDL points: 1 место — 50, 2 — 25, 3 — 12, 4 — 6.
           </p>
+
 
           <button
             onClick={actions.reset}
