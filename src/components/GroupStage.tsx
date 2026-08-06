@@ -4,10 +4,11 @@ import { TeamLogo } from "@/components/TeamLogo";
 type Props = {
   groups: Team[][];
   matches: GroupMatch[];
-  onScore: (id: string, side: "A" | "B", value: string) => void;
+  onScore?: (id: string, side: "A" | "B", value: string) => void;
+  readOnly?: boolean;
 };
 
-export function GroupStage({ groups, matches, onScore }: Props) {
+export function GroupStage({ groups, matches, onScore, readOnly = false }: Props) {
   if (groups.length === 0) {
     return (
       <div className="panel p-5">
@@ -73,22 +74,35 @@ export function GroupStage({ groups, matches, onScore }: Props) {
                   <span className="flex-1 truncate text-sm text-foreground">
                     {group.find((t) => t.id === m.teamA)?.name}
                   </span>
-                  <input
-                    inputMode="numeric"
-                    value={m.scoreA ?? ""}
-                    onChange={(e) => onScore(m.id, "A", e.target.value)}
-                    className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
-                  />
+                  {readOnly ? (
+                    <span className="w-11 text-center text-sm font-bold text-foreground">
+                      {m.scoreA ?? "—"}
+                    </span>
+                  ) : (
+                    <input
+                      inputMode="numeric"
+                      value={m.scoreA ?? ""}
+                      onChange={(e) => onScore?.(m.id, "A", e.target.value)}
+                      className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
+                    />
+                  )}
                   <span className="text-xs font-bold text-muted-foreground">:</span>
-                  <input
-                    inputMode="numeric"
-                    value={m.scoreB ?? ""}
-                    onChange={(e) => onScore(m.id, "B", e.target.value)}
-                    className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
-                  />
+                  {readOnly ? (
+                    <span className="w-11 text-center text-sm font-bold text-foreground">
+                      {m.scoreB ?? "—"}
+                    </span>
+                  ) : (
+                    <input
+                      inputMode="numeric"
+                      value={m.scoreB ?? ""}
+                      onChange={(e) => onScore?.(m.id, "B", e.target.value)}
+                      className="w-11 rounded-md border border-input bg-white/80 px-1 py-1 text-center text-sm text-foreground outline-none focus:border-primary"
+                    />
+                  )}
                   <span className="flex-1 truncate text-right text-sm text-foreground">
                     {group.find((t) => t.id === m.teamB)?.name}
                   </span>
+
                 </div>
               ))}
             </div>
