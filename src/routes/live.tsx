@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarDays, LayoutGrid, Radio, Swords } from "lucide-react";
 import { BracketView } from "@/components/BracketView";
 import { GroupStage } from "@/components/GroupStage";
@@ -28,8 +28,18 @@ export const Route = createFileRoute("/live")({
 });
 
 function LivePage() {
-  const { state, ready } = useTournamentState();
+  const { state, ready, refresh } = useTournamentState();
   const [tab, setTab] = useState<"schedule" | "groups" | "playoff">("schedule");
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    const tick = () => {
+      refresh();
+      setUpdatedAt(new Date().toLocaleTimeString("ru-RU"));
+    };
+    const timer = window.setInterval(tick, 10000);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
@@ -42,6 +52,8 @@ function LivePage() {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Открытая страница: расписание, таблицы групп и сетка плей-офф. Доступно всем без входа.
+          Данные обновляются автоматически каждые 10 секунд
+          {updatedAt ? ` — последнее обновление в ${updatedAt}` : ""}.
         </p>
       </header>
 
