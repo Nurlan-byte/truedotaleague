@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Crown, Medal } from "lucide-react";
+import { Crown, Medal, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { TeamLogo } from "@/components/TeamLogo";
+import { useAdmin } from "@/hooks/use-admin";
 import { useTournamentState } from "@/hooks/use-tournament-state";
+
 
 export const Route = createFileRoute("/tournaments")({
   head: () => ({

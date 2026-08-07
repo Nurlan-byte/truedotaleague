@@ -159,6 +159,9 @@ export function useTournamentState() {
           ],
         };
       }),
+    removeTournament: (id: string) =>
+      setState((s) => ({ ...s, history: s.history.filter((t) => t.id !== id) })),
+    clearHistory: () => setState((s) => ({ ...s, history: [] })),
     reset: () => setState((s) => ({ ...initialState, history: s.history })),
   };
 

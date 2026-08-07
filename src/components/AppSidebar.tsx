@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, Trophy, Users } from "lucide-react";
+import { Home, LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, Trophy, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Создать турнир", url: "/", icon: Plus },
+  { title: "Главная", url: "/", icon: Home },
+  { title: "Создать турнир", url: "/create", icon: Plus },
   { title: "Турнир онлайн", url: "/live", icon: Radio },
   { title: "Команды", url: "/teams", icon: Shield },
   { title: "Турниры", url: "/tournaments", icon: LayoutGrid },
@@ -21,6 +22,7 @@ const items = [
   { title: "Рейтинг игроков", url: "/players", icon: Users },
   { title: "Дорога к TI", url: "/road-to-ti", icon: RouteIcon },
 ] as const;
+
 
 export function AppSidebar() {
   const { state } = useSidebar();
