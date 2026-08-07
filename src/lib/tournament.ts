@@ -250,6 +250,35 @@ export function finalPlacements(matches: Match[], teams: Team[]): Placement[] {
   });
 }
 
+/** Места по групповому этапу — резерв, если плей-офф не проводился/не доигран. */
+export function groupPlacements(
+  groups: Team[][],
+  groupMatches: GroupMatch[],
+): Placement[] {
+  const rows = groups.flatMap((g, gi) =>
+    standings(
+      g,
+      groupMatches.filter((m) => m.group === gi),
+    ).map((row) => ({ row, team: g.find((t) => t.id === row.teamId) })),
+  );
+  const played = rows.filter((r) => r.row.played > 0 && r.team);
+  if (played.length < 2) return [];
+  return played
+    .sort(
+      (x, y) =>
+        y.row.points - x.row.points ||
+        y.row.scored - y.row.conceded - (x.row.scored - x.row.conceded) ||
+        y.row.scored - x.row.scored,
+    )
+    .map((r, i) => ({
+      place: i + 1,
+      teamName: r.team!.name,
+      logo: r.team!.logo,
+      points: PLACE_POINTS[i + 1] ?? 0,
+    }));
+}
+
+
 export type RankRow = { teamName: string; logo?: string; points: number; titles: number; events: number };
 
 /** Общий рейтинг команд по всем сохранённым турнирам. */

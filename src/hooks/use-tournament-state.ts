@@ -3,11 +3,13 @@ import {
   buildBracket,
   buildGroups,
   finalPlacements,
+  groupPlacements,
   propagate,
   standings,
   uid,
   type GroupMatch,
   type Match,
+  type Placement,
   type Team,
   type TournamentRecord,
 } from "@/lib/tournament";
@@ -42,6 +44,13 @@ function read(): TournamentState {
   } catch {
     return initialState;
   }
+}
+
+/** Итоговые места: сначала по сетке плей-офф, иначе по групповому этапу. */
+function resolvePlacements(s: TournamentState): Placement[] {
+  const fromBracket = finalPlacements(s.bracket, s.teams);
+  if (fromBracket.length > 0) return fromBracket;
+  return groupPlacements(s.groups, s.groupMatches);
 }
 
 export function useTournamentState() {
@@ -144,7 +153,7 @@ export function useTournamentState() {
       }),
     finishTournament: () =>
       setState((s) => {
-        const placements = finalPlacements(s.bracket, s.teams);
+        const placements = resolvePlacements(s);
         if (placements.length === 0) return s;
         return {
           ...s,
@@ -165,5 +174,5 @@ export function useTournamentState() {
     reset: () => setState((s) => ({ ...initialState, history: s.history })),
   };
 
-  return { state, ready, actions, refresh, placements: finalPlacements(state.bracket, state.teams) };
+  return { state, ready, actions, refresh, placements: resolvePlacements(state) };
 }
