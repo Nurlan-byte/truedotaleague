@@ -78,6 +78,7 @@ function TournamentsPage() {
                   {isAdmin && (
                     <button
                       onClick={() => {
+                        if (!confirm(`Удалить турнир «${t.title}»? Действие необратимо.`)) return;
                         actions.removeTournament(t.id);
                         toast.success(`Турнир «${t.title}» удалён`);
                       }}
