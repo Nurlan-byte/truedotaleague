@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Crown, Medal } from "lucide-react";
+import { Crown, Medal, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { TeamLogo } from "@/components/TeamLogo";
+import { useAdmin } from "@/hooks/use-admin";
 import { useTournamentState } from "@/hooks/use-tournament-state";
+
 
 export const Route = createFileRoute("/tournaments")({
   head: () => ({
@@ -34,13 +37,28 @@ const placeColor = (place: number) =>
         : "text-muted-foreground";
 
 function TournamentsPage() {
-  const { state } = useTournamentState();
+  const { state, actions } = useTournamentState();
+  const { isAdmin } = useAdmin();
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8">
-      <h1 className="flex items-center gap-2 text-4xl text-foreground">
-        <Crown className="size-7 text-accent" /> Турниры лиги
-      </h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="flex items-center gap-2 text-4xl text-foreground">
+          <Crown className="size-7 text-accent" /> Турниры лиги
+        </h1>
+        {isAdmin && state.history.length > 0 && (
+          <button
+            onClick={() => {
+              if (!confirm("Удалить все завершённые турниры? Действие необратимо.")) return;
+              actions.clearHistory();
+              toast.success("История турниров очищена");
+            }}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm font-semibold text-muted-foreground hover:border-destructive hover:text-destructive"
+          >
+            <Trash2 className="size-4" /> Очистить все
+          </button>
+        )}
+      </div>
 
       {state.history.length === 0 ? (
         <div className="panel mt-5 p-5 text-sm text-muted-foreground">
@@ -55,8 +73,23 @@ function TournamentsPage() {
                 <p className="text-xl font-bold text-foreground">
                   {state.history.length - i}-й турнир — {t.title}
                 </p>
-                <p className="text-xs text-muted-foreground">{t.date}</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-xs text-muted-foreground">{t.date}</p>
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        actions.removeTournament(t.id);
+                        toast.success(`Турнир «${t.title}» удалён`);
+                      }}
+                      aria-label={`Удалить турнир ${t.title}`}
+                      className="inline-flex items-center gap-1 rounded-lg border border-border bg-white/60 px-2 py-1 text-xs font-semibold text-muted-foreground hover:border-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="size-3.5" /> Удалить
+                    </button>
+                  )}
+                </div>
               </div>
+
               <ul className="space-y-1.5">
                 {t.placements.map((p) => (
                   <li key={p.place} className="flex items-center gap-2 text-sm">
