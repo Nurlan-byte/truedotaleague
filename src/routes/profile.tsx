@@ -276,6 +276,49 @@ function ProfilePage() {
             />
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="team">
+                Команда
+              </label>
+              <input
+                id="team"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                maxLength={40}
+                placeholder="Например: Natus Vincere"
+                className={field}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Оставьте пустым, если вы без команды.
+              </p>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="trole">
+                Роль в команде
+              </label>
+              <input
+                id="trole"
+                value={teamRole}
+                onChange={(e) => setTeamRole(e.target.value)}
+                maxLength={40}
+                placeholder="Капитан / игрок / запасной"
+                className={field}
+              />
+            </div>
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground">
+            <input
+              type="checkbox"
+              checked={lookingForTeam}
+              onChange={(e) => setLookingForTeam(e.target.checked)}
+              className="size-4 accent-[var(--primary)]"
+            />
+            Ищу команду
+          </label>
+
+
           <div>
             <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="bio">
               О себе
