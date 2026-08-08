@@ -140,6 +140,9 @@ function ProfilePage() {
         mmr: mmrValue,
         role_position: position,
         profile_url: url,
+        team_name: teamName.trim(),
+        team_role: teamRole.trim(),
+        looking_for_team: lookingForTeam,
       })
       .eq("id", user.id);
     setSaving(false);
