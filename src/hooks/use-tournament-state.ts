@@ -16,8 +16,10 @@ import {
 
 const STORAGE_KEY = "tdl-tournament-state";
 const SYNC_EVENT = "tdl-state-sync";
+const DATA_VERSION = 2;
 
 export type TournamentState = {
+  version: number;
   title: string;
   teams: Team[];
   bracket: Match[];
@@ -28,6 +30,7 @@ export type TournamentState = {
 };
 
 export const initialState: TournamentState = {
+  version: DATA_VERSION,
   title: "Кубок сезона",
   teams: [],
   bracket: [],
@@ -40,7 +43,20 @@ export const initialState: TournamentState = {
 function read(): TournamentState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...initialState, ...JSON.parse(raw) } : initialState;
+    if (!raw) return initialState;
+    const parsed = { ...initialState, ...JSON.parse(raw) } as TournamentState;
+    // Разовая чистка: старые тестовые команды и незавершённая сетка удаляются.
+    if (parsed.version !== DATA_VERSION) {
+      return {
+        ...parsed,
+        version: DATA_VERSION,
+        teams: [],
+        bracket: [],
+        groups: [],
+        groupMatches: [],
+      };
+    }
+    return parsed;
   } catch {
     return initialState;
   }
