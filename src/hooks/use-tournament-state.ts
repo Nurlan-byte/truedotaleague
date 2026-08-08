@@ -188,6 +188,10 @@ export function useTournamentState() {
         if (placements.length === 0) return s;
         return {
           ...s,
+          // Турнир уходит в архив: расписание, группы и сетка очищаются.
+          bracket: [],
+          groups: [],
+          groupMatches: [],
           history: [
             {
               id: uid(),
