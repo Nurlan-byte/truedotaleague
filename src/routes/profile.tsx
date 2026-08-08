@@ -36,6 +36,9 @@ function ProfilePage() {
   const [mmr, setMmr] = useState("");
   const [position, setPosition] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [teamRole, setTeamRole] = useState("");
+  const [lookingForTeam, setLookingForTeam] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
