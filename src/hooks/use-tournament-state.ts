@@ -118,13 +118,28 @@ export function useTournamentState() {
         .map((n) => n.trim())
         .filter(Boolean);
       if (!names.length) return;
-      setState((s) => ({
-        ...s,
-        teams: [...s.teams, ...names.map((n) => ({ id: uid(), name: n }))],
-      }));
+      setState((s) => {
+        const taken = new Set(s.teams.map((t) => t.name.toLowerCase()));
+        const fresh = names
+          .filter((n) => {
+            const key = n.toLowerCase();
+            if (taken.has(key)) return false;
+            taken.add(key);
+            return true;
+          })
+          .map((n) => ({
+            id: uid(),
+            name: n,
+            registeredAt: new Date().toLocaleDateString("ru-RU"),
+          }));
+        if (!fresh.length) return s;
+        return { ...s, teams: [...s.teams, ...fresh] };
+      });
     },
     removeTeam: (id: string) =>
       setState((s) => ({ ...s, teams: s.teams.filter((t) => t.id !== id) })),
+    clearTeams: () =>
+      setState((s) => ({ ...s, teams: [], groups: [], groupMatches: [], bracket: [] })),
     setTeamLogo: (id: string, logo: string) =>
       setState((s) => ({
         ...s,
