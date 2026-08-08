@@ -98,6 +98,16 @@ function CreateTournamentPage() {
             </Link>
           </div>
 
+          {state.teams.length < 2 && (
+            <p className="rounded-lg border border-border bg-white/60 p-3 text-xs text-muted-foreground">
+              Сначала добавьте официальные команды в разделе{" "}
+              <Link to="/teams" className="font-semibold text-primary hover:underline">
+                Команды
+              </Link>{" "}
+              — минимум две. Только после этого можно создать группы и сетку плей-офф.
+            </p>
+          )}
+
           <button
             onClick={() => actions.generateBracket(shuffle(state.teams))}
             disabled={state.teams.length < 2}
@@ -135,6 +145,7 @@ function CreateTournamentPage() {
           >
             Плей-офф из топ-2 групп
           </button>
+
 
           <button
             onClick={() => {

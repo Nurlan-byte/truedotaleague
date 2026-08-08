@@ -54,7 +54,8 @@ export function MatchSchedule({ teams, groupMatches, bracket }: Props) {
     return (
       <div className="panel p-5">
         <p className="text-sm text-muted-foreground">
-          Расписание появится, когда организатор создаст группы или сетку плей-офф.
+          Сейчас активного турнира нет. Расписание появится, когда организатор создаст группы или
+          сетку плей-офф. Результаты прошедших турниров — в разделе «Турниры лиги».
         </p>
       </div>
     );
