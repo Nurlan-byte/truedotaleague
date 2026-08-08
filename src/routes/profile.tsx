@@ -36,6 +36,9 @@ function ProfilePage() {
   const [mmr, setMmr] = useState("");
   const [position, setPosition] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [teamRole, setTeamRole] = useState("");
+  const [lookingForTeam, setLookingForTeam] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +49,9 @@ function ProfilePage() {
     let active = true;
     supabase
       .from("profiles")
-      .select("nickname, bio, mmr, role_position, profile_url, avatar_url")
+      .select(
+        "nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team",
+      )
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -57,6 +62,9 @@ function ProfilePage() {
         setPosition(data.role_position ?? "");
         setProfileUrl(data.profile_url ?? "");
         setAvatarUrl(data.avatar_url ?? null);
+        setTeamName(data.team_name ?? "");
+        setTeamRole(data.team_role ?? "");
+        setLookingForTeam(Boolean(data.looking_for_team));
       });
     return () => {
       active = false;
@@ -132,6 +140,9 @@ function ProfilePage() {
         mmr: mmrValue,
         role_position: position,
         profile_url: url,
+        team_name: teamName.trim(),
+        team_role: teamRole.trim(),
+        looking_for_team: lookingForTeam,
       })
       .eq("id", user.id);
     setSaving(false);
@@ -264,6 +275,49 @@ function ProfilePage() {
               className={field}
             />
           </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="team">
+                Команда
+              </label>
+              <input
+                id="team"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                maxLength={40}
+                placeholder="Например: Natus Vincere"
+                className={field}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Оставьте пустым, если вы без команды.
+              </p>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="trole">
+                Роль в команде
+              </label>
+              <input
+                id="trole"
+                value={teamRole}
+                onChange={(e) => setTeamRole(e.target.value)}
+                maxLength={40}
+                placeholder="Капитан / игрок / запасной"
+                className={field}
+              />
+            </div>
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground">
+            <input
+              type="checkbox"
+              checked={lookingForTeam}
+              onChange={(e) => setLookingForTeam(e.target.checked)}
+              className="size-4 accent-[var(--primary)]"
+            />
+            Ищу команду
+          </label>
+
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="bio">

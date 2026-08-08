@@ -20,10 +20,13 @@ export type Database = {
           bio: string
           created_at: string
           id: string
+          looking_for_team: boolean
           mmr: number | null
           nickname: string
           profile_url: string
           role_position: string
+          team_name: string
+          team_role: string
           updated_at: string
         }
         Insert: {
@@ -31,10 +34,13 @@ export type Database = {
           bio?: string
           created_at?: string
           id: string
+          looking_for_team?: boolean
           mmr?: number | null
           nickname?: string
           profile_url?: string
           role_position?: string
+          team_name?: string
+          team_role?: string
           updated_at?: string
         }
         Update: {
@@ -42,10 +48,13 @@ export type Database = {
           bio?: string
           created_at?: string
           id?: string
+          looking_for_team?: boolean
           mmr?: number | null
           nickname?: string
           profile_url?: string
           role_position?: string
+          team_name?: string
+          team_role?: string
           updated_at?: string
         }
         Relationships: []
