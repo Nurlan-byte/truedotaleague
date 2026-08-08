@@ -49,7 +49,9 @@ function ProfilePage() {
     let active = true;
     supabase
       .from("profiles")
-      .select("nickname, bio, mmr, role_position, profile_url, avatar_url")
+      .select(
+        "nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team",
+      )
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -60,6 +62,9 @@ function ProfilePage() {
         setPosition(data.role_position ?? "");
         setProfileUrl(data.profile_url ?? "");
         setAvatarUrl(data.avatar_url ?? null);
+        setTeamName(data.team_name ?? "");
+        setTeamRole(data.team_role ?? "");
+        setLookingForTeam(Boolean(data.looking_for_team));
       });
     return () => {
       active = false;
