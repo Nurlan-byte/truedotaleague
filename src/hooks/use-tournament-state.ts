@@ -16,8 +16,10 @@ import {
 
 const STORAGE_KEY = "tdl-tournament-state";
 const SYNC_EVENT = "tdl-state-sync";
+const DATA_VERSION = 2;
 
 export type TournamentState = {
+  version: number;
   title: string;
   teams: Team[];
   bracket: Match[];
@@ -28,6 +30,7 @@ export type TournamentState = {
 };
 
 export const initialState: TournamentState = {
+  version: DATA_VERSION,
   title: "Кубок сезона",
   teams: [],
   bracket: [],
@@ -40,7 +43,20 @@ export const initialState: TournamentState = {
 function read(): TournamentState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...initialState, ...JSON.parse(raw) } : initialState;
+    if (!raw) return initialState;
+    const parsed = { ...initialState, ...JSON.parse(raw) } as TournamentState;
+    // Разовая чистка: старые тестовые команды и незавершённая сетка удаляются.
+    if (parsed.version !== DATA_VERSION) {
+      return {
+        ...parsed,
+        version: DATA_VERSION,
+        teams: [],
+        bracket: [],
+        groups: [],
+        groupMatches: [],
+      };
+    }
+    return parsed;
   } catch {
     return initialState;
   }
@@ -102,13 +118,28 @@ export function useTournamentState() {
         .map((n) => n.trim())
         .filter(Boolean);
       if (!names.length) return;
-      setState((s) => ({
-        ...s,
-        teams: [...s.teams, ...names.map((n) => ({ id: uid(), name: n }))],
-      }));
+      setState((s) => {
+        const taken = new Set(s.teams.map((t) => t.name.toLowerCase()));
+        const fresh = names
+          .filter((n) => {
+            const key = n.toLowerCase();
+            if (taken.has(key)) return false;
+            taken.add(key);
+            return true;
+          })
+          .map((n) => ({
+            id: uid(),
+            name: n,
+            registeredAt: new Date().toLocaleDateString("ru-RU"),
+          }));
+        if (!fresh.length) return s;
+        return { ...s, teams: [...s.teams, ...fresh] };
+      });
     },
     removeTeam: (id: string) =>
       setState((s) => ({ ...s, teams: s.teams.filter((t) => t.id !== id) })),
+    clearTeams: () =>
+      setState((s) => ({ ...s, teams: [], groups: [], groupMatches: [], bracket: [] })),
     setTeamLogo: (id: string, logo: string) =>
       setState((s) => ({
         ...s,
@@ -157,6 +188,10 @@ export function useTournamentState() {
         if (placements.length === 0) return s;
         return {
           ...s,
+          // Турнир уходит в архив: расписание, группы и сетка очищаются.
+          bracket: [],
+          groups: [],
+          groupMatches: [],
           history: [
             {
               id: uid(),

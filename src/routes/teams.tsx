@@ -46,6 +46,10 @@ function TeamsPage() {
       <h1 className="flex items-center gap-2 text-4xl text-foreground">
         <Shield className="size-7 text-primary" /> Команды ({state.teams.length})
       </h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Официальный состав участников лиги. Сетку групп и плей-офф можно создать только после того,
+        как команды добавлены здесь.
+      </p>
 
       {isAdmin && (
         <div className="panel mt-5 p-5">
@@ -74,17 +78,35 @@ function TeamsPage() {
             </button>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            Можно вставить сразу несколько названий через запятую.
+            Можно вставить сразу несколько названий через запятую. Дубликаты не добавляются.
           </p>
           {logoError && (
             <p className="mt-2 text-xs font-semibold text-destructive">{logoError}</p>
+          )}
+          {state.teams.length > 0 && (
+            <button
+              onClick={() => {
+                if (
+                  confirm(
+                    `Удалить все команды (${state.teams.length}) и текущие группы с сеткой? Действие необратимо.`,
+                  )
+                ) {
+                  actions.clearTeams();
+                }
+              }}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-xs font-semibold text-muted-foreground hover:border-destructive hover:text-destructive"
+            >
+              <Trash2 className="size-3.5" /> Очистить список команд
+            </button>
           )}
         </div>
       )}
 
       <ul className="panel mt-5 space-y-1.5 p-4">
         {state.teams.length === 0 && (
-          <li className="p-2 text-sm text-muted-foreground">Команд пока нет.</li>
+          <li className="p-2 text-sm text-muted-foreground">
+            Команд пока нет. {isAdmin ? "Добавьте участников выше." : "Ожидайте регистрацию команд."}
+          </li>
         )}
         {state.teams.map((t, i) => (
           <li
@@ -93,7 +115,12 @@ function TeamsPage() {
           >
             <span className="w-5 text-xs font-semibold text-muted-foreground">{i + 1}</span>
             <TeamLogo name={t.name} logo={t.logo} size="md" />
-            <span className="flex-1 truncate font-medium">{t.name}</span>
+            <span className="min-w-0 flex-1 truncate font-medium">{t.name}</span>
+            {t.registeredAt && (
+              <span className="hidden shrink-0 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground sm:inline">
+                заявлена {t.registeredAt}
+              </span>
+            )}
             {isAdmin && (
               <>
                 <label
