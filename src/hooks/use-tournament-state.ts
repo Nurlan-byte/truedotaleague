@@ -112,7 +112,7 @@ export function useTournamentState() {
   const actions = {
     setTitle: (title: string) => setState((s) => ({ ...s, title })),
     setGroupCount: (groupCount: number) => setState((s) => ({ ...s, groupCount })),
-    addTeams: (raw: string) => {
+    addTeams: (raw: string, owner?: { id: string; name?: string }) => {
       const names = raw
         .split(/[\n,]/)
         .map((n) => n.trim())
