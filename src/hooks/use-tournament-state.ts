@@ -131,6 +131,8 @@ export function useTournamentState() {
             id: uid(),
             name: n,
             registeredAt: new Date().toLocaleDateString("ru-RU"),
+            ownerId: owner?.id,
+            ownerName: owner?.name,
           }));
         if (!fresh.length) return s;
         return { ...s, teams: [...s.teams, ...fresh] };
