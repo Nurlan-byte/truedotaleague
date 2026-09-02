@@ -112,7 +112,7 @@ export function useTournamentState() {
   const actions = {
     setTitle: (title: string) => setState((s) => ({ ...s, title })),
     setGroupCount: (groupCount: number) => setState((s) => ({ ...s, groupCount })),
-    addTeams: (raw: string) => {
+    addTeams: (raw: string, owner?: { id: string; name?: string }) => {
       const names = raw
         .split(/[\n,]/)
         .map((n) => n.trim())
@@ -131,6 +131,8 @@ export function useTournamentState() {
             id: uid(),
             name: n,
             registeredAt: new Date().toLocaleDateString("ru-RU"),
+            ownerId: owner?.id,
+            ownerName: owner?.name,
           }));
         if (!fresh.length) return s;
         return { ...s, teams: [...s.teams, ...fresh] };
