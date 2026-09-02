@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, Trophy, Users } from "lucide-react";
+import { Home, LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, Trophy, UserCog, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useAdmin } from "@/hooks/use-admin";
 
 const items = [
   { title: "Главная", url: "/", icon: Home },
@@ -28,6 +29,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
+  const { isAdmin } = useAdmin();
 
   return (
     <Sidebar collapsible="icon">
@@ -54,6 +56,23 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Админка</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={currentPath === "/admin"}>
+                    <Link to="/admin" className="flex items-center gap-2">
+                      <UserCog className="size-4" />
+                      {!collapsed && <span>Роли и доступы</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );
