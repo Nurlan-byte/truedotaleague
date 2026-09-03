@@ -76,23 +76,33 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
   }
 
   const played = rows.filter((r) => r.scoreA !== null && r.scoreB !== null).length;
+  const scheduled = rows.filter((r) => r.scheduledAt).length;
 
   return (
     <div className="panel p-5">
-      <h2 className="mb-4 flex items-center gap-2 text-2xl text-foreground">
+      <h2 className="mb-1 flex items-center gap-2 text-2xl text-foreground">
         <CalendarDays className="size-5 text-primary" /> Расписание матчей
         <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
           {played}/{rows.length} сыграно
         </span>
       </h2>
+      <p className="mb-4 text-xs text-muted-foreground">
+        {onTime
+          ? "Укажите дату и время каждого матча — команды увидят их на публичной странице турнира."
+          : scheduled > 0
+            ? `Время назначено для ${scheduled} из ${rows.length} матчей. Время указано в вашем часовом поясе.`
+            : "Организатор ещё не назначил время матчей."}
+      </p>
 
       <ul className="space-y-2">
         {rows.map((r) => {
           const done = r.scoreA !== null && r.scoreB !== null;
+          const when = formatMatchTime(r.scheduledAt);
           return (
             <li
               key={r.id}
-              className="flex items-center gap-3 rounded-lg border border-border bg-white/50 px-3 py-2"
+              className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-white/50 px-3 py-2"
+
             >
               <span className="w-24 shrink-0 truncate text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 {r.stage}
