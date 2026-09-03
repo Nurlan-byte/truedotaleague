@@ -164,6 +164,18 @@ export function useTournamentState() {
           m.id === id ? { ...m, [side === "A" ? "scoreA" : "scoreB"]: parseScore(value) } : m,
         ),
       })),
+    /** Дата и время матча (значение input[type=datetime-local]). */
+    setMatchTime: (id: string, value: string) =>
+      setState((s) => ({
+        ...s,
+        bracket: s.bracket.map((m) =>
+          m.id === id ? { ...m, scheduledAt: value || null } : m,
+        ),
+        groupMatches: s.groupMatches.map((m) =>
+          m.id === id ? { ...m, scheduledAt: value || null } : m,
+        ),
+      })),
+
     generateBracket: (teams: Team[]) => setState((s) => ({ ...s, bracket: buildBracket(teams) })),
     generateGroups: () =>
       setState((s) => {
