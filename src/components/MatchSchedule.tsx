@@ -1,11 +1,20 @@
-import { matchWinner, roundName, type GroupMatch, type Match, type Team } from "@/lib/tournament";
+import {
+  formatMatchTime,
+  matchWinner,
+  roundName,
+  type GroupMatch,
+  type Match,
+  type Team,
+} from "@/lib/tournament";
 import { TeamLogo } from "@/components/TeamLogo";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Clock } from "lucide-react";
 
 type Props = {
   teams: Team[];
   groupMatches: GroupMatch[];
   bracket: Match[];
+  /** Если передан — показываются поля выбора даты и времени матча (для админа). */
+  onTime?: (id: string, value: string) => void;
 };
 
 type Row = {
@@ -16,11 +25,13 @@ type Row = {
   scoreA: number | null;
   scoreB: number | null;
   winner: string | null;
+  scheduledAt: string | null;
 };
 
-export function MatchSchedule({ teams, groupMatches, bracket }: Props) {
+export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
   const teamOf = (id: string | null) => (id ? teams.find((t) => t.id === id) : undefined);
   const totalRounds = bracket.length ? Math.max(...bracket.map((m) => m.round)) : 0;
+
 
   const rows: Row[] = [
     ...groupMatches.map((m) => ({
@@ -30,6 +41,7 @@ export function MatchSchedule({ teams, groupMatches, bracket }: Props) {
       teamB: m.teamB,
       scoreA: m.scoreA,
       scoreB: m.scoreB,
+      scheduledAt: m.scheduledAt ?? null,
       winner:
         m.scoreA === null || m.scoreB === null || m.scoreA === m.scoreB
           ? null
@@ -46,9 +58,11 @@ export function MatchSchedule({ teams, groupMatches, bracket }: Props) {
         teamB: m.teamB,
         scoreA: m.scoreA,
         scoreB: m.scoreB,
+        scheduledAt: m.scheduledAt ?? null,
         winner: matchWinner(m),
       })),
   ];
+
 
   if (rows.length === 0) {
     return (
@@ -62,23 +76,33 @@ export function MatchSchedule({ teams, groupMatches, bracket }: Props) {
   }
 
   const played = rows.filter((r) => r.scoreA !== null && r.scoreB !== null).length;
+  const scheduled = rows.filter((r) => r.scheduledAt).length;
 
   return (
     <div className="panel p-5">
-      <h2 className="mb-4 flex items-center gap-2 text-2xl text-foreground">
+      <h2 className="mb-1 flex items-center gap-2 text-2xl text-foreground">
         <CalendarDays className="size-5 text-primary" /> Расписание матчей
         <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
           {played}/{rows.length} сыграно
         </span>
       </h2>
+      <p className="mb-4 text-xs text-muted-foreground">
+        {onTime
+          ? "Укажите дату и время каждого матча — команды увидят их на публичной странице турнира."
+          : scheduled > 0
+            ? `Время назначено для ${scheduled} из ${rows.length} матчей. Время указано в вашем часовом поясе.`
+            : "Организатор ещё не назначил время матчей."}
+      </p>
 
       <ul className="space-y-2">
         {rows.map((r) => {
           const done = r.scoreA !== null && r.scoreB !== null;
+          const when = formatMatchTime(r.scheduledAt);
           return (
             <li
               key={r.id}
-              className="flex items-center gap-3 rounded-lg border border-border bg-white/50 px-3 py-2"
+              className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-white/50 px-3 py-2"
+
             >
               <span className="w-24 shrink-0 truncate text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 {r.stage}
@@ -102,7 +126,27 @@ export function MatchSchedule({ teams, groupMatches, bracket }: Props) {
                 {r.teamB && <TeamLogo name={teamOf(r.teamB)?.name ?? ""} logo={teamOf(r.teamB)?.logo} />}
                 <span className="truncate">{teamOf(r.teamB)?.name ?? "Ожидание"}</span>
               </span>
+              {onTime ? (
+                <input
+                  type="datetime-local"
+                  aria-label={`Дата и время матча (${r.stage})`}
+                  value={r.scheduledAt ?? ""}
+                  onChange={(e) => onTime(r.id, e.target.value)}
+                  className="shrink-0 rounded-md border border-border bg-white px-2 py-1 text-xs text-foreground"
+                />
+              ) : (
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${
+                    when
+                      ? "bg-primary/10 text-primary"
+                      : "bg-secondary text-muted-foreground"
+                  }`}
+                >
+                  <Clock className="size-3" /> {when ?? "время не назначено"}
+                </span>
+              )}
             </li>
+
           );
         })}
       </ul>

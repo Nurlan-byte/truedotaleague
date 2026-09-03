@@ -1,12 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { LayoutGrid, Lock, Shuffle, Swords, Trash2, Trophy, Users } from "lucide-react";
+import {
+  CalendarDays,
+  LayoutGrid,
+  Lock,
+  Shuffle,
+  Swords,
+  Trash2,
+  Trophy,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { BracketView } from "@/components/BracketView";
 import { GroupStage } from "@/components/GroupStage";
+import { MatchSchedule } from "@/components/MatchSchedule";
 import { useAdmin } from "@/hooks/use-admin";
 import { useTournamentState } from "@/hooks/use-tournament-state";
 import { shuffle } from "@/lib/tournament";
+
 
 export const Route = createFileRoute("/create")({
   head: () => ({
@@ -179,11 +190,12 @@ function CreateTournamentPage() {
         </aside>
 
         <section>
-          <div className="mb-5 inline-flex rounded-xl border border-border bg-white/70 p-1 backdrop-blur-sm">
+          <div className="mb-5 inline-flex flex-wrap rounded-xl border border-border bg-white/70 p-1 backdrop-blur-sm">
             {(
               [
                 ["playoff", "Плей-офф", Swords],
                 ["groups", "Группы", LayoutGrid],
+                ["schedule", "Расписание", CalendarDays],
               ] as const
             ).map(([key, label, Icon]) => (
               <button
@@ -206,14 +218,22 @@ function CreateTournamentPage() {
               teams={state.teams}
               onScore={actions.setBracketScore}
             />
-          ) : (
+          ) : tab === "groups" ? (
             <GroupStage
               groups={state.groups}
               matches={state.groupMatches}
               onScore={actions.setGroupScore}
             />
+          ) : (
+            <MatchSchedule
+              teams={state.teams}
+              groupMatches={state.groupMatches}
+              bracket={state.bracket}
+              onTime={actions.setMatchTime}
+            />
           )}
         </section>
+
       </div>
     </div>
   );
