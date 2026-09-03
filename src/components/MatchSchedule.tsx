@@ -41,6 +41,7 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
       teamB: m.teamB,
       scoreA: m.scoreA,
       scoreB: m.scoreB,
+      scheduledAt: m.scheduledAt ?? null,
       winner:
         m.scoreA === null || m.scoreB === null || m.scoreA === m.scoreB
           ? null
@@ -57,9 +58,11 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
         teamB: m.teamB,
         scoreA: m.scoreA,
         scoreB: m.scoreB,
+        scheduledAt: m.scheduledAt ?? null,
         winner: matchWinner(m),
       })),
   ];
+
 
   if (rows.length === 0) {
     return (
