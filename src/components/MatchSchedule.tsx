@@ -1,11 +1,20 @@
-import { matchWinner, roundName, type GroupMatch, type Match, type Team } from "@/lib/tournament";
+import {
+  formatMatchTime,
+  matchWinner,
+  roundName,
+  type GroupMatch,
+  type Match,
+  type Team,
+} from "@/lib/tournament";
 import { TeamLogo } from "@/components/TeamLogo";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Clock } from "lucide-react";
 
 type Props = {
   teams: Team[];
   groupMatches: GroupMatch[];
   bracket: Match[];
+  /** Если передан — показываются поля выбора даты и времени матча (для админа). */
+  onTime?: (id: string, value: string) => void;
 };
 
 type Row = {
@@ -16,11 +25,13 @@ type Row = {
   scoreA: number | null;
   scoreB: number | null;
   winner: string | null;
+  scheduledAt: string | null;
 };
 
-export function MatchSchedule({ teams, groupMatches, bracket }: Props) {
+export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
   const teamOf = (id: string | null) => (id ? teams.find((t) => t.id === id) : undefined);
   const totalRounds = bracket.length ? Math.max(...bracket.map((m) => m.round)) : 0;
+
 
   const rows: Row[] = [
     ...groupMatches.map((m) => ({
