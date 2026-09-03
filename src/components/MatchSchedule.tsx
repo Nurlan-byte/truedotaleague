@@ -126,7 +126,27 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
                 {r.teamB && <TeamLogo name={teamOf(r.teamB)?.name ?? ""} logo={teamOf(r.teamB)?.logo} />}
                 <span className="truncate">{teamOf(r.teamB)?.name ?? "Ожидание"}</span>
               </span>
+              {onTime ? (
+                <input
+                  type="datetime-local"
+                  aria-label={`Дата и время матча (${r.stage})`}
+                  value={r.scheduledAt ?? ""}
+                  onChange={(e) => onTime(r.id, e.target.value)}
+                  className="shrink-0 rounded-md border border-border bg-white px-2 py-1 text-xs text-foreground"
+                />
+              ) : (
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${
+                    when
+                      ? "bg-primary/10 text-primary"
+                      : "bg-secondary text-muted-foreground"
+                  }`}
+                >
+                  <Clock className="size-3" /> {when ?? "время не назначено"}
+                </span>
+              )}
             </li>
+
           );
         })}
       </ul>
