@@ -28,6 +28,8 @@ export type Match = {
   teamB: string | null;
   scoreA: number | null;
   scoreB: number | null;
+  /** Дата и время матча в формате datetime-local ("2026-09-03T18:00"). */
+  scheduledAt?: string | null;
 };
 
 export type GroupMatch = {
@@ -37,7 +39,22 @@ export type GroupMatch = {
   teamB: string;
   scoreA: number | null;
   scoreB: number | null;
+  scheduledAt?: string | null;
 };
+
+/** Читаемая дата матча, например «3 сент, 18:00». */
+export function formatMatchTime(value?: string | null): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString("ru-RU", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
