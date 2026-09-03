@@ -33,6 +33,10 @@ export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const { isAdmin } = useAdmin();
 
+  const visibleItems = items.filter((item) =>
+    item.url !== "/create" || isAdmin,
+  );
+
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-white/70 backdrop-blur-md">
@@ -45,7 +49,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Лига</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={currentPath === item.url}>
                     <Link to={item.url} className="flex items-center gap-2">
