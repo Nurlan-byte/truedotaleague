@@ -44,7 +44,7 @@ function CreateTournamentPage() {
   const { isAdmin, checking, user } = useAdmin();
   const { state, actions, placements } = useTournamentState();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"groups" | "playoff">("playoff");
+  const [tab, setTab] = useState<"groups" | "playoff" | "schedule">("playoff");
 
   if (checking) {
     return (
