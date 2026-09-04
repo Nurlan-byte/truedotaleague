@@ -132,7 +132,11 @@ function HomePage() {
           </div>
           {state.teams.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Команд пока нет. Администратор добавит их в разделе «Команды».
+              Регистрация команд открыта — заявите свою команду в разделе{" "}
+              <Link to="/teams" className="font-semibold text-primary hover:underline">
+                «Команды»
+              </Link>
+              , и она появится здесь.
             </p>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-2">

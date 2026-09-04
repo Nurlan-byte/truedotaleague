@@ -17,7 +17,7 @@ import {
 
 const STORAGE_KEY = "tdl-tournament-state";
 const SYNC_EVENT = "tdl-state-sync";
-const DATA_VERSION = 2;
+const DATA_VERSION = 3;
 
 export type TournamentState = {
   version: number;
