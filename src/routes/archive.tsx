@@ -1,7 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Archive, Crown, Medal, Search, Trophy } from "lucide-react";
+import {
+  Archive,
+  CalendarDays,
+  Crown,
+  LayoutGrid,
+  ListOrdered,
+  Medal,
+  Search,
+  Trophy,
+} from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
+import { BracketView } from "@/components/BracketView";
+import { GroupStage } from "@/components/GroupStage";
+import { MatchSchedule } from "@/components/MatchSchedule";
 import { useTournamentState } from "@/hooks/use-tournament-state";
 
 export const Route = createFileRoute("/archive")({
@@ -34,10 +46,20 @@ const placeColor = (place: number) =>
         ? "text-win"
         : "text-muted-foreground";
 
+type TabKey = "results" | "bracket" | "groups" | "matches";
+
+const TABS: { key: TabKey; label: string; icon: typeof Medal }[] = [
+  { key: "results", label: "Итоги", icon: ListOrdered },
+  { key: "bracket", label: "Сетка", icon: Trophy },
+  { key: "groups", label: "Группы", icon: LayoutGrid },
+  { key: "matches", label: "Матчи", icon: CalendarDays },
+];
+
 function ArchivePage() {
   const { state, ready } = useTournamentState();
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabKey>("results");
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -50,6 +72,10 @@ function ArchivePage() {
   }, [state.history, query]);
 
   const selected = list.find((t) => t.id === selectedId) ?? list[0] ?? null;
+  const teams = selected?.teams ?? [];
+  const bracket = selected?.bracket ?? [];
+  const groups = selected?.groups ?? [];
+  const groupMatches = selected?.groupMatches ?? [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
@@ -93,7 +119,10 @@ function ArchivePage() {
                 return (
                   <li key={t.id}>
                     <button
-                      onClick={() => setSelectedId(t.id)}
+                      onClick={() => {
+                        setSelectedId(t.id);
+                        setTab("results");
+                      }}
                       className={`w-full rounded-lg border px-3 py-2 text-left transition-all ${
                         active
                           ? "border-primary bg-primary/10"
@@ -144,20 +173,62 @@ function ArchivePage() {
                 </div>
               </div>
 
-              <ul className="mt-5 space-y-1.5">
-                {selected.placements.map((p) => (
-                  <li
-                    key={p.place}
-                    className="flex items-center gap-2 rounded-lg border border-border bg-white/50 px-3 py-2 text-sm"
+              <nav className="mt-5 flex flex-wrap gap-2">
+                {TABS.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => setTab(t.key)}
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ${
+                      tab === t.key
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-white/60 text-muted-foreground hover:border-primary/50"
+                    }`}
                   >
-                    <Medal className={`size-4 ${placeColor(p.place)}`} />
-                    <span className="w-6 font-bold text-muted-foreground">{p.place}</span>
-                    <TeamLogo name={p.teamName} logo={p.logo} />
-                    <span className="flex-1 truncate text-foreground">{p.teamName}</span>
-                    <span className="font-bold text-foreground">+{p.points} TDL</span>
-                  </li>
+                    <t.icon className="size-3.5" /> {t.label}
+                  </button>
                 ))}
-              </ul>
+              </nav>
+
+              <div className="mt-4">
+                {tab === "results" && (
+                  <ul className="space-y-1.5">
+                    {selected.placements.map((p) => (
+                      <li
+                        key={p.place}
+                        className="flex items-center gap-2 rounded-lg border border-border bg-white/50 px-3 py-2 text-sm"
+                      >
+                        <Medal className={`size-4 ${placeColor(p.place)}`} />
+                        <span className="w-6 font-bold text-muted-foreground">{p.place}</span>
+                        <TeamLogo name={p.teamName} logo={p.logo} />
+                        <span className="flex-1 truncate text-foreground">{p.teamName}</span>
+                        <span className="font-bold text-foreground">+{p.points} TDL</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {tab === "bracket" &&
+                  (bracket.length > 0 ? (
+                    <BracketView matches={bracket} teams={teams} readOnly />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Для этого турнира сетка плей-офф не сохранена.
+                    </p>
+                  ))}
+
+                {tab === "groups" &&
+                  (groups.length > 0 ? (
+                    <GroupStage groups={groups} matches={groupMatches} readOnly />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Групповой этап в этом турнире не проводился.
+                    </p>
+                  ))}
+
+                {tab === "matches" && (
+                  <MatchSchedule teams={teams} groupMatches={groupMatches} bracket={bracket} />
+                )}
+              </div>
             </section>
           )}
         </div>

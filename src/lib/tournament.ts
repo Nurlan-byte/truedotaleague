@@ -18,6 +18,11 @@ export type TournamentRecord = {
   title: string;
   date: string;
   placements: Placement[];
+  /** Снимок турнира на момент завершения — для просмотра сетки в архиве. */
+  teams?: Team[];
+  bracket?: Match[];
+  groups?: Team[][];
+  groupMatches?: GroupMatch[];
 };
 
 export type Match = {
@@ -235,7 +240,7 @@ export function standings(group: Team[], matches: GroupMatch[]): Standing[] {
   );
 }
 
-/** Итоговые места 1-4 по сетке плей-офф. */
+/** Итоговые места всех участников плей-офф: чем позже команда выбыла, тем выше место. */
 export function finalPlacements(matches: Match[], teams: Team[]): Placement[] {
   if (matches.length === 0) return [];
   const totalRounds = Math.max(...matches.map((m) => m.round));
@@ -243,26 +248,25 @@ export function finalPlacements(matches: Match[], teams: Team[]): Placement[] {
   if (!final) return [];
   const champ = matchWinner(final);
   if (!champ) return [];
-  const runnerUp = final.teamA === champ ? final.teamB : final.teamA;
 
-  const semis = matches.filter((m) => m.round === totalRounds - 1);
-  const semiLosers = semis
+  // Все проигравшие с раундом выбывания и разницей счёта.
+  const losers = matches
     .map((m) => {
       const w = matchWinner(m);
       if (!w) return null;
       const loser = m.teamA === w ? m.teamB : m.teamA;
       if (!loser) return null;
       const diff =
-        (m.teamA === loser ? (m.scoreA ?? 0) - (m.scoreB ?? 0) : (m.scoreB ?? 0) - (m.scoreA ?? 0));
-      return { id: loser, diff };
+        m.teamA === loser ? (m.scoreA ?? 0) - (m.scoreB ?? 0) : (m.scoreB ?? 0) - (m.scoreA ?? 0);
+      return { id: loser, round: m.round, diff };
     })
-    .filter((x): x is { id: string; diff: number } => !!x)
-    .sort((a, b) => b.diff - a.diff)
-    .map((x) => x.id);
+    .filter((x): x is { id: string; round: number; diff: number } => !!x)
+    .sort((a, b) => b.round - a.round || b.diff - a.diff);
 
-  const ordered = [champ, runnerUp, ...semiLosers].filter(
-    (id): id is string => !!id,
-  );
+  const ordered: string[] = [];
+  for (const id of [champ, ...losers.map((l) => l.id)]) {
+    if (!ordered.includes(id)) ordered.push(id);
+  }
 
   return ordered.map((id, i) => {
     const team = teams.find((t) => t.id === id);
@@ -274,6 +278,7 @@ export function finalPlacements(matches: Match[], teams: Team[]): Placement[] {
     };
   });
 }
+
 
 /** Места по групповому этапу — резерв, если плей-офф не проводился/не доигран. */
 export function groupPlacements(
