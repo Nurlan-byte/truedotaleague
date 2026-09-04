@@ -46,10 +46,20 @@ const placeColor = (place: number) =>
         ? "text-win"
         : "text-muted-foreground";
 
+type TabKey = "results" | "bracket" | "groups" | "matches";
+
+const TABS: { key: TabKey; label: string; icon: typeof Medal }[] = [
+  { key: "results", label: "Итоги", icon: ListOrdered },
+  { key: "bracket", label: "Сетка", icon: Trophy },
+  { key: "groups", label: "Группы", icon: LayoutGrid },
+  { key: "matches", label: "Матчи", icon: CalendarDays },
+];
+
 function ArchivePage() {
   const { state, ready } = useTournamentState();
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabKey>("results");
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -62,6 +72,10 @@ function ArchivePage() {
   }, [state.history, query]);
 
   const selected = list.find((t) => t.id === selectedId) ?? list[0] ?? null;
+  const teams = selected?.teams ?? [];
+  const bracket = selected?.bracket ?? [];
+  const groups = selected?.groups ?? [];
+  const groupMatches = selected?.groupMatches ?? [];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 lg:px-8">
