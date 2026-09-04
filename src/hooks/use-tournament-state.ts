@@ -220,6 +220,11 @@ export function useTournamentState() {
               title: s.title,
               date: new Date().toLocaleDateString("ru-RU"),
               placements,
+              // Снимок турнира — чтобы в архиве можно было открыть сетку и группы.
+              teams: s.teams,
+              bracket: s.bracket,
+              groups: s.groups,
+              groupMatches: s.groupMatches,
             },
             ...s.history,
           ],
