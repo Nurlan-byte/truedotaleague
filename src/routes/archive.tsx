@@ -144,20 +144,62 @@ function ArchivePage() {
                 </div>
               </div>
 
-              <ul className="mt-5 space-y-1.5">
-                {selected.placements.map((p) => (
-                  <li
-                    key={p.place}
-                    className="flex items-center gap-2 rounded-lg border border-border bg-white/50 px-3 py-2 text-sm"
+              <nav className="mt-5 flex flex-wrap gap-2">
+                {TABS.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => setTab(t.key)}
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ${
+                      tab === t.key
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-white/60 text-muted-foreground hover:border-primary/50"
+                    }`}
                   >
-                    <Medal className={`size-4 ${placeColor(p.place)}`} />
-                    <span className="w-6 font-bold text-muted-foreground">{p.place}</span>
-                    <TeamLogo name={p.teamName} logo={p.logo} />
-                    <span className="flex-1 truncate text-foreground">{p.teamName}</span>
-                    <span className="font-bold text-foreground">+{p.points} TDL</span>
-                  </li>
+                    <t.icon className="size-3.5" /> {t.label}
+                  </button>
                 ))}
-              </ul>
+              </nav>
+
+              <div className="mt-4">
+                {tab === "results" && (
+                  <ul className="space-y-1.5">
+                    {selected.placements.map((p) => (
+                      <li
+                        key={p.place}
+                        className="flex items-center gap-2 rounded-lg border border-border bg-white/50 px-3 py-2 text-sm"
+                      >
+                        <Medal className={`size-4 ${placeColor(p.place)}`} />
+                        <span className="w-6 font-bold text-muted-foreground">{p.place}</span>
+                        <TeamLogo name={p.teamName} logo={p.logo} />
+                        <span className="flex-1 truncate text-foreground">{p.teamName}</span>
+                        <span className="font-bold text-foreground">+{p.points} TDL</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {tab === "bracket" &&
+                  (bracket.length > 0 ? (
+                    <BracketView matches={bracket} teams={teams} readOnly />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Для этого турнира сетка плей-офф не сохранена.
+                    </p>
+                  ))}
+
+                {tab === "groups" &&
+                  (groups.length > 0 ? (
+                    <GroupStage groups={groups} matches={groupMatches} readOnly />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Групповой этап в этом турнире не проводился.
+                    </p>
+                  ))}
+
+                {tab === "matches" && (
+                  <MatchSchedule teams={teams} groupMatches={groupMatches} bracket={bracket} />
+                )}
+              </div>
             </section>
           )}
         </div>
