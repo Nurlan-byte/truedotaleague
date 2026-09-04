@@ -1,7 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Archive, Crown, Medal, Search, Trophy } from "lucide-react";
+import {
+  Archive,
+  CalendarDays,
+  Crown,
+  LayoutGrid,
+  ListOrdered,
+  Medal,
+  Search,
+  Trophy,
+} from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
+import { BracketView } from "@/components/BracketView";
+import { GroupStage } from "@/components/GroupStage";
+import { MatchSchedule } from "@/components/MatchSchedule";
 import { useTournamentState } from "@/hooks/use-tournament-state";
 
 export const Route = createFileRoute("/archive")({
