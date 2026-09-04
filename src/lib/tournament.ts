@@ -18,6 +18,11 @@ export type TournamentRecord = {
   title: string;
   date: string;
   placements: Placement[];
+  /** Снимок турнира на момент завершения — для просмотра сетки в архиве. */
+  teams?: Team[];
+  bracket?: Match[];
+  groups?: Team[][];
+  groupMatches?: GroupMatch[];
 };
 
 export type Match = {
