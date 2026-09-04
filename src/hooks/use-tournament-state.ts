@@ -62,11 +62,18 @@ function read(): TournamentState {
   }
 }
 
-/** Итоговые места: сначала по сетке плей-офф, иначе по групповому этапу. */
+/** Итоговые места: плей-офф + остальные участники по групповому этапу. */
 function resolvePlacements(s: TournamentState): Placement[] {
   const fromBracket = finalPlacements(s.bracket, s.teams);
-  if (fromBracket.length > 0) return fromBracket;
-  return groupPlacements(s.groups, s.groupMatches);
+  const fromGroups = groupPlacements(s.groups, s.groupMatches);
+  if (fromBracket.length === 0) return fromGroups;
+  const seen = new Set(fromBracket.map((p) => p.teamName));
+  const rest = fromGroups.filter((p) => !seen.has(p.teamName));
+  return [...fromBracket, ...rest].map((p, i) => ({
+    ...p,
+    place: i + 1,
+    points: PLACE_POINTS[i + 1] ?? 0,
+  }));
 }
 
 export function useTournamentState() {
