@@ -119,7 +119,10 @@ function ArchivePage() {
                 return (
                   <li key={t.id}>
                     <button
-                      onClick={() => setSelectedId(t.id)}
+                      onClick={() => {
+                        setSelectedId(t.id);
+                        setTab("results");
+                      }}
                       className={`w-full rounded-lg border px-3 py-2 text-left transition-all ${
                         active
                           ? "border-primary bg-primary/10"
