@@ -6,7 +6,30 @@ export type Team = {
   /** id пользователя, зарегистрировавшего команду (капитан). */
   ownerId?: string;
   ownerName?: string;
+  /** id команды из раздела «Моя команда», если заявка подана оттуда. */
+  rosterId?: string;
 };
+
+/** Игрок состава команды. */
+export type RosterPlayer = {
+  id: string;
+  nickname: string;
+  role?: string;
+  mmr?: number | null;
+};
+
+/** Команда, созданная капитаном: постоянный состав, независимо от турниров. */
+export type RosterTeam = {
+  id: string;
+  name: string;
+  tag?: string;
+  logo?: string;
+  ownerId: string;
+  ownerName?: string;
+  createdAt: string;
+  players: RosterPlayer[];
+};
+
 
 /** TDL-очки за место в турнире. */
 export const PLACE_POINTS: Record<number, number> = { 1: 50, 2: 25, 3: 12, 4: 6 };

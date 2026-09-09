@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Archive, Home, LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, Trophy, UserCog, Users } from "lucide-react";
+import { Archive, Home, LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +17,7 @@ const items = [
   { title: "Главная", url: "/", icon: Home },
   { title: "Создать турнир", url: "/create", icon: Plus },
   { title: "Турнир онлайн", url: "/live", icon: Radio },
+  { title: "Моя команда", url: "/my-team", icon: ShieldPlus },
   { title: "Команды", url: "/teams", icon: Shield },
   { title: "Турниры", url: "/tournaments", icon: LayoutGrid },
   { title: "Архив турниров", url: "/archive", icon: Archive },
