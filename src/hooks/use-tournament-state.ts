@@ -163,6 +163,103 @@ export function useTournamentState() {
         teams: s.teams.map((t) => (t.id === id ? { ...t, logo } : t)),
         groups: s.groups.map((g) => g.map((t) => (t.id === id ? { ...t, logo } : t))),
       })),
+
+    /* ---------- Мои команды (постоянные составы) ---------- */
+    createRosterTeam: (
+      data: { name: string; tag?: string; logo?: string },
+      owner: { id: string; name?: string },
+    ) => {
+      const name = data.name.trim();
+      if (!name) return;
+      setState((s) => {
+        if (s.roster.some((t) => t.name.toLowerCase() === name.toLowerCase())) return s;
+        return {
+          ...s,
+          roster: [
+            ...s.roster,
+            {
+              id: uid(),
+              name,
+              tag: data.tag?.trim() || undefined,
+              logo: data.logo,
+              ownerId: owner.id,
+              ownerName: owner.name,
+              createdAt: new Date().toLocaleDateString("ru-RU"),
+              players: [],
+            },
+          ],
+        };
+      });
+    },
+    updateRosterTeam: (id: string, patch: Partial<Omit<RosterTeam, "id" | "ownerId">>) =>
+      setState((s) => ({
+        ...s,
+        roster: s.roster.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+        // Название и логотип синхронизируются с уже поданной заявкой.
+        teams: s.teams.map((t) =>
+          t.rosterId === id
+            ? { ...t, name: patch.name ?? t.name, logo: patch.logo ?? t.logo }
+            : t,
+        ),
+      })),
+    removeRosterTeam: (id: string) =>
+      setState((s) => ({
+        ...s,
+        roster: s.roster.filter((t) => t.id !== id),
+        teams: s.teams.filter((t) => t.rosterId !== id),
+      })),
+    addRosterPlayer: (teamId: string, nickname: string, role?: string, mmr?: number | null) => {
+      const nick = nickname.trim();
+      if (!nick) return;
+      setState((s) => ({
+        ...s,
+        roster: s.roster.map((t) =>
+          t.id === teamId && t.players.length < 7
+            ? {
+                ...t,
+                players: [
+                  ...t.players,
+                  { id: uid(), nickname: nick, role: role?.trim() || undefined, mmr: mmr ?? null },
+                ],
+              }
+            : t,
+        ),
+      }));
+    },
+    removeRosterPlayer: (teamId: string, playerId: string) =>
+      setState((s) => ({
+        ...s,
+        roster: s.roster.map((t) =>
+          t.id === teamId ? { ...t, players: t.players.filter((p) => p.id !== playerId) } : t,
+        ),
+      })),
+    /** Подать заявку составом на текущий турнир. */
+    applyToTournament: (teamId: string) =>
+      setState((s) => {
+        const team = s.roster.find((t) => t.id === teamId);
+        if (!team) return s;
+        if (s.teams.some((t) => t.rosterId === teamId)) return s;
+        if (s.teams.some((t) => t.name.toLowerCase() === team.name.toLowerCase())) return s;
+        return {
+          ...s,
+          teams: [
+            ...s.teams,
+            {
+              id: uid(),
+              name: team.name,
+              logo: team.logo,
+              registeredAt: new Date().toLocaleDateString("ru-RU"),
+              ownerId: team.ownerId,
+              ownerName: team.ownerName,
+              rosterId: team.id,
+            },
+          ],
+        };
+      }),
+    /** Снять заявку своей команды с турнира. */
+    withdrawApplication: (teamId: string) =>
+      setState((s) => ({ ...s, teams: s.teams.filter((t) => t.rosterId !== teamId) })),
+
     setBracketScore: (id: string, side: "A" | "B", value: string) =>
       setState((s) => ({
         ...s,
