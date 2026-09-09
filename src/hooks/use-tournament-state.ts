@@ -29,7 +29,10 @@ export type TournamentState = {
   groups: Team[][];
   groupMatches: GroupMatch[];
   groupCount: number;
+  /** Команды, созданные капитанами (постоянные составы). */
+  roster: RosterTeam[];
   history: TournamentRecord[];
+
 };
 
 export const initialState: TournamentState = {
