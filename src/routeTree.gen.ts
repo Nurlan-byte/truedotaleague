@@ -16,6 +16,7 @@ import { Route as RoadToTiRouteImport } from './routes/road-to-ti'
 import { Route as RatingTeamsRouteImport } from './routes/rating-teams'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PlayersRouteImport } from './routes/players'
+import { Route as MyTeamRouteImport } from './routes/my-team'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -57,6 +58,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PlayersRoute = PlayersRouteImport.update({
   id: '/players',
   path: '/players',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyTeamRoute = MyTeamRouteImport.update({
+  id: '/my-team',
+  path: '/my-team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LiveRoute = LiveRouteImport.update({
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/create': typeof CreateRoute
   '/live': typeof LiveRoute
+  '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
   '/rating-teams': typeof RatingTeamsRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/create': typeof CreateRoute
   '/live': typeof LiveRoute
+  '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
   '/rating-teams': typeof RatingTeamsRoute
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/create': typeof CreateRoute
   '/live': typeof LiveRoute
+  '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
   '/rating-teams': typeof RatingTeamsRoute
@@ -153,6 +162,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/create'
     | '/live'
+    | '/my-team'
     | '/players'
     | '/profile'
     | '/rating-teams'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/create'
     | '/live'
+    | '/my-team'
     | '/players'
     | '/profile'
     | '/rating-teams'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/create'
     | '/live'
+    | '/my-team'
     | '/players'
     | '/profile'
     | '/rating-teams'
@@ -202,6 +214,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CreateRoute: typeof CreateRoute
   LiveRoute: typeof LiveRoute
+  MyTeamRoute: typeof MyTeamRoute
   PlayersRoute: typeof PlayersRouteWithChildren
   ProfileRoute: typeof ProfileRoute
   RatingTeamsRoute: typeof RatingTeamsRoute
@@ -260,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: '/players'
       fullPath: '/players'
       preLoaderRoute: typeof PlayersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-team': {
+      id: '/my-team'
+      path: '/my-team'
+      fullPath: '/my-team'
+      preLoaderRoute: typeof MyTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/live': {
@@ -332,6 +352,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CreateRoute: CreateRoute,
   LiveRoute: LiveRoute,
+  MyTeamRoute: MyTeamRoute,
   PlayersRoute: PlayersRouteWithChildren,
   ProfileRoute: ProfileRoute,
   RatingTeamsRoute: RatingTeamsRoute,
