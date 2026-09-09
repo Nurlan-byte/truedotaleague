@@ -43,7 +43,9 @@ export const initialState: TournamentState = {
   groups: [],
   groupMatches: [],
   groupCount: 2,
+  roster: [],
   history: [],
+
 };
 
 function read(): TournamentState {
