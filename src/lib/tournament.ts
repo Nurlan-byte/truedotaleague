@@ -30,6 +30,22 @@ export type RosterTeam = {
   players: RosterPlayer[];
 };
 
+/** Заявка команды на участие в турнире — ждёт решения администратора. */
+export type Application = {
+  id: string;
+  rosterId: string;
+  teamName: string;
+  tag?: string;
+  logo?: string;
+  ownerId: string;
+  ownerName?: string;
+  playersCount: number;
+  submittedAt: string;
+  status: "pending" | "approved" | "rejected";
+  /** Причина отказа, если заявка отклонена. */
+  note?: string;
+};
+
 
 /** TDL-очки за место в турнире. */
 export const PLACE_POINTS: Record<number, number> = { 1: 50, 2: 25, 3: 12, 4: 6 };
