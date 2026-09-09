@@ -8,6 +8,7 @@ import {
   standings,
   uid,
   PLACE_POINTS,
+  type Application,
   type GroupMatch,
   type Match,
   type Placement,
@@ -31,6 +32,8 @@ export type TournamentState = {
   groupCount: number;
   /** Команды, созданные капитанами (постоянные составы). */
   roster: RosterTeam[];
+  /** Заявки на участие в турнире (проверяет админ). */
+  applications: Application[];
   history: TournamentRecord[];
 
 };
@@ -44,9 +47,11 @@ export const initialState: TournamentState = {
   groupMatches: [],
   groupCount: 2,
   roster: [],
+  applications: [],
   history: [],
 
 };
+
 
 function read(): TournamentState {
   try {
