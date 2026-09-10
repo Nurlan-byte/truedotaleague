@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, ImagePlus, Plus, Send, Shield, Trash2, Users, X } from "lucide-react";
+import { CheckCircle2, Hourglass, ImagePlus, Plus, Send, Shield, Trash2, Users, X } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { useAuth } from "@/hooks/use-auth";
 import { useTournamentState } from "@/hooks/use-tournament-state";
