@@ -71,20 +71,22 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
+  const oauth = async (provider: "google" | "microsoft") => {
     setError(null);
+    setNotice(null);
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
+    const result = await lovable.auth.signInWithOAuth(provider, {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
-      setError("Не удалось войти через Google");
+      setError(provider === "google" ? "Не удалось войти через Google" : "Не удалось войти через Microsoft");
       setBusy(false);
       return;
     }
     if (result.redirected) return;
     navigate({ to: "/", replace: true });
   };
+
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
@@ -132,7 +134,7 @@ function AuthPage() {
 
         <button
           type="button"
-          onClick={google}
+          onClick={() => oauth("google")}
           disabled={busy}
           className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-white/80 px-3 py-2.5 text-sm font-bold text-foreground backdrop-blur-sm transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
         >
@@ -153,6 +155,22 @@ function AuthPage() {
           </svg>
           Продолжить с Google
         </button>
+
+        <button
+          type="button"
+          onClick={() => oauth("microsoft")}
+          disabled={busy}
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-white/80 px-3 py-2.5 text-sm font-bold text-foreground backdrop-blur-sm transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+        >
+          <svg className="size-4" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#F25022" d="M3 3h8.5v8.5H3z" />
+            <path fill="#7FBA00" d="M12.5 3H21v8.5h-8.5z" />
+            <path fill="#00A4EF" d="M3 12.5h8.5V21H3z" />
+            <path fill="#FFB900" d="M12.5 12.5H21V21h-8.5z" />
+          </svg>
+          Продолжить с Microsoft
+        </button>
+
 
         <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-widest text-muted-foreground">
           <span className="h-px flex-1 bg-border" /> или email <span className="h-px flex-1 bg-border" />
