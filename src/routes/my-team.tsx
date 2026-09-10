@@ -141,7 +141,9 @@ function MyTeamPage() {
       <div className="mt-5 space-y-5">
         {myTeams.map((team) => {
           const applied = state.teams.find((t) => t.rosterId === team.id);
+          const application = state.applications.find((a) => a.rosterId === team.id);
           return (
+
             <div key={team.id} className="panel p-5">
               <div className="flex items-center gap-3">
                 <TeamLogo name={team.name} logo={team.logo} size="md" />
