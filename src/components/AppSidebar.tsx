@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Archive, Home, LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
+import { Archive, Home, Inbox, LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,

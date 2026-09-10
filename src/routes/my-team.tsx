@@ -74,8 +74,9 @@ function MyTeamPage() {
     if (!registrationOpen)
       return toast.error("Приём заявок закрыт: турнир уже начался. Дождитесь следующего.");
     actions.applyToTournament(teamId);
-    toast.success(`Заявка подана на «${state.title}»`);
+    toast.success("Заявка отправлена админам лиги — ожидайте подтверждения");
   };
+
 
   if (!user) {
     return (
