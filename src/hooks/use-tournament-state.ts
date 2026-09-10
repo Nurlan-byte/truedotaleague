@@ -238,32 +238,86 @@ export function useTournamentState() {
           t.id === teamId ? { ...t, players: t.players.filter((p) => p.id !== playerId) } : t,
         ),
       })),
-    /** Подать заявку составом на текущий турнир. */
+    /** Подать заявку составом на текущий турнир — уходит админам на рассмотрение. */
     applyToTournament: (teamId: string) =>
       setState((s) => {
         const team = s.roster.find((t) => t.id === teamId);
         if (!team) return s;
         if (s.teams.some((t) => t.rosterId === teamId)) return s;
-        if (s.teams.some((t) => t.name.toLowerCase() === team.name.toLowerCase())) return s;
+        if (s.applications.some((a) => a.rosterId === teamId && a.status === "pending")) return s;
         return {
           ...s,
-          teams: [
-            ...s.teams,
+          applications: [
             {
               id: uid(),
-              name: team.name,
+              rosterId: team.id,
+              teamName: team.name,
+              tag: team.tag,
               logo: team.logo,
-              registeredAt: new Date().toLocaleDateString("ru-RU"),
               ownerId: team.ownerId,
               ownerName: team.ownerName,
-              rosterId: team.id,
+              playersCount: team.players.length,
+              submittedAt: new Date().toLocaleString("ru-RU", {
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              status: "pending",
             },
+            ...s.applications,
           ],
         };
       }),
+    /** Админ принимает заявку: команда попадает в список участников. */
+    approveApplication: (appId: string) =>
+      setState((s) => {
+        const app = s.applications.find((a) => a.id === appId);
+        if (!app) return s;
+        const dup =
+          s.teams.some((t) => t.rosterId === app.rosterId) ||
+          s.teams.some((t) => t.name.toLowerCase() === app.teamName.toLowerCase());
+        return {
+          ...s,
+          applications: s.applications.map((a) =>
+            a.id === appId ? { ...a, status: "approved" } : a,
+          ),
+          teams: dup
+            ? s.teams
+            : [
+                ...s.teams,
+                {
+                  id: uid(),
+                  name: app.teamName,
+                  logo: app.logo,
+                  registeredAt: new Date().toLocaleDateString("ru-RU"),
+                  ownerId: app.ownerId,
+                  ownerName: app.ownerName,
+                  rosterId: app.rosterId,
+                },
+              ],
+        };
+      }),
+    /** Админ отклоняет заявку. */
+    rejectApplication: (appId: string, note?: string) =>
+      setState((s) => ({
+        ...s,
+        applications: s.applications.map((a) =>
+          a.id === appId ? { ...a, status: "rejected", note: note?.trim() || undefined } : a,
+        ),
+        teams: s.teams.filter((t) => {
+          const app = s.applications.find((a) => a.id === appId);
+          return !app || t.rosterId !== app.rosterId;
+        }),
+      })),
     /** Снять заявку своей команды с турнира. */
     withdrawApplication: (teamId: string) =>
-      setState((s) => ({ ...s, teams: s.teams.filter((t) => t.rosterId !== teamId) })),
+      setState((s) => ({
+        ...s,
+        teams: s.teams.filter((t) => t.rosterId !== teamId),
+        applications: s.applications.filter((a) => a.rosterId !== teamId),
+      })),
+
 
     setBracketScore: (id: string, side: "A" | "B", value: string) =>
       setState((s) => ({

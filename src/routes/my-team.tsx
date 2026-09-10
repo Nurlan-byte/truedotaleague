@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, ImagePlus, Plus, Send, Shield, Trash2, Users, X } from "lucide-react";
+import { CheckCircle2, Hourglass, ImagePlus, Plus, Send, Shield, Trash2, Users, X } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { useAuth } from "@/hooks/use-auth";
 import { useTournamentState } from "@/hooks/use-tournament-state";
@@ -74,8 +74,9 @@ function MyTeamPage() {
     if (!registrationOpen)
       return toast.error("Приём заявок закрыт: турнир уже начался. Дождитесь следующего.");
     actions.applyToTournament(teamId);
-    toast.success(`Заявка подана на «${state.title}»`);
+    toast.success("Заявка отправлена админам лиги — ожидайте подтверждения");
   };
+
 
   if (!user) {
     return (
@@ -140,7 +141,9 @@ function MyTeamPage() {
       <div className="mt-5 space-y-5">
         {myTeams.map((team) => {
           const applied = state.teams.find((t) => t.rosterId === team.id);
+          const application = state.applications.find((a) => a.rosterId === team.id);
           return (
+
             <div key={team.id} className="panel p-5">
               <div className="flex items-center gap-3">
                 <TeamLogo name={team.name} logo={team.logo} size="md" />
@@ -262,7 +265,7 @@ function MyTeamPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                       <CheckCircle2 className="size-4 text-primary" /> Заявка на «{state.title}»
-                      подана {applied.registeredAt}
+                      принята {applied.registeredAt}
                     </p>
                     <button
                       onClick={() => {
@@ -280,16 +283,41 @@ function MyTeamPage() {
                       Список участников турнира
                     </Link>
                   </div>
+                ) : application?.status === "pending" ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <Hourglass className="size-4 text-accent" /> Заявка отправлена админам{" "}
+                      {application.submittedAt} — ожидает подтверждения
+                    </p>
+                    <button
+                      onClick={() => {
+                        actions.withdrawApplication(team.id);
+                        toast.success("Заявка отозвана");
+                      }}
+                      className="rounded-lg border border-border bg-white/60 px-3 py-2 text-xs font-semibold text-muted-foreground hover:border-destructive hover:text-destructive"
+                    >
+                      Отозвать заявку
+                    </button>
+                  </div>
                 ) : (
-                  <button
-                    onClick={() => apply(team.id)}
-                    disabled={!registrationOpen}
-                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Send className="size-4" /> Подать заявку на «{state.title}»
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={() => apply(team.id)}
+                      disabled={!registrationOpen}
+                      className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Send className="size-4" /> Подать заявку на «{state.title}»
+                    </button>
+                    {application?.status === "rejected" && (
+                      <p className="text-xs font-semibold text-destructive">
+                        Предыдущая заявка отклонена
+                        {application.note ? `: ${application.note}` : ""}. Можно подать снова.
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
+
             </div>
           );
         })}

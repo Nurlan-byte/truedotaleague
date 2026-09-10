@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Archive, Home, LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
+import { Archive, Home, Inbox, LayoutGrid, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -69,6 +69,14 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={currentPath === "/applications"}>
+                    <Link to="/applications" className="flex items-center gap-2">
+                      <Inbox className="size-4" />
+                      {!collapsed && <span>Заявки на турнир</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild isActive={currentPath === "/admin"}>
                     <Link to="/admin" className="flex items-center gap-2">
                       <UserCog className="size-4" />
@@ -80,6 +88,7 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
       </SidebarContent>
     </Sidebar>
   );
