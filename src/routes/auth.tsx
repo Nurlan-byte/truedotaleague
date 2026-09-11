@@ -26,6 +26,18 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+const DISCORD_ERRORS: Record<string, string> = {
+  cancelled: "Вход через Discord отменён.",
+  oauth_error: "Discord вернул ошибку авторизации. Попробуйте ещё раз.",
+  no_code: "Discord не передал код авторизации. Попробуйте войти снова.",
+  bad_state: "Ссылка входа устарела. Начните вход через Discord заново.",
+  invalid_code: "Код авторизации Discord недействителен или уже использован.",
+  profile_failed: "Не удалось получить профиль Discord. Попробуйте позже.",
+  user_failed: "Не удалось создать или найти аккаунт. Попробуйте ещё раз.",
+  session_failed: "Не удалось создать сессию. Попробуйте войти снова.",
+  not_configured: "Вход через Discord пока не настроен администратором лиги.",
+};
+
 function AuthPage() {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
@@ -40,6 +52,18 @@ function AuthPage() {
   useEffect(() => {
     if (!loading && session) navigate({ to: "/", replace: true });
   }, [loading, session, navigate]);
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("discord_error");
+    if (code) setError(DISCORD_ERRORS[code] ?? "Не удалось войти через Discord.");
+  }, []);
+
+  const discordLogin = () => {
+    setError(null);
+    setNotice(null);
+    setBusy(true);
+    window.location.href = "/api/public/auth/discord/start";
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
