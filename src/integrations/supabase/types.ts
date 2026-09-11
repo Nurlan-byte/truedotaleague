@@ -19,6 +19,9 @@ export type Database = {
           avatar_url: string | null
           bio: string
           created_at: string
+          discord_global_name: string
+          discord_id: string | null
+          discord_username: string
           id: string
           looking_for_team: boolean
           mmr: number | null
@@ -33,6 +36,9 @@ export type Database = {
           avatar_url?: string | null
           bio?: string
           created_at?: string
+          discord_global_name?: string
+          discord_id?: string | null
+          discord_username?: string
           id: string
           looking_for_team?: boolean
           mmr?: number | null
@@ -47,6 +53,9 @@ export type Database = {
           avatar_url?: string | null
           bio?: string
           created_at?: string
+          discord_global_name?: string
+          discord_id?: string | null
+          discord_username?: string
           id?: string
           looking_for_team?: boolean
           mmr?: number | null
