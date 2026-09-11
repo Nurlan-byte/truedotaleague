@@ -235,7 +235,7 @@ function AuthPage() {
         </form>
 
         <p className="mt-4 text-xs text-muted-foreground">
-          Вход через Discord добавим, когда подключим собственный бэкенд-провайдер.
+          Можно войти через Google или Microsoft — email и пароль вводить не нужно.
         </p>
       </div>
     </main>
