@@ -19,13 +19,13 @@ import { Route as PlayersRouteImport } from './routes/players'
 import { Route as MyTeamRouteImport } from './routes/my-team'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as CreateRouteImport } from './routes/create'
+import { Route as AuthDiscordRouteImport } from './routes/auth-discord'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ArchiveRouteImport } from './routes/archive'
 import { Route as ApplicationsRouteImport } from './routes/applications'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlayersPlayerIdRouteImport } from './routes/players.$playerId'
-import { Route as AuthDiscordRouteImport } from './routes/auth.discord'
 import { Route as ApiPublicAuthDiscordStartRouteImport } from './routes/api/public/auth/discord/start'
 import { Route as ApiPublicAuthDiscordCallbackRouteImport } from './routes/api/public/auth/discord/callback'
 
@@ -79,6 +79,11 @@ const CreateRoute = CreateRouteImport.update({
   path: '/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthDiscordRoute = AuthDiscordRouteImport.update({
+  id: '/auth-discord',
+  path: '/auth-discord',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -109,11 +114,6 @@ const PlayersPlayerIdRoute = PlayersPlayerIdRouteImport.update({
   path: '/$playerId',
   getParentRoute: () => PlayersRoute,
 } as any)
-const AuthDiscordRoute = AuthDiscordRouteImport.update({
-  id: '/discord',
-  path: '/discord',
-  getParentRoute: () => AuthRoute,
-} as any)
 const ApiPublicAuthDiscordStartRoute =
   ApiPublicAuthDiscordStartRouteImport.update({
     id: '/api/public/auth/discord/start',
@@ -132,7 +132,8 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/applications': typeof ApplicationsRoute
   '/archive': typeof ArchiveRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/auth-discord': typeof AuthDiscordRoute
   '/create': typeof CreateRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
@@ -143,7 +144,6 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
   '/tournaments': typeof TournamentsRoute
-  '/auth/discord': typeof AuthDiscordRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
   '/api/public/auth/discord/start': typeof ApiPublicAuthDiscordStartRoute
@@ -153,7 +153,8 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/applications': typeof ApplicationsRoute
   '/archive': typeof ArchiveRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/auth-discord': typeof AuthDiscordRoute
   '/create': typeof CreateRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
@@ -164,7 +165,6 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
   '/tournaments': typeof TournamentsRoute
-  '/auth/discord': typeof AuthDiscordRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
   '/api/public/auth/discord/start': typeof ApiPublicAuthDiscordStartRoute
@@ -175,7 +175,8 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/applications': typeof ApplicationsRoute
   '/archive': typeof ArchiveRoute
-  '/auth': typeof AuthRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/auth-discord': typeof AuthDiscordRoute
   '/create': typeof CreateRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
@@ -186,7 +187,6 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
   '/tournaments': typeof TournamentsRoute
-  '/auth/discord': typeof AuthDiscordRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
   '/api/public/auth/discord/start': typeof ApiPublicAuthDiscordStartRoute
@@ -199,6 +199,7 @@ export interface FileRouteTypes {
     | '/applications'
     | '/archive'
     | '/auth'
+    | '/auth-discord'
     | '/create'
     | '/live'
     | '/my-team'
@@ -209,7 +210,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/teams'
     | '/tournaments'
-    | '/auth/discord'
     | '/players/$playerId'
     | '/api/public/auth/discord/callback'
     | '/api/public/auth/discord/start'
@@ -220,6 +220,7 @@ export interface FileRouteTypes {
     | '/applications'
     | '/archive'
     | '/auth'
+    | '/auth-discord'
     | '/create'
     | '/live'
     | '/my-team'
@@ -230,7 +231,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/teams'
     | '/tournaments'
-    | '/auth/discord'
     | '/players/$playerId'
     | '/api/public/auth/discord/callback'
     | '/api/public/auth/discord/start'
@@ -241,6 +241,7 @@ export interface FileRouteTypes {
     | '/applications'
     | '/archive'
     | '/auth'
+    | '/auth-discord'
     | '/create'
     | '/live'
     | '/my-team'
@@ -251,7 +252,6 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/teams'
     | '/tournaments'
-    | '/auth/discord'
     | '/players/$playerId'
     | '/api/public/auth/discord/callback'
     | '/api/public/auth/discord/start'
@@ -262,7 +262,8 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   ApplicationsRoute: typeof ApplicationsRoute
   ArchiveRoute: typeof ArchiveRoute
-  AuthRoute: typeof AuthRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  AuthDiscordRoute: typeof AuthDiscordRoute
   CreateRoute: typeof CreateRoute
   LiveRoute: typeof LiveRoute
   MyTeamRoute: typeof MyTeamRoute
@@ -349,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth-discord': {
+      id: '/auth-discord'
+      path: '/auth-discord'
+      fullPath: '/auth-discord'
+      preLoaderRoute: typeof AuthDiscordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -391,13 +399,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayersPlayerIdRouteImport
       parentRoute: typeof PlayersRoute
     }
-    '/auth/discord': {
-      id: '/auth/discord'
-      path: '/discord'
-      fullPath: '/auth/discord'
-      preLoaderRoute: typeof AuthDiscordRouteImport
-      parentRoute: typeof AuthRoute
-    }
     '/api/public/auth/discord/start': {
       id: '/api/public/auth/discord/start'
       path: '/api/public/auth/discord/start'
@@ -415,16 +416,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthRouteChildren {
-  AuthDiscordRoute: typeof AuthDiscordRoute
-}
-
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthDiscordRoute: AuthDiscordRoute,
-}
-
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
-
 interface PlayersRouteChildren {
   PlayersPlayerIdRoute: typeof PlayersPlayerIdRoute
 }
@@ -441,7 +432,8 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   ApplicationsRoute: ApplicationsRoute,
   ArchiveRoute: ArchiveRoute,
-  AuthRoute: AuthRouteWithChildren,
+  AuthRoute: AuthRoute,
+  AuthDiscordRoute: AuthDiscordRoute,
   CreateRoute: CreateRoute,
   LiveRoute: LiveRoute,
   MyTeamRoute: MyTeamRoute,
