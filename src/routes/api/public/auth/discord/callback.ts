@@ -173,7 +173,7 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
           return new Response(null, {
             status: 302,
             headers: {
-              location: `${origin}/auth/discord?token_hash=${encodeURIComponent(tokenHash)}`,
+              location: `${origin}/auth-discord?token_hash=${encodeURIComponent(tokenHash)}`,
               "set-cookie": buildStateCookie("", 0, secure),
               "cache-control": "no-store",
             },

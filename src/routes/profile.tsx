@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ImagePlus, Save, Trophy, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -30,7 +30,9 @@ export const Route = createFileRoute("/profile")({
 const POSITIONS = ["Керри (1)", "Мид (2)", "Хардлайн (3)", "Роумер (4)", "Саппорт (5)"];
 
 function ProfilePage() {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [discord, setDiscord] = useState<{ id: string; username: string; name: string } | null>(null);
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
   const [mmr, setMmr] = useState("");
@@ -50,7 +52,7 @@ function ProfilePage() {
     supabase
       .from("profiles")
       .select(
-        "nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team",
+        "nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team, discord_id, discord_username, discord_global_name",
       )
       .eq("id", user.id)
       .maybeSingle()
@@ -65,6 +67,7 @@ function ProfilePage() {
         setTeamName(data.team_name ?? "");
         setTeamRole(data.team_role ?? "");
         setLookingForTeam(Boolean(data.looking_for_team));
+        setDiscord(data.discord_id ? { id: data.discord_id, username: data.discord_username ?? "", name: data.discord_global_name ?? "" } : null);
       });
     return () => {
       active = false;
@@ -188,7 +191,22 @@ function ProfilePage() {
             <TeamLogo name={nickname || user.email || "?"} logo={avatarUrl ?? undefined} size="lg" />
             <div>
               <p className="text-sm font-bold text-foreground">{nickname || "Без ника"}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+              {discord ? (
+                <p className="text-xs text-muted-foreground">
+                  Discord: {discord.name || discord.username} (@{discord.username}) · ID {discord.id}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              )}
+              <button
+                onClick={async () => {
+                  await signOut();
+                  navigate({ to: "/auth", replace: true });
+                }}
+                className="mt-1 text-xs font-semibold text-destructive hover:underline"
+              >
+                Выйти
+              </button>
               <div className="mt-2 flex items-center gap-3">
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary hover:text-primary">
                   <ImagePlus className="size-4" /> {avatarUrl ? "Заменить аватар" : "Загрузить аватар"}
