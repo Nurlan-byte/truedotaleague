@@ -179,7 +179,7 @@ function Setup({ s, setS }: SP) {
   const need = slots * s.captains.length;
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_1fr_360px]">
+    <div className="grid gap-4 2xl:grid-cols-[1fr_1fr_360px]">
       {/* Captains */}
       <section className="panel p-4">
         <div className="mb-3 flex items-center justify-between">
