@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/auth/discord")({
+export const Route = createFileRoute("/auth-discord")({
   ssr: false,
   head: () => ({
     meta: [
