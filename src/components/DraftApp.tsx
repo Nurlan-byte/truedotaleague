@@ -183,8 +183,8 @@ function Setup({ s, setS }: SP) {
       {/* Captains */}
       <section className="panel p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xl font-bold">Капитаны · порядок <span className="text-primary">{s.captains.length}</span></h2>
-          <button className="btn" onClick={shuffle} disabled={s.captains.length < 2}>🎲 Перемешать</button>
+          <h2 className="whitespace-nowrap text-xl font-bold">Капитаны · порядок <span className="text-primary">{s.captains.length}</span></h2>
+          <button className="btn" onClick={shuffle} disabled={s.captains.length < 2}>Перемешать</button>
         </div>
         <div className="grid gap-2 sm:grid-cols-3">
           <input className="field" placeholder="Имя капитана" value={cName} onChange={(e) => setCName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCaptain()} />
