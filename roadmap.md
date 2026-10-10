@@ -1,3 +1,4 @@
 # Roadmap
-- [ ] Discord OAuth2 login (button, callback, profile info, logout) — needs DISCORD_CLIENT_ID/SECRET
-- [ ] Port draft from "Immortal Draft" project: src/lib/draft.ts, draft.test.ts, components/DraftApp.tsx → /draft page, «Драфт» in menu, default name «Immortal Draft», Russian UI
+- [x] Discord OAuth2 login code (button, callback, profile info, logout)
+- [ ] Discord keys DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET — waiting on user (form was declined)
+- [ ] Port draft from "Immortal Draft" project → /draft page, «Драфт» in menu — blocked: project not accessible from this workspace
