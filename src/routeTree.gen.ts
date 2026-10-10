@@ -9,94 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TournamentsRouteImport } from './routes/tournaments'
-import { Route as TeamsRouteImport } from './routes/teams'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as RoadToTiRouteImport } from './routes/road-to-ti'
-import { Route as RatingTeamsRouteImport } from './routes/rating-teams'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as PlayersRouteImport } from './routes/players'
-import { Route as MyTeamRouteImport } from './routes/my-team'
-import { Route as LiveRouteImport } from './routes/live'
-import { Route as CreateRouteImport } from './routes/create'
-import { Route as AuthDiscordRouteImport } from './routes/auth-discord'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as ArchiveRouteImport } from './routes/archive'
-import { Route as ApplicationsRouteImport } from './routes/applications'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ApplicationsRouteImport } from './routes/applications'
+import { Route as ArchiveRouteImport } from './routes/archive'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthDiscordRouteImport } from './routes/auth-discord'
+import { Route as CreateRouteImport } from './routes/create'
+import { Route as LiveRouteImport } from './routes/live'
+import { Route as MyTeamRouteImport } from './routes/my-team'
+import { Route as PlayersRouteImport } from './routes/players'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as RatingTeamsRouteImport } from './routes/rating-teams'
+import { Route as RoadToTiRouteImport } from './routes/road-to-ti'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TeamsRouteImport } from './routes/teams'
+import { Route as TournamentsRouteImport } from './routes/tournaments'
 import { Route as PlayersPlayerIdRouteImport } from './routes/players.$playerId'
-import { Route as ApiPublicAuthDiscordStartRouteImport } from './routes/api/public/auth/discord/start'
 import { Route as ApiPublicAuthDiscordCallbackRouteImport } from './routes/api/public/auth/discord/callback'
+import { Route as ApiPublicAuthDiscordStartRouteImport } from './routes/api/public/auth/discord/start'
 
-const TournamentsRoute = TournamentsRouteImport.update({
-  id: '/tournaments',
-  path: '/tournaments',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TeamsRoute = TeamsRouteImport.update({
-  id: '/teams',
-  path: '/teams',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RoadToTiRoute = RoadToTiRouteImport.update({
-  id: '/road-to-ti',
-  path: '/road-to-ti',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RatingTeamsRoute = RatingTeamsRouteImport.update({
-  id: '/rating-teams',
-  path: '/rating-teams',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PlayersRoute = PlayersRouteImport.update({
-  id: '/players',
-  path: '/players',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MyTeamRoute = MyTeamRouteImport.update({
-  id: '/my-team',
-  path: '/my-team',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LiveRoute = LiveRouteImport.update({
-  id: '/live',
-  path: '/live',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CreateRoute = CreateRouteImport.update({
-  id: '/create',
-  path: '/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthDiscordRoute = AuthDiscordRouteImport.update({
-  id: '/auth-discord',
-  path: '/auth-discord',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ArchiveRoute = ArchiveRouteImport.update({
-  id: '/archive',
-  path: '/archive',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApplicationsRoute = ApplicationsRouteImport.update({
-  id: '/applications',
-  path: '/applications',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -104,9 +39,74 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ApplicationsRoute = ApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArchiveRoute = ArchiveRouteImport.update({
+  id: '/archive',
+  path: '/archive',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthDiscordRoute = AuthDiscordRouteImport.update({
+  id: '/auth-discord',
+  path: '/auth-discord',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreateRoute = CreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyTeamRoute = MyTeamRouteImport.update({
+  id: '/my-team',
+  path: '/my-team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlayersRoute = PlayersRouteImport.update({
+  id: '/players',
+  path: '/players',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatingTeamsRoute = RatingTeamsRouteImport.update({
+  id: '/rating-teams',
+  path: '/rating-teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RoadToTiRoute = RoadToTiRouteImport.update({
+  id: '/road-to-ti',
+  path: '/road-to-ti',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsRoute = TeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TournamentsRoute = TournamentsRouteImport.update({
+  id: '/tournaments',
+  path: '/tournaments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayersPlayerIdRoute = PlayersPlayerIdRouteImport.update({
@@ -114,16 +114,16 @@ const PlayersPlayerIdRoute = PlayersPlayerIdRouteImport.update({
   path: '/$playerId',
   getParentRoute: () => PlayersRoute,
 } as any)
-const ApiPublicAuthDiscordStartRoute =
-  ApiPublicAuthDiscordStartRouteImport.update({
-    id: '/api/public/auth/discord/start',
-    path: '/api/public/auth/discord/start',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicAuthDiscordCallbackRoute =
   ApiPublicAuthDiscordCallbackRouteImport.update({
     id: '/api/public/auth/discord/callback',
     path: '/api/public/auth/discord/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAuthDiscordStartRoute =
+  ApiPublicAuthDiscordStartRouteImport.update({
+    id: '/api/public/auth/discord/start',
+    path: '/api/public/auth/discord/start',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -280,102 +280,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tournaments': {
-      id: '/tournaments'
-      path: '/tournaments'
-      fullPath: '/tournaments'
-      preLoaderRoute: typeof TournamentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/teams': {
-      id: '/teams'
-      path: '/teams'
-      fullPath: '/teams'
-      preLoaderRoute: typeof TeamsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/road-to-ti': {
-      id: '/road-to-ti'
-      path: '/road-to-ti'
-      fullPath: '/road-to-ti'
-      preLoaderRoute: typeof RoadToTiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rating-teams': {
-      id: '/rating-teams'
-      path: '/rating-teams'
-      fullPath: '/rating-teams'
-      preLoaderRoute: typeof RatingTeamsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/players': {
-      id: '/players'
-      path: '/players'
-      fullPath: '/players'
-      preLoaderRoute: typeof PlayersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/my-team': {
-      id: '/my-team'
-      path: '/my-team'
-      fullPath: '/my-team'
-      preLoaderRoute: typeof MyTeamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/live': {
-      id: '/live'
-      path: '/live'
-      fullPath: '/live'
-      preLoaderRoute: typeof LiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/create': {
-      id: '/create'
-      path: '/create'
-      fullPath: '/create'
-      preLoaderRoute: typeof CreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth-discord': {
-      id: '/auth-discord'
-      path: '/auth-discord'
-      fullPath: '/auth-discord'
-      preLoaderRoute: typeof AuthDiscordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/archive': {
-      id: '/archive'
-      path: '/archive'
-      fullPath: '/archive'
-      preLoaderRoute: typeof ArchiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/applications': {
-      id: '/applications'
-      path: '/applications'
-      fullPath: '/applications'
-      preLoaderRoute: typeof ApplicationsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -385,11 +294,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/applications': {
+      id: '/applications'
+      path: '/applications'
+      fullPath: '/applications'
+      preLoaderRoute: typeof ApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/archive': {
+      id: '/archive'
+      path: '/archive'
+      fullPath: '/archive'
+      preLoaderRoute: typeof ArchiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth-discord': {
+      id: '/auth-discord'
+      path: '/auth-discord'
+      fullPath: '/auth-discord'
+      preLoaderRoute: typeof AuthDiscordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create': {
+      id: '/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof CreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-team': {
+      id: '/my-team'
+      path: '/my-team'
+      fullPath: '/my-team'
+      preLoaderRoute: typeof MyTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/players': {
+      id: '/players'
+      path: '/players'
+      fullPath: '/players'
+      preLoaderRoute: typeof PlayersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rating-teams': {
+      id: '/rating-teams'
+      path: '/rating-teams'
+      fullPath: '/rating-teams'
+      preLoaderRoute: typeof RatingTeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/road-to-ti': {
+      id: '/road-to-ti'
+      path: '/road-to-ti'
+      fullPath: '/road-to-ti'
+      preLoaderRoute: typeof RoadToTiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teams': {
+      id: '/teams'
+      path: '/teams'
+      fullPath: '/teams'
+      preLoaderRoute: typeof TeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tournaments': {
+      id: '/tournaments'
+      path: '/tournaments'
+      fullPath: '/tournaments'
+      preLoaderRoute: typeof TournamentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/players/$playerId': {
@@ -399,18 +399,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayersPlayerIdRouteImport
       parentRoute: typeof PlayersRoute
     }
-    '/api/public/auth/discord/start': {
-      id: '/api/public/auth/discord/start'
-      path: '/api/public/auth/discord/start'
-      fullPath: '/api/public/auth/discord/start'
-      preLoaderRoute: typeof ApiPublicAuthDiscordStartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/auth/discord/callback': {
       id: '/api/public/auth/discord/callback'
       path: '/api/public/auth/discord/callback'
       fullPath: '/api/public/auth/discord/callback'
       preLoaderRoute: typeof ApiPublicAuthDiscordCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/auth/discord/start': {
+      id: '/api/public/auth/discord/start'
+      path: '/api/public/auth/discord/start'
+      fullPath: '/api/public/auth/discord/start'
+      preLoaderRoute: typeof ApiPublicAuthDiscordStartRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
