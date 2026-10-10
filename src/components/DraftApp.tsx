@@ -3,7 +3,6 @@ import {
   type Captain, type DraftState, type Player, ORG, TEAM_COLORS, availablePlayers, currentTurn, initialState,
   parseBulk, pick, resultsCsv, resultsText, rosterOf, skip, slotsPerTeam, uid, undo, validate,
 } from "@/lib/draft";
-import logoAsset from "@/assets/tdl-logo.png.asset.json";
 
 const KEY = "draft-night-v1";
 
@@ -69,7 +68,7 @@ export function DraftApp() {
       <header className="no-print sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <img src={logoAsset.url} alt="TrueDotaLeague" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-primary font-display text-sm font-bold text-primary-foreground">TDL</div>
             <div className="min-w-0 flex-1">
               <div className="font-display text-[11px] font-bold uppercase leading-none tracking-[0.22em] text-primary">{ORG}</div>
               <input

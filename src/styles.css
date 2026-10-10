@@ -143,3 +143,32 @@
 @utility glow {
   box-shadow: var(--shadow-glow);
 }
+
+@utility label-xs {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-muted-foreground);
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-slide {
+  animation: slide-in 0.3s ease-out both;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
