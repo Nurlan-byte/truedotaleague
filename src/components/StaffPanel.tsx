@@ -406,7 +406,7 @@ function AuditHistory({ tournamentId }: { tournamentId: string }) {
     <Box title="История изменений">
       <ul className="max-h-96 space-y-1.5 overflow-y-auto text-sm">
         {data.map((e) => {
-          const fields = e.entity === "tournaments" ? changedFields(e.before, e.after) : [];
+          const fields = e.entity === "tournaments" && e.before ? changedFields(e.before, e.after) : [];
           return (
             <li key={e.id} className="flex flex-wrap gap-x-2 rounded-lg bg-white/50 px-3 py-1.5">
               <History className="mt-0.5 size-3.5 shrink-0 text-primary" />
