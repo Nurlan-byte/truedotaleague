@@ -76,7 +76,7 @@ function ImportPage() {
       return {
         ids,
         team_ids: [...new Set(ids.values())],
-        groups: groups.map((g, i) => ({ name: `Группа ${String.fromCharCode(65 + i)}`, team_ids: g.map((t) => ids.get(t.id)).filter(Boolean) })),
+        groups: groups.map((g, i) => ({ name: `Группа ${String.fromCharCode(65 + i)}`, team_ids: g.map((t) => ids.get(t.id)).filter((x): x is string => !!x) })),
         group_matches: gm.filter((m) => id(m.teamA) && id(m.teamB)).map((m) => ({ group_idx: m.group, team_a_id: id(m.teamA), team_b_id: id(m.teamB), score_a: m.scoreA, score_b: m.scoreB })),
         bracket: bracket.map((m) => ({ round: m.round, slot: m.order, team_a_id: id(m.teamA), team_b_id: id(m.teamB), score_a: m.scoreA, score_b: m.scoreB })),
       };
@@ -102,7 +102,7 @@ function ImportPage() {
           const st = await structure(teams, rec.groups, rec.groupMatches, rec.bracket);
           const placements = rec.placements
             .map((p) => ({ team_id: st.ids.get(teams.find((t) => t.name === p.teamName)!.id), place: p.place }))
-            .filter((p) => p.team_id);
+            .filter((p): p is { team_id: string; place: number } => !!p.team_id);
           const { data, error } = await supabase.rpc("import_legacy_tournament", {
             p: {
               legacy_id: `history:${rec.id}`,

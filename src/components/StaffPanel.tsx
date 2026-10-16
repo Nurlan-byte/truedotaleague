@@ -49,7 +49,7 @@ export function StaffPanel({ t, isAdmin, isStaff, userId }: Props) {
   const refresh = () => qc.invalidateQueries({ queryKey: ["league"] });
 
   const run = useMutation({
-    mutationFn: async (fn: () => Promise<{ error: { message: string } | null }>) => {
+    mutationFn: async (fn: () => PromiseLike<{ error: { message: string } | null }>) => {
       const { error } = await fn();
       if (error) throw error;
     },
@@ -201,7 +201,7 @@ function StaffMatches({ t, isAdmin }: { t: TournamentDetail; isAdmin: boolean })
   const [edit, setEdit] = useState<Record<string, { time?: string; a?: string; b?: string }>>({});
 
   const saveTime = async (id: string, value: string) => {
-    const { error } = await supabase.rpc("set_match_schedule", { p_match_id: id, p_scheduled_at: fromLeagueInput(value) ?? undefined });
+    const { error } = await supabase.rpc("set_match_schedule", { p_match_id: id, p_scheduled_at: fromLeagueInput(value) as string });
     if (error) return toast.error(rpcErrorText(error));
     toast.success("Время сохранено");
     qc.invalidateQueries({ queryKey: ["league"] });
