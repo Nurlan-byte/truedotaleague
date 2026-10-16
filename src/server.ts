@@ -44,9 +44,23 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+// Hosted runtimes may pass secrets as request-time env bindings instead of
+// pre-populating process.env. Copy missing string bindings so server-only code
+// can keep reading process.env. Values are never logged or returned.
+function syncEnvBindings(env: unknown) {
+  if (!env || typeof env !== "object") return;
+  const g = globalThis as { process?: { env?: Record<string, string | undefined> } };
+  if (!g.process) g.process = { env: {} };
+  if (!g.process.env) g.process.env = {};
+  for (const [key, value] of Object.entries(env as Record<string, unknown>)) {
+    if (typeof value === "string" && !g.process.env[key]) g.process.env[key] = value;
+  }
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      syncEnvBindings(env);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
