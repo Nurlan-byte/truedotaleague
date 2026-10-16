@@ -4,6 +4,7 @@ import {
   discordAvatarUrl,
   discordEmail,
   getDiscordConfig,
+  hasVerifiedDiscordEmail,
   readCookie,
   STATE_COOKIE,
   type DiscordUser,
@@ -121,8 +122,12 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
             if (created.data?.user) {
               userId = created.data.user.id;
             } else {
-              // The e-mail already belongs to an account (e.g. Google sign-in
-              // with the same address) — link Discord to it instead.
+              // Only link to an existing account by e-mail when Discord has
+              // verified that e-mail — otherwise this would allow takeover.
+              if (!hasVerifiedDiscordEmail(discordUser, email)) {
+                console.error("discord user create failed (unverified email)", created.error);
+                return fail(origin, "user_failed", secure);
+              }
               let page = 1;
               while (!userId && page <= 20) {
                 const list = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
