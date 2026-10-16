@@ -129,6 +129,7 @@ function RootComponent() {
           <AppSidebar />
           <div className="flex min-w-0 flex-1 flex-col">
             <AppHeader />
+            <ReturnAfterAuth />
             <main className="min-w-0 flex-1">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
@@ -139,4 +140,18 @@ function RootComponent() {
       </SidebarProvider>
     </QueryClientProvider>
   );
+}
+
+/** После входа (email, Google, Discord) возвращает гостя на страницу, откуда он пришёл. */
+function ReturnAfterAuth() {
+  const { user } = useAuth();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const router = useRouter();
+  useEffect(() => {
+    if (!user || !peekReturnTo()) return;
+    if (pathname !== "/" && pathname !== "/auth") return;
+    const target = takeReturnTo();
+    if (target) router.history.replace(target);
+  }, [user, pathname, router]);
+  return null;
 }

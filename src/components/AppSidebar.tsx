@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Archive, Home, Inbox, LayoutGrid, ListChecks, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
+import { Archive, Home, Inbox, ListChecks, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,11 +16,10 @@ import { useAdmin } from "@/hooks/use-admin";
 const items = [
   { title: "Главная", url: "/", icon: Home },
   { title: "Создать турнир", url: "/create", icon: Plus },
-  { title: "Турнир онлайн", url: "/live", icon: Radio },
+  { title: "Турниры", url: "/tournaments", icon: Radio },
   { title: "Драфт", url: "/draft", icon: ListChecks },
   { title: "Моя команда", url: "/my-team", icon: ShieldPlus },
   { title: "Команды", url: "/teams", icon: Shield },
-  { title: "Турниры", url: "/tournaments", icon: LayoutGrid },
   { title: "Архив турниров", url: "/archive", icon: Archive },
   { title: "Рейтинг команд", url: "/rating-teams", icon: Trophy },
   { title: "Рейтинг игроков", url: "/players", icon: Users },
@@ -53,7 +52,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild isActive={currentPath === item.url}>
+                  <SidebarMenuButton asChild isActive={item.url === "/" ? currentPath === "/" : currentPath === item.url || currentPath.startsWith(item.url + "/")}>
                     <Link to={item.url} className="flex items-center gap-2">
                       <item.icon className="size-4" />
                       {!collapsed && <span>{item.title}</span>}
