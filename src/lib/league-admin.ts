@@ -134,9 +134,7 @@ export function rosterChanged(snapshot: unknown, live: { nickname: string; posit
 /** Сетка → payload для generate_structure. */
 export function bracketPayload(teams: Team[]) {
   return {
-    matches: buildBracket(teams)
-      .filter((m) => m.round === 1 || true)
-      .map((m) => ({
+    matches: buildBracket(teams).map((m) => ({
         round: m.round,
         slot: m.order,
         team_a_id: m.round === 1 ? m.teamA : null,
