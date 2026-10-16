@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Crown, Medal, Plus, Radio, Shield, Trophy, Users } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { useAdmin } from "@/hooks/use-admin";
-import { useTournamentState } from "@/hooks/use-tournament-state";
+import { useQuery } from "@tanstack/react-query";
+import { allTeamsQuery, catalogQuery, rankingQuery } from "@/lib/league-api";
+import { formatLeagueDate, sortCatalog } from "@/lib/league";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -11,7 +13,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Добро пожаловать в TrueDotaLeague: завершённые турниры, команды лиги, рейтинг в TDL points и трансляция турнира онлайн.",
+          "Добро пожаловать в TrueDotaLeague: завершённые турниры, команды лиги, рейтинг в TDL points и каталог турниров.",
       },
       { property: "og:title", content: "TrueDotaLeague — лига по Dota 2" },
       {
@@ -26,9 +28,22 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-  const { state } = useTournamentState();
   const { isAdmin } = useAdmin();
-  const finished = state.history;
+  const catalog = useQuery(catalogQuery());
+  const teamsQ = useQuery(allTeamsQuery());
+  const ranking = useQuery(rankingQuery());
+  const finished = sortCatalog((catalog.data ?? []).filter((t) => t.status === "finished")).map((t) => {
+    const win = t.placements.find((p) => p.place === 1);
+    const snap = t.tournament_participants.find((p) => p.team_id === win?.team_id);
+    return {
+      id: t.id,
+      title: t.title,
+      date: formatLeagueDate(t.starts_at, false) ?? "",
+      placements: win ? [{ teamName: win.team_name, logo: snap?.logo_url ?? undefined, points: win.points }] : [],
+    };
+  });
+  const state = { teams: (teamsQ.data ?? []).map((t) => ({ id: t.id, name: t.name, logo: t.logo_url ?? undefined })) };
+  const totalPoints = (ranking.data ?? []).reduce((s, r) => s + r.points, 0);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8">
@@ -43,10 +58,10 @@ function HomePage() {
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Link
-            to="/live"
+            to="/tournaments"
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
           >
-            <Radio className="size-4" /> Турнир онлайн
+            <Radio className="size-4" /> Турниры
           </Link>
           <Link
             to="/rating-teams"
@@ -71,10 +86,7 @@ function HomePage() {
           { label: "Команд в лиге", value: state.teams.length, icon: Shield },
           {
             label: "Разыграно TDL points",
-            value: finished.reduce(
-              (sum, t) => sum + t.placements.reduce((s, p) => s + p.points, 0),
-              0,
-            ),
+            value: totalPoints,
             icon: Trophy,
           },
         ].map((card) => (
@@ -92,8 +104,8 @@ function HomePage() {
             <h2 className="flex items-center gap-2 text-xl text-foreground">
               <Crown className="size-5 text-accent" /> Завершённые турниры
             </h2>
-            <Link to="/tournaments" className="text-xs font-semibold text-primary hover:underline">
-              Все турниры
+            <Link to="/archive" className="text-xs font-semibold text-primary hover:underline">
+              Архив
             </Link>
           </div>
           {finished.length === 0 ? (
@@ -103,9 +115,10 @@ function HomePage() {
           ) : (
             <ul className="space-y-3">
               {finished.slice(0, 4).map((t) => (
-                <li key={t.id} className="rounded-lg border border-border bg-white/50 p-3">
+                <li key={t.id}>
+                  <Link to="/tournaments/$tournamentId" params={{ tournamentId: t.id }} className="block rounded-lg border border-border bg-white/50 p-3 hover:border-primary">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="font-bold text-foreground">{t.title}</p>
+                    <p className="break-words font-bold text-foreground">{t.title}</p>
                     <p className="text-xs text-muted-foreground">{t.date}</p>
                   </div>
                   {t.placements[0] && (
@@ -115,6 +128,7 @@ function HomePage() {
                       <span className="truncate">{t.placements[0].teamName}</span>
                     </p>
                   )}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -132,9 +146,9 @@ function HomePage() {
           </div>
           {state.teams.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Регистрация команд открыта — заявите свою команду в разделе{" "}
-              <Link to="/teams" className="font-semibold text-primary hover:underline">
-                «Команды»
+              Команд пока нет — создайте свою в разделе{" "}
+              <Link to="/my-team" className="font-semibold text-primary hover:underline">
+                «Моя команда»
               </Link>
               , и она появится здесь.
             </p>

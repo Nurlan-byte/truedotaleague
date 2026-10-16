@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Hourglass, ImagePlus, Plus, Send, Shield, Trash2, Users, X } from "lucide-react";
+import { ImagePlus, Plus, Shield, Trash2, UserPlus, Users, X } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
+import { LoadingPanel } from "@/components/league";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useTournamentState } from "@/hooks/use-tournament-state";
+import { myApplicationsQuery, myTeamsQuery } from "@/lib/league-api";
+import { APPLICATION_LABEL, formatLeagueDate, rpcErrorText } from "@/lib/league";
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 
 export const Route = createFileRoute("/my-team")({
@@ -13,14 +17,10 @@ export const Route = createFileRoute("/my-team")({
       { title: "Моя команда — создание состава | TrueDotaLeague" },
       {
         name: "description",
-        content:
-          "Создайте свою команду по Dota 2: название, тег, логотип и состав игроков, затем подайте заявку на участие в турнире лиги.",
+        content: "Создайте свою команду по Dota 2: название, тег, логотип и состав, затем подайте заявку на турнир лиги.",
       },
       { property: "og:title", content: "Моя команда — TrueDotaLeague" },
-      {
-        property: "og:description",
-        content: "Создание команды и заявка на участие в турнире лиги по Dota 2.",
-      },
+      { property: "og:description", content: "Создание команды и заявки на турниры лиги по Dota 2." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -28,57 +28,33 @@ export const Route = createFileRoute("/my-team")({
   component: MyTeamPage,
 });
 
-function MyTeamPage() {
-  const { user, profile } = useAuth();
-  const { state, actions } = useTournamentState();
+const input =
+  "min-w-0 rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:bg-white";
 
+function MyTeamPage() {
+  const { user, loading } = useAuth();
+  const qc = useQueryClient();
+  const teams = useQuery(myTeamsQuery(user?.id));
+  const apps = useQuery(myApplicationsQuery((teams.data ?? []).map((t) => t.id)));
   const [name, setName] = useState("");
   const [tag, setTag] = useState("");
-  const [player, setPlayer] = useState({ nickname: "", role: "", mmr: "" });
+  const [player, setPlayer] = useState<Record<string, { nickname: string; role: string; mmr: string }>>({});
+  const [captainNick, setCaptainNick] = useState<Record<string, string>>({});
 
-  const myTeams = user ? state.roster.filter((t) => t.ownerId === user.id) : [];
-  const registrationOpen = state.bracket.length === 0 && state.groups.length === 0;
-
-  const create = () => {
-    if (!name.trim()) return toast.error("Введите название команды");
-    if (state.roster.some((t) => t.name.toLowerCase() === name.trim().toLowerCase()))
-      return toast.error("Команда с таким названием уже существует");
-    actions.createRosterTeam(
-      { name, tag },
-      { id: user!.id, name: profile?.nickname || undefined },
-    );
-    toast.success("Команда создана");
-    setName("");
-    setTag("");
+  const refresh = () => qc.invalidateQueries({ queryKey: ["league"] });
+  const run = useMutation({
+    mutationFn: async (fn: () => Promise<void>) => fn(),
+    onSuccess: refresh,
+    onError: (e) => toast.error(e instanceof Error && e.message.startsWith("!") ? e.message.slice(1) : rpcErrorText(e as Error)),
+  });
+  const check = (error: { message: string; code?: string } | null, text?: string) => {
+    if (!error) return;
+    if (error.code === "23503") throw new Error("!Команду нельзя удалить: она участвовала в турнирах");
+    throw new Error(text ? `!${text}` : error.message);
   };
 
-  const upload = async (teamId: string, file: File) => {
-    const err = validateLogoFile(file);
-    if (err) return toast.error(err);
-    try {
-      actions.updateRosterTeam(teamId, { logo: await fileToLogoDataUrl(file) });
-      toast.success("Логотип обновлён");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Не удалось загрузить логотип");
-    }
-  };
-
-  const addPlayer = (teamId: string) => {
-    if (!player.nickname.trim()) return toast.error("Введите ник игрока");
-    const mmr = player.mmr.trim() ? Number(player.mmr.replace(/\D/g, "")) : null;
-    actions.addRosterPlayer(teamId, player.nickname, player.role, mmr);
-    setPlayer({ nickname: "", role: "", mmr: "" });
-  };
-
-  const apply = (teamId: string) => {
-    if (!registrationOpen)
-      return toast.error("Приём заявок закрыт: турнир уже начался. Дождитесь следующего.");
-    actions.applyToTournament(teamId);
-    toast.success("Заявка отправлена админам лиги — ожидайте подтверждения");
-  };
-
-
-  if (!user) {
+  if (loading) return <div className="mx-auto max-w-4xl px-4 py-8"><LoadingPanel /></div>;
+  if (!user)
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 lg:px-8">
         <h1 className="flex items-center gap-2 text-4xl text-foreground">
@@ -93,7 +69,17 @@ function MyTeamPage() {
         </div>
       </div>
     );
-  }
+
+  const create = () => {
+    if (!name.trim()) return toast.error("Введите название команды");
+    run.mutate(async () => {
+      const { error } = await supabase.from("teams").insert({ name: name.trim(), tag: tag.trim(), owner_id: user.id });
+      check(error);
+      toast.success("Команда создана");
+      setName("");
+      setTag("");
+    });
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8">
@@ -101,69 +87,54 @@ function MyTeamPage() {
         <Shield className="size-7 text-primary" /> Моя команда
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Создайте команду, соберите состав, а затем подайте заявку на участие в турнире{" "}
-        <span className="font-semibold text-foreground">«{state.title}»</span>.{" "}
-        {registrationOpen ? "Приём заявок открыт." : "Приём заявок закрыт — турнир уже начался."}
+        Создайте команду и соберите состав. Заявку на турнир подаёт владелец или капитан на странице турнира в разделе{" "}
+        <Link to="/tournaments" className="font-semibold text-primary hover:underline">
+          «Турниры»
+        </Link>
+        .
       </p>
 
       <div className="panel mt-5 p-5">
         <h2 className="text-lg font-semibold text-foreground">Создать команду</h2>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Название команды"
-            className="min-w-0 flex-1 rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:bg-white"
-          />
-          <input
-            value={tag}
-            onChange={(e) => setTag(e.target.value)}
-            placeholder="Тег (напр. TDL)"
-            maxLength={8}
-            className="w-full rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:bg-white sm:w-40"
-          />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название команды" className={`${input} flex-1`} />
+          <input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="Тег (напр. TDL)" maxLength={8} className={`${input} sm:w-40`} />
           <button
             onClick={create}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm"
+            disabled={run.isPending}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm disabled:opacity-50"
           >
             <Plus className="size-4" /> Создать
           </button>
         </div>
       </div>
 
-      {myTeams.length === 0 && (
-        <div className="panel mt-5 p-5 text-sm text-muted-foreground">
-          У вас пока нет команды. Создайте её выше — после этого появится кнопка подачи заявки на
-          турнир.
-        </div>
-      )}
+      {teams.isLoading ? (
+        <div className="mt-5"><LoadingPanel /></div>
+      ) : (teams.data ?? []).length === 0 ? (
+        <div className="panel mt-5 p-5 text-sm text-muted-foreground">У вас пока нет команды. Создайте её выше.</div>
+      ) : null}
 
       <div className="mt-5 space-y-5">
-        {myTeams.map((team) => {
-          const applied = state.teams.find((t) => t.rosterId === team.id);
-          const application = state.applications.find((a) => a.rosterId === team.id);
+        {(teams.data ?? []).map((team) => {
+          const isOwner = team.owner_id === user.id;
+          const members = [...team.team_members].sort((a, b) => a.position - b.position);
+          const p = player[team.id] ?? { nickname: "", role: "", mmr: "" };
+          const teamApps = (apps.data ?? []).filter((a) => a.team_id === team.id);
           return (
-
             <div key={team.id} className="panel p-5">
-              <div className="flex items-center gap-3">
-                <TeamLogo name={team.name} logo={team.logo} size="md" />
+              <div className="flex min-w-0 items-center gap-3">
+                <TeamLogo name={team.name} logo={team.logo_url ?? undefined} size="md" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-lg font-semibold text-foreground">
                     {team.name}
-                    {team.tag && (
-                      <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-primary">
-                        [{team.tag}]
-                      </span>
-                    )}
+                    {team.tag && <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-primary">[{team.tag}]</span>}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Создана {team.createdAt} · игроков: {team.players.length}
+                    {isOwner ? "Вы владелец" : "Вы капитан"} · игроков: {members.length}
                   </p>
                 </div>
-                <label
-                  className="cursor-pointer text-muted-foreground transition-colors hover:text-primary"
-                  title="Загрузить логотип"
-                >
+                <label className="cursor-pointer text-muted-foreground hover:text-primary" title="Загрузить логотип">
                   <ImagePlus className="size-5" />
                   <span className="sr-only">Логотип команды {team.name}</span>
                   <input
@@ -172,152 +143,178 @@ function MyTeamPage() {
                     className="hidden"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
-                      if (f) void upload(team.id, f);
                       e.target.value = "";
+                      if (!f) return;
+                      const err = validateLogoFile(f);
+                      if (err) return toast.error(err);
+                      run.mutate(async () => {
+                        const logo = await fileToLogoDataUrl(f);
+                        const { error } = await supabase.from("teams").update({ logo_url: logo }).eq("id", team.id);
+                        check(error);
+                        toast.success("Логотип обновлён");
+                      });
                     }}
                   />
                 </label>
-                <button
-                  onClick={() => {
-                    if (confirm(`Удалить команду «${team.name}»? Заявка тоже будет снята.`)) {
-                      actions.removeRosterTeam(team.id);
-                      toast.success("Команда удалена");
-                    }
-                  }}
-                  className="text-muted-foreground transition-colors hover:text-destructive"
-                  aria-label={`Удалить команду ${team.name}`}
-                >
-                  <Trash2 className="size-5" />
-                </button>
+                {isOwner && (
+                  <button
+                    onClick={() => {
+                      if (!confirm(`Удалить команду «${team.name}»?`)) return;
+                      run.mutate(async () => {
+                        const { error } = await supabase.from("teams").delete().eq("id", team.id);
+                        check(error);
+                        toast.success("Команда удалена");
+                      });
+                    }}
+                    className="text-muted-foreground hover:text-destructive"
+                    aria-label={`Удалить команду ${team.name}`}
+                  >
+                    <Trash2 className="size-5" />
+                  </button>
+                )}
               </div>
 
-              <div className="mt-4">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Users className="size-4 text-primary" /> Состав
-                </h3>
-                <ul className="mt-2 space-y-1.5">
-                  {team.players.length === 0 && (
-                    <li className="text-xs text-muted-foreground">
-                      Игроков нет — добавьте до 7 участников (5 основных и запасные).
-                    </li>
-                  )}
-                  {team.players.map((p, i) => (
-                    <li
-                      key={p.id}
-                      className="flex items-center gap-3 rounded-lg bg-white/50 px-3 py-2 text-sm text-foreground"
+              <h3 className="mt-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Users className="size-4 text-primary" /> Состав
+              </h3>
+              <ul className="mt-2 space-y-1.5">
+                {members.length === 0 && <li className="text-xs text-muted-foreground">Игроков нет — добавьте до 7 участников.</li>}
+                {members.map((m, i) => (
+                  <li key={m.id} className="flex min-w-0 items-center gap-3 rounded-lg bg-white/50 px-3 py-2 text-sm text-foreground">
+                    <span className="w-4 text-xs font-semibold text-muted-foreground">{i + 1}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">{m.nickname}</span>
+                    {m.role && <span className="shrink-0 text-xs text-muted-foreground">{m.role}</span>}
+                    {m.mmr !== null && <span className="shrink-0 text-xs text-muted-foreground">{m.mmr} MMR</span>}
+                    <button
+                      onClick={() =>
+                        run.mutate(async () => {
+                          const { error } = await supabase.from("team_members").delete().eq("id", m.id);
+                          check(error);
+                        })
+                      }
+                      className="text-muted-foreground hover:text-destructive"
+                      aria-label={`Убрать ${m.nickname}`}
                     >
-                      <span className="w-4 text-xs font-semibold text-muted-foreground">
-                        {i + 1}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate font-medium">{p.nickname}</span>
-                      {p.role && (
-                        <span className="shrink-0 text-xs text-muted-foreground">{p.role}</span>
-                      )}
-                      {p.mmr ? (
-                        <span className="shrink-0 text-xs font-semibold text-primary">
-                          {p.mmr} MMR
+                      <X className="size-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {members.length < 7 && (
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    value={p.nickname}
+                    onChange={(e) => setPlayer({ ...player, [team.id]: { ...p, nickname: e.target.value } })}
+                    placeholder="Ник игрока"
+                    className={`${input} flex-1`}
+                  />
+                  <input
+                    value={p.role}
+                    onChange={(e) => setPlayer({ ...player, [team.id]: { ...p, role: e.target.value } })}
+                    placeholder="Роль (Carry, Mid…)"
+                    className={`${input} sm:w-36`}
+                  />
+                  <input
+                    value={p.mmr}
+                    onChange={(e) => setPlayer({ ...player, [team.id]: { ...p, mmr: e.target.value } })}
+                    placeholder="MMR"
+                    inputMode="numeric"
+                    className={`${input} sm:w-24`}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!p.nickname.trim()) return toast.error("Введите ник игрока");
+                      const mmr = p.mmr.trim() ? Number(p.mmr.replace(/\D/g, "")) : null;
+                      run.mutate(async () => {
+                        const { error } = await supabase.from("team_members").insert({
+                          team_id: team.id,
+                          nickname: p.nickname.trim(),
+                          role: p.role.trim(),
+                          mmr,
+                          position: members.length,
+                        });
+                        check(error);
+                        setPlayer({ ...player, [team.id]: { nickname: "", role: "", mmr: "" } });
+                      });
+                    }}
+                    className="inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-white/70 px-3 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
+                  >
+                    <Plus className="size-4" /> Добавить
+                  </button>
+                </div>
+              )}
+
+              {isOwner && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold text-foreground">Капитаны</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Капитаны тоже могут подавать заявки от имени команды. Сейчас: {team.team_captains.length || "нет"}.
+                  </p>
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                    <input
+                      value={captainNick[team.id] ?? ""}
+                      onChange={(e) => setCaptainNick({ ...captainNick, [team.id]: e.target.value })}
+                      placeholder="Ник пользователя на сайте"
+                      className={`${input} flex-1`}
+                    />
+                    <button
+                      onClick={() => {
+                        const nick = (captainNick[team.id] ?? "").trim();
+                        if (!nick) return toast.error("Введите ник");
+                        run.mutate(async () => {
+                          const { data: prof } = await supabase.from("profiles").select("id").eq("nickname", nick).limit(2);
+                          if (!prof || prof.length !== 1) throw new Error("!Пользователь с таким ником не найден или ник не уникален");
+                          const { error } = await supabase.from("team_captains").insert({ team_id: team.id, user_id: prof[0].id });
+                          check(error, "Не удалось добавить капитана");
+                          toast.success("Капитан добавлен");
+                          setCaptainNick({ ...captainNick, [team.id]: "" });
+                        });
+                      }}
+                      className="inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-white/70 px-3 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
+                    >
+                      <UserPlus className="size-4" /> Назначить
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {teamApps.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-semibold text-foreground">Заявки на турниры</h3>
+                  <ul className="mt-2 space-y-1.5">
+                    {teamApps.map((a) => (
+                      <li key={a.id} className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-white/50 px-3 py-2 text-sm">
+                        <Link
+                          to="/tournaments/$tournamentId"
+                          params={{ tournamentId: a.tournament_id }}
+                          className="min-w-0 flex-1 truncate font-medium text-foreground hover:text-primary"
+                        >
+                          {a.tournaments?.title ?? "Турнир"}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">
+                          {APPLICATION_LABEL[a.status]}
+                          {a.reject_reason ? ` — ${a.reject_reason}` : ""} · {formatLeagueDate(a.created_at)}
                         </span>
-                      ) : null}
-                      <button
-                        onClick={() => actions.removeRosterPlayer(team.id, p.id)}
-                        className="text-muted-foreground transition-colors hover:text-destructive"
-                        aria-label={`Убрать ${p.nickname}`}
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-
-                {team.players.length < 7 && (
-                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                    <input
-                      value={player.nickname}
-                      onChange={(e) => setPlayer({ ...player, nickname: e.target.value })}
-                      placeholder="Ник игрока"
-                      className="min-w-0 flex-1 rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:bg-white"
-                    />
-                    <input
-                      value={player.role}
-                      onChange={(e) => setPlayer({ ...player, role: e.target.value })}
-                      placeholder="Позиция (1-5)"
-                      className="w-full rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:bg-white sm:w-36"
-                    />
-                    <input
-                      value={player.mmr}
-                      onChange={(e) => setPlayer({ ...player, mmr: e.target.value })}
-                      placeholder="MMR"
-                      inputMode="numeric"
-                      className="w-full rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:bg-white sm:w-24"
-                    />
-                    <button
-                      onClick={() => addPlayer(team.id)}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
-                    >
-                      <Plus className="size-4" /> Добавить
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 border-t border-border pt-4">
-                {applied ? (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                      <CheckCircle2 className="size-4 text-primary" /> Заявка на «{state.title}»
-                      принята {applied.registeredAt}
-                    </p>
-                    <button
-                      onClick={() => {
-                        actions.withdrawApplication(team.id);
-                        toast.success("Заявка снята");
-                      }}
-                      className="rounded-lg border border-border bg-white/60 px-3 py-2 text-xs font-semibold text-muted-foreground hover:border-destructive hover:text-destructive"
-                    >
-                      Снять заявку
-                    </button>
-                    <Link
-                      to="/teams"
-                      className="text-xs font-semibold text-primary hover:underline"
-                    >
-                      Список участников турнира
-                    </Link>
-                  </div>
-                ) : application?.status === "pending" ? (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                      <Hourglass className="size-4 text-accent" /> Заявка отправлена админам{" "}
-                      {application.submittedAt} — ожидает подтверждения
-                    </p>
-                    <button
-                      onClick={() => {
-                        actions.withdrawApplication(team.id);
-                        toast.success("Заявка отозвана");
-                      }}
-                      className="rounded-lg border border-border bg-white/60 px-3 py-2 text-xs font-semibold text-muted-foreground hover:border-destructive hover:text-destructive"
-                    >
-                      Отозвать заявку
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button
-                      onClick={() => apply(team.id)}
-                      disabled={!registrationOpen}
-                      className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Send className="size-4" /> Подать заявку на «{state.title}»
-                    </button>
-                    {application?.status === "rejected" && (
-                      <p className="text-xs font-semibold text-destructive">
-                        Предыдущая заявка отклонена
-                        {application.note ? `: ${application.note}` : ""}. Можно подать снова.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-
+                        {(a.status === "pending" || a.status === "accepted") && (
+                          <button
+                            onClick={() => {
+                              if (!confirm("Отозвать заявку?")) return;
+                              run.mutate(async () => {
+                                const { error } = await supabase.rpc("withdraw_application", { p_id: a.id });
+                                if (error) throw new Error(`!${rpcErrorText(error)}`);
+                                toast.success("Заявка отозвана");
+                              });
+                            }}
+                            className="text-xs font-semibold text-destructive hover:underline"
+                          >
+                            Отозвать
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           );
         })}

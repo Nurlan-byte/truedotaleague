@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { RankingView } from "@/components/RankingView";
-import { useTournamentState } from "@/hooks/use-tournament-state";
+import { useQuery } from "@tanstack/react-query";
+import { LoadingPanel } from "@/components/league";
+import { rankingQuery } from "@/lib/league-api";
 
 export const Route = createFileRoute("/rating-teams")({
   head: () => ({
@@ -24,12 +26,12 @@ export const Route = createFileRoute("/rating-teams")({
 });
 
 function RatingTeamsPage() {
-  const { state } = useTournamentState();
+  const { data, isLoading } = useQuery(rankingQuery());
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8">
       <h1 className="mb-5 text-4xl text-foreground">Рейтинг команд</h1>
-      <RankingView history={state.history} />
+      {isLoading ? <LoadingPanel /> : <RankingView rows={data ?? []} />}
     </div>
   );
 }
