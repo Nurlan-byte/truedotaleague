@@ -178,6 +178,22 @@ const ERRORS: Record<string, string> = {
   reason_required: "Укажите причину",
   forbidden: "Недостаточно прав",
   idempotency_key_required: "Ошибка формы, обновите страницу",
+  version_conflict: "Турнир изменён другим администратором",
+  team_limit_below_accepted: "Лимит команд меньше числа уже принятых команд",
+  admin_required: "Решение передано администратору: следующие матчи уже сыграны",
+  last_admin: "Нельзя снять роль с последнего администратора",
+  reset_confirmation_required: "Есть результаты — подтвердите сброс",
+  regulation_not_published: "Сначала опубликуйте регламент",
+  invalid_transition: "Такой переход статуса недоступен",
+  only_drafts_deletable: "Удалить можно только черновик",
+  has_applications: "У турнира есть заявки — отмените его вместо удаления",
+  has_results: "У турнира есть результаты — удаление невозможно",
+  user_not_moderator: "Сначала выдайте пользователю роль модератора",
+  tournament_not_live: "Завершить можно только идущий турнир",
+  team_not_participant: "В структуре есть команда, не допущенная к турниру",
+  invalid_placements: "Проверьте места: команды и места не должны повторяться",
+  tournament_locked: "Турнир завершён или отменён",
+  "violates check constraint": "Проверьте даты, адрес площадки и лимит команд",
 };
 
 export function rpcErrorText(err: { message?: string } | null | undefined): string {

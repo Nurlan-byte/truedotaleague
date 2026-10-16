@@ -26,9 +26,12 @@ import { Route as RegulationsRouteImport } from './routes/regulations'
 import { Route as RoadToTiRouteImport } from './routes/road-to-ti'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TeamsRouteImport } from './routes/teams'
+import { Route as AdminImportRouteImport } from './routes/admin_.import'
 import { Route as PlayersPlayerIdRouteImport } from './routes/players.$playerId'
 import { Route as TournamentsIndexRouteImport } from './routes/tournaments.index'
 import { Route as TournamentsTournamentIdRouteImport } from './routes/tournaments.$tournamentId'
+import { Route as TournamentsNewRouteImport } from './routes/tournaments.new'
+import { Route as TournamentsTournamentIdEditRouteImport } from './routes/tournaments.$tournamentId_.edit'
 import { Route as ApiPublicAuthDiscordCallbackRouteImport } from './routes/api/public/auth/discord/callback'
 import { Route as ApiPublicAuthDiscordStartRouteImport } from './routes/api/public/auth/discord/start'
 
@@ -117,6 +120,11 @@ const TeamsRoute = TeamsRouteImport.update({
   path: '/teams',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminImportRoute = AdminImportRouteImport.update({
+  id: '/admin_/import',
+  path: '/admin/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayersPlayerIdRoute = PlayersPlayerIdRouteImport.update({
   id: '/$playerId',
   path: '/$playerId',
@@ -132,6 +140,17 @@ const TournamentsTournamentIdRoute = TournamentsTournamentIdRouteImport.update({
   path: '/tournaments/$tournamentId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TournamentsNewRoute = TournamentsNewRouteImport.update({
+  id: '/tournaments/new',
+  path: '/tournaments/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TournamentsTournamentIdEditRoute =
+  TournamentsTournamentIdEditRouteImport.update({
+    id: '/tournaments/$tournamentId_/edit',
+    path: '/tournaments/$tournamentId/edit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAuthDiscordCallbackRoute =
   ApiPublicAuthDiscordCallbackRouteImport.update({
     id: '/api/public/auth/discord/callback',
@@ -163,9 +182,12 @@ export interface FileRoutesByFullPath {
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
+  '/admin/import': typeof AdminImportRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
+  '/tournaments/new': typeof TournamentsNewRoute
   '/tournaments/': typeof TournamentsIndexRoute
+  '/tournaments/$tournamentId/edit': typeof TournamentsTournamentIdEditRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
   '/api/public/auth/discord/start': typeof ApiPublicAuthDiscordStartRoute
 }
@@ -187,9 +209,12 @@ export interface FileRoutesByTo {
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
+  '/admin/import': typeof AdminImportRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
+  '/tournaments/new': typeof TournamentsNewRoute
   '/tournaments': typeof TournamentsIndexRoute
+  '/tournaments/$tournamentId/edit': typeof TournamentsTournamentIdEditRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
   '/api/public/auth/discord/start': typeof ApiPublicAuthDiscordStartRoute
 }
@@ -212,9 +237,12 @@ export interface FileRoutesById {
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
+  '/admin_/import': typeof AdminImportRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
+  '/tournaments/new': typeof TournamentsNewRoute
   '/tournaments/': typeof TournamentsIndexRoute
+  '/tournaments/$tournamentId_/edit': typeof TournamentsTournamentIdEditRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
   '/api/public/auth/discord/start': typeof ApiPublicAuthDiscordStartRoute
 }
@@ -238,9 +266,12 @@ export interface FileRouteTypes {
     | '/road-to-ti'
     | '/sitemap.xml'
     | '/teams'
+    | '/admin/import'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
+    | '/tournaments/new'
     | '/tournaments/'
+    | '/tournaments/$tournamentId/edit'
     | '/api/public/auth/discord/callback'
     | '/api/public/auth/discord/start'
   fileRoutesByTo: FileRoutesByTo
@@ -262,9 +293,12 @@ export interface FileRouteTypes {
     | '/road-to-ti'
     | '/sitemap.xml'
     | '/teams'
+    | '/admin/import'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
+    | '/tournaments/new'
     | '/tournaments'
+    | '/tournaments/$tournamentId/edit'
     | '/api/public/auth/discord/callback'
     | '/api/public/auth/discord/start'
   id:
@@ -286,9 +320,12 @@ export interface FileRouteTypes {
     | '/road-to-ti'
     | '/sitemap.xml'
     | '/teams'
+    | '/admin_/import'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
+    | '/tournaments/new'
     | '/tournaments/'
+    | '/tournaments/$tournamentId_/edit'
     | '/api/public/auth/discord/callback'
     | '/api/public/auth/discord/start'
   fileRoutesById: FileRoutesById
@@ -311,8 +348,11 @@ export interface RootRouteChildren {
   RoadToTiRoute: typeof RoadToTiRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamsRoute: typeof TeamsRoute
+  AdminImportRoute: typeof AdminImportRoute
   TournamentsTournamentIdRoute: typeof TournamentsTournamentIdRoute
+  TournamentsNewRoute: typeof TournamentsNewRoute
   TournamentsIndexRoute: typeof TournamentsIndexRoute
+  TournamentsTournamentIdEditRoute: typeof TournamentsTournamentIdEditRoute
   ApiPublicAuthDiscordCallbackRoute: typeof ApiPublicAuthDiscordCallbackRoute
   ApiPublicAuthDiscordStartRoute: typeof ApiPublicAuthDiscordStartRoute
 }
@@ -438,6 +478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/import': {
+      id: '/admin_/import'
+      path: '/admin/import'
+      fullPath: '/admin/import'
+      preLoaderRoute: typeof AdminImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/players/$playerId': {
       id: '/players/$playerId'
       path: '/$playerId'
@@ -457,6 +504,20 @@ declare module '@tanstack/react-router' {
       path: '/tournaments/$tournamentId'
       fullPath: '/tournaments/$tournamentId'
       preLoaderRoute: typeof TournamentsTournamentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tournaments/new': {
+      id: '/tournaments/new'
+      path: '/tournaments/new'
+      fullPath: '/tournaments/new'
+      preLoaderRoute: typeof TournamentsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tournaments/$tournamentId_/edit': {
+      id: '/tournaments/$tournamentId_/edit'
+      path: '/tournaments/$tournamentId/edit'
+      fullPath: '/tournaments/$tournamentId/edit'
+      preLoaderRoute: typeof TournamentsTournamentIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/auth/discord/callback': {
@@ -505,8 +566,11 @@ const rootRouteChildren: RootRouteChildren = {
   RoadToTiRoute: RoadToTiRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamsRoute: TeamsRoute,
+  AdminImportRoute: AdminImportRoute,
   TournamentsTournamentIdRoute: TournamentsTournamentIdRoute,
+  TournamentsNewRoute: TournamentsNewRoute,
   TournamentsIndexRoute: TournamentsIndexRoute,
+  TournamentsTournamentIdEditRoute: TournamentsTournamentIdEditRoute,
   ApiPublicAuthDiscordCallbackRoute: ApiPublicAuthDiscordCallbackRoute,
   ApiPublicAuthDiscordStartRoute: ApiPublicAuthDiscordStartRoute,
 }

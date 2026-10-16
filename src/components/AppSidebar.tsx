@@ -15,7 +15,7 @@ import { useAdmin } from "@/hooks/use-admin";
 
 const items = [
   { title: "Главная", url: "/", icon: Home },
-  { title: "Создать турнир", url: "/create", icon: Plus },
+  { title: "Создать турнир", url: "/tournaments/new", icon: Plus },
   { title: "Турниры", url: "/tournaments", icon: Radio },
   { title: "Драфт", url: "/draft", icon: ListChecks },
   { title: "Моя команда", url: "/my-team", icon: ShieldPlus },
@@ -35,7 +35,7 @@ export function AppSidebar() {
   const { isAdmin } = useAdmin();
 
   const visibleItems = items.filter((item) =>
-    item.url !== "/create" || isAdmin,
+    item.url !== "/tournaments/new" || isAdmin,
   );
 
   return (

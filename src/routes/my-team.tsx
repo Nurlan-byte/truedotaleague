@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { myApplicationsQuery, myTeamsQuery } from "@/lib/league-api";
 import { APPLICATION_LABEL, formatLeagueDate, rpcErrorText } from "@/lib/league";
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
+import { effectiveRegulationQuery } from "@/lib/league-admin";
 
 export const Route = createFileRoute("/my-team")({
   head: () => ({
@@ -36,6 +37,7 @@ function MyTeamPage() {
   const qc = useQueryClient();
   const teams = useQuery(myTeamsQuery(user?.id));
   const apps = useQuery(myApplicationsQuery((teams.data ?? []).map((t) => t.id)));
+  const effectiveReg = useQuery(effectiveRegulationQuery());
   const [name, setName] = useState("");
   const [tag, setTag] = useState("");
   const [player, setPlayer] = useState<Record<string, { nickname: string; role: string; mmr: string }>>({});
@@ -295,6 +297,39 @@ function MyTeamPage() {
                           {APPLICATION_LABEL[a.status]}
                           {a.reject_reason ? ` — ${a.reject_reason}` : ""} · {formatLeagueDate(a.created_at)}
                         </span>
+                        {a.status === "rejected" && a.tournaments?.status === "registration_open" && (
+                          <Link
+                            to="/tournaments/$tournamentId"
+                            params={{ tournamentId: a.tournament_id }}
+                            search={{ apply: true }}
+                            className="text-xs font-semibold text-primary hover:underline"
+                          >
+                            Подать повторно
+                          </Link>
+                        )}
+                        {(a.status === "pending" || a.status === "accepted") &&
+                          effectiveReg.data &&
+                          a.regulation_version_id !== effectiveReg.data.id && (
+                            <span className="w-full rounded-md bg-accent/15 px-2 py-1 text-xs text-foreground">
+                              Вступила в силу новая версия регламента.{" "}
+                              <Link to="/regulations" className="font-semibold text-primary hover:underline">Ознакомьтесь</Link> и{" "}
+                              <button
+                                className="font-semibold text-primary hover:underline"
+                                onClick={() =>
+                                  run.mutate(async () => {
+                                    const { error } = await supabase.rpc("reacknowledge_regulation", {
+                                      p_application_id: a.id,
+                                      p_version_id: effectiveReg.data!.id,
+                                    });
+                                    if (error) throw new Error(`!${rpcErrorText(error)}`);
+                                    toast.success("Ознакомление подтверждено");
+                                  })
+                                }
+                              >
+                                подтвердите ознакомление
+                              </button>
+                            </span>
+                          )}
                         {(a.status === "pending" || a.status === "accepted") && (
                           <button
                             onClick={() => {

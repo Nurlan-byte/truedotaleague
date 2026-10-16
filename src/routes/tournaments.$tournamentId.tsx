@@ -20,6 +20,9 @@ import {
   toViewModel,
 } from "@/lib/league";
 import { setReturnTo } from "@/lib/return-to";
+import { StaffPanel } from "@/components/StaffPanel";
+import { useAdmin } from "@/hooks/use-admin";
+import { isStaffQuery } from "@/lib/league-admin";
 
 export const Route = createFileRoute("/tournaments/$tournamentId")({
   validateSearch: (search: Record<string, unknown>): { apply?: boolean } =>
@@ -56,6 +59,9 @@ function TournamentPage() {
   const { data: t, isLoading, error } = useQuery({ ...tournamentQuery(tournamentId), refetchInterval: 15000 });
   const { user, byTournament } = useMyApplications();
   const [applyOpen, setApplyOpen] = useState(false);
+  const { isAdmin } = useAdmin();
+  const staff = useQuery(isStaffQuery(tournamentId, user?.id));
+  const isStaff = isAdmin || !!staff.data;
 
   useEffect(() => {
     if (search.apply && t?.status === "registration_open" && user) setApplyOpen(true);
@@ -150,6 +156,8 @@ function TournamentPage() {
           </ul>
         </div>
       </header>
+
+      {user && isStaff && <StaffPanel t={t} isAdmin={isAdmin} isStaff={isStaff} userId={user.id} />}
 
       {t.description.trim() && (
         <Section title="Описание">

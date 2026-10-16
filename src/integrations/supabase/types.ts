@@ -896,6 +896,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      delete_draft_tournament: { Args: { p_id: string }; Returns: undefined }
       finish_tournament: {
         Args: { p_id: string; p_placements: Json; p_reason?: string }
         Returns: {
@@ -931,6 +932,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      generate_structure: {
+        Args: {
+          p_confirm_reset?: boolean
+          p_kind: string
+          p_payload: Json
+          p_tournament_id: string
+        }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -938,6 +948,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      import_legacy_team: { Args: { p: Json }; Returns: string }
+      import_legacy_tournament: { Args: { p: Json }; Returns: Json }
       is_admin: { Args: { _uid: string }; Returns: boolean }
       is_staff_for: {
         Args: { _tournament_id: string; _uid: string }
@@ -969,6 +981,30 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "regulation_versions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reacknowledge_regulation: {
+        Args: { p_application_id: string; p_version_id: string }
+        Returns: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          idempotency_key: string
+          regulation_version_id: string | null
+          reject_reason: string | null
+          roster_snapshot: Json
+          status: Database["public"]["Enums"]["application_status"]
+          submitted_by: string
+          team_id: string
+          tournament_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "applications"
           isOneToOne: true
           isSetofReturn: false
         }
