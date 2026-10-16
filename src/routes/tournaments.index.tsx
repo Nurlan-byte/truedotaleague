@@ -66,7 +66,7 @@ function CatalogPage() {
           </Link>
           {isAdmin && (
             <Link
-              to="/create"
+              to="/tournaments/new"
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
             >
               <Plus className="size-4" /> Создать турнир
