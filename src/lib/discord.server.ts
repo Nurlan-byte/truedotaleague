@@ -59,7 +59,13 @@ export function discordAvatarUrl(user: DiscordUser): string {
   return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
 }
 
+export const FALLBACK_EMAIL_DOMAIN = "@discord.tdl.local";
+
 export function discordEmail(user: DiscordUser): string {
-  if (user.email && user.verified !== false) return user.email.toLowerCase();
-  return `discord_${user.id}@discord.tdl.local`;
+  if (user.email && user.verified === true) return user.email.toLowerCase();
+  return `discord_${user.id}${FALLBACK_EMAIL_DOMAIN}`;
+}
+
+export function hasVerifiedDiscordEmail(user: DiscordUser, email: string): boolean {
+  return user.verified === true && !!user.email && !email.endsWith(FALLBACK_EMAIL_DOMAIN);
 }
