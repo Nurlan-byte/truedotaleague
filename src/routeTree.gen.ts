@@ -26,6 +26,7 @@ import { Route as RegulationsRouteImport } from './routes/regulations'
 import { Route as RoadToTiRouteImport } from './routes/road-to-ti'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TeamsRouteImport } from './routes/teams'
+import { Route as AdminImportRouteImport } from './routes/admin_.import'
 import { Route as PlayersPlayerIdRouteImport } from './routes/players.$playerId'
 import { Route as TournamentsIndexRouteImport } from './routes/tournaments.index'
 import { Route as TournamentsTournamentIdRouteImport } from './routes/tournaments.$tournamentId'
@@ -119,6 +120,11 @@ const TeamsRoute = TeamsRouteImport.update({
   path: '/teams',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminImportRoute = AdminImportRouteImport.update({
+  id: '/admin_/import',
+  path: '/admin/import',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayersPlayerIdRoute = PlayersPlayerIdRouteImport.update({
   id: '/$playerId',
   path: '/$playerId',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
+  '/admin/import': typeof AdminImportRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
+  '/admin/import': typeof AdminImportRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
+  '/admin_/import': typeof AdminImportRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
     | '/road-to-ti'
     | '/sitemap.xml'
     | '/teams'
+    | '/admin/import'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/road-to-ti'
     | '/sitemap.xml'
     | '/teams'
+    | '/admin/import'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/road-to-ti'
     | '/sitemap.xml'
     | '/teams'
+    | '/admin_/import'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
@@ -336,6 +348,7 @@ export interface RootRouteChildren {
   RoadToTiRoute: typeof RoadToTiRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamsRoute: typeof TeamsRoute
+  AdminImportRoute: typeof AdminImportRoute
   TournamentsTournamentIdRoute: typeof TournamentsTournamentIdRoute
   TournamentsNewRoute: typeof TournamentsNewRoute
   TournamentsIndexRoute: typeof TournamentsIndexRoute
@@ -465,6 +478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/import': {
+      id: '/admin_/import'
+      path: '/admin/import'
+      fullPath: '/admin/import'
+      preLoaderRoute: typeof AdminImportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/players/$playerId': {
       id: '/players/$playerId'
       path: '/$playerId'
@@ -546,6 +566,7 @@ const rootRouteChildren: RootRouteChildren = {
   RoadToTiRoute: RoadToTiRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamsRoute: TeamsRoute,
+  AdminImportRoute: AdminImportRoute,
   TournamentsTournamentIdRoute: TournamentsTournamentIdRoute,
   TournamentsNewRoute: TournamentsNewRoute,
   TournamentsIndexRoute: TournamentsIndexRoute,

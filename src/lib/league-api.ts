@@ -78,7 +78,7 @@ export const myApplicationsQuery = (teamIds: string[]) =>
       if (!teamIds.length) return [];
       const { data, error } = await supabase
         .from("applications")
-        .select("id, tournament_id, team_id, status, reject_reason, created_at, tournaments(title, registration_closes_at, status)")
+        .select("id, tournament_id, team_id, status, reject_reason, created_at, regulation_version_id, tournaments(title, registration_closes_at, status)")
         .in("team_id", teamIds)
         .order("created_at", { ascending: false });
       if (error) throw error;
