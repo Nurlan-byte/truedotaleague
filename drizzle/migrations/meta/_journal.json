@@ -8,6 +8,13 @@
       "when": 1792181007342,
       "tag": "0000_roles_and_tournament_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792182298477,
+      "tag": "0001_stage3_admin_rpcs",
+      "breakpoints": true
     }
   ]
 }
