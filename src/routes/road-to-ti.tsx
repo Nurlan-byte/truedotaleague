@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Route as RouteIcon } from "lucide-react";
-import { leaderboard } from "@/lib/tournament";
 import { TeamLogo } from "@/components/TeamLogo";
-import { useTournamentState } from "@/hooks/use-tournament-state";
+import { useQuery } from "@tanstack/react-query";
+import { rankingQuery } from "@/lib/league-api";
 
 export const Route = createFileRoute("/road-to-ti")({
   head: () => ({
@@ -28,8 +28,8 @@ export const Route = createFileRoute("/road-to-ti")({
 const SLOTS = 4;
 
 function RoadToTiPage() {
-  const { state } = useTournamentState();
-  const rows = leaderboard(state.history);
+  const { data } = useQuery(rankingQuery());
+  const rows = (data ?? []).map((r) => ({ ...r, teamName: r.name }));
   const max = rows[0]?.points ?? 1;
 
   return (
@@ -54,7 +54,7 @@ function RoadToTiPage() {
         <ol className="panel mt-6 space-y-2 p-4">
           {rows.map((r, i) => (
             <li
-              key={r.teamName}
+              key={r.teamId}
               className={`rounded-lg px-3 py-2.5 ${
                 i < SLOTS ? "bg-primary/10" : "bg-white/50"
               }`}

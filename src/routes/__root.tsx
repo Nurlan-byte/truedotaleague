@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -16,6 +17,8 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
 import { Toaster } from "@/components/ui/sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { peekReturnTo, takeReturnTo } from "@/lib/return-to";
 
 function NotFoundComponent() {
   return (
@@ -107,7 +110,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <head>
         <HeadContent />
       </head>
@@ -129,6 +132,7 @@ function RootComponent() {
           <AppSidebar />
           <div className="flex min-w-0 flex-1 flex-col">
             <AppHeader />
+            <ReturnAfterAuth />
             <main className="min-w-0 flex-1">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
@@ -139,4 +143,18 @@ function RootComponent() {
       </SidebarProvider>
     </QueryClientProvider>
   );
+}
+
+/** После входа (email, Google, Discord) возвращает гостя на страницу, откуда он пришёл. */
+function ReturnAfterAuth() {
+  const { user } = useAuth();
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const router = useRouter();
+  useEffect(() => {
+    if (!user || !peekReturnTo()) return;
+    if (pathname !== "/" && pathname !== "/auth") return;
+    const target = takeReturnTo();
+    if (target) router.history.replace(target);
+  }, [user, pathname, router]);
+  return null;
 }
