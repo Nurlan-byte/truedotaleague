@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { RankingView } from "@/components/RankingView";
 import type { RankingRow } from "@/lib/league-api";
+import { rowMovement, rowTopInTable } from "./ranking-motion";
 import { canonicalRanking, visibleRanking } from "./ranking-view";
 
 const rows: RankingRow[] = [
@@ -48,5 +49,21 @@ describe("ranking presentation", () => {
     expect(html).toContain('tabindex="0"');
     expect(html).toContain('aria-label="Таблица рейтинга; прокрутите горизонтально');
     expect(html).toContain('class="px-4 py-3 font-bold text-accent">1</td>');
+  });
+
+  it("does not animate a no-op query after the page scrolls", () => {
+    const sameRows = visibleRanking(standings, " ", "all", "points-desc");
+    expect(sameRows.map((row) => row.teamId)).toEqual(standings.map((row) => row.teamId));
+    const before = rowTopInTable(620, 500);
+    const afterScrolling = rowTopInTable(420, 300);
+    expect(rowMovement(before, afterScrolling)).toBe(0);
+  });
+
+  it("animates only the real row move after scroll then ascending sort", () => {
+    const ascending = visibleRanking(standings, "", "all", "points-asc");
+    expect(ascending[0].teamId).toBe("gamma");
+    const zenithBefore = rowTopInTable(620, 500);
+    const zenithAfterScrollAndSort = rowTopInTable(340, 300);
+    expect(rowMovement(zenithBefore, zenithAfterScrollAndSort)).toBe(80);
   });
 });

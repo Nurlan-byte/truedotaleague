@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Search, Trophy, X } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import type { RankingRow } from "@/lib/league-api";
+import { rowMovement, rowTopInTable } from "@/lib/ranking-motion";
 import {
   canonicalRanking,
   visibleRanking,
@@ -21,8 +22,9 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
   const [filter, setFilter] = useState<RankingFilter>("all");
   const [sort, setSort] = useState<RankingSort>("points-desc");
   const searchRef = useRef<HTMLInputElement>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
-  const previousRects = useRef(new Map<string, DOMRect>());
+  const previousPositions = useRef(new Map<string, number>());
   const hasRendered = useRef(false);
   const activeAnimations = useRef<Animation[]>([]);
   const standings = useMemo(() => canonicalRanking(rows), [rows]);
@@ -34,24 +36,26 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
   useLayoutEffect(() => {
     activeAnimations.current.forEach((animation) => animation.cancel());
     activeAnimations.current = [];
-    const nextRects = new Map<string, DOMRect>();
+    const nextPositions = new Map<string, number>();
+    const tableTop = tableRef.current?.getBoundingClientRect().top;
     for (const row of visibleRows) {
       const element = rowRefs.current.get(row.teamId);
-      if (element) nextRects.set(row.teamId, element.getBoundingClientRect());
+      if (element && tableTop !== undefined)
+        nextPositions.set(row.teamId, rowTopInTable(element.getBoundingClientRect().top, tableTop));
     }
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!reduceMotion && hasRendered.current) {
       for (const row of visibleRows) {
         const element = rowRefs.current.get(row.teamId);
-        const before = previousRects.current.get(row.teamId);
-        const after = nextRects.get(row.teamId);
-        if (!element || !after) continue;
-        const delta = before ? before.top - after.top : 8;
-        if (Math.abs(delta) < 1 && before) continue;
+        const before = previousPositions.current.get(row.teamId);
+        const after = nextPositions.get(row.teamId);
+        if (!element || after === undefined) continue;
+        const delta = before === undefined ? 8 : rowMovement(before, after);
+        if (Math.abs(delta) < 1 && before !== undefined) continue;
         activeAnimations.current.push(
           element.animate(
             [
-              { transform: `translateY(${delta}px)`, opacity: before ? 1 : 0 },
+              { transform: `translateY(${delta}px)`, opacity: before === undefined ? 0 : 1 },
               { transform: "translateY(0)", opacity: 1 },
             ],
             { duration: 260, easing: "cubic-bezier(0.2, 0, 0, 1)" },
@@ -59,7 +63,7 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
         );
       }
     }
-    previousRects.current = nextRects;
+    previousPositions.current = nextPositions;
     hasRendered.current = true;
   }, [visibleRows]);
 
@@ -203,7 +207,7 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
           role="region"
           aria-label="Таблица рейтинга; прокрутите горизонтально для остальных столбцов"
         >
-          <table className="w-full min-w-[560px] border-collapse text-sm">
+          <table ref={tableRef} className="w-full min-w-[560px] border-collapse text-sm">
             <caption className="sr-only">Рейтинг команд по TDL points, титулам и участию</caption>
             <thead className="bg-secondary/70 text-secondary-foreground">
               <tr className="text-xs uppercase tracking-wider">
