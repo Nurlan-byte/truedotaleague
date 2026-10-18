@@ -1,12 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Search, Trophy, X } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import type { RankingRow } from "@/lib/league-api";
+import {
+  canonicalRanking,
+  visibleRanking,
+  type RankingFilter,
+  type RankingSort,
+} from "@/lib/ranking-view";
 
-type Filter = "all" | "titles" | "events";
-type Sort = "points-desc" | "points-asc" | "titles" | "events";
 const number = new Intl.NumberFormat("ru-RU");
-const filters: { value: Filter; label: string }[] = [
+const filters: { value: RankingFilter; label: string }[] = [
   { value: "all", label: "Все команды" },
   { value: "titles", label: "С титулами" },
   { value: "events", label: "С участиями" },
@@ -14,33 +18,62 @@ const filters: { value: Filter; label: string }[] = [
 
 export function RankingView({ rows }: { rows: RankingRow[] }) {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
-  const [sort, setSort] = useState<Sort>("points-desc");
+  const [filter, setFilter] = useState<RankingFilter>("all");
+  const [sort, setSort] = useState<RankingSort>("points-desc");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
+  const previousRects = useRef(new Map<string, DOMRect>());
+  const hasRendered = useRef(false);
+  const activeAnimations = useRef<Animation[]>([]);
+  const standings = useMemo(() => canonicalRanking(rows), [rows]);
+  const visibleRows = useMemo(
+    () => visibleRanking(standings, search, filter, sort),
+    [standings, search, filter, sort],
+  );
 
-  const visibleRows = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase("ru-RU");
-    const originalOrder = new Map(rows.map((row, index) => [row.teamId, index]));
-    return rows
-      .filter(
-        (row) =>
-          (!query || row.name.toLocaleLowerCase("ru-RU").includes(query)) &&
-          (filter !== "titles" || row.titles > 0) &&
-          (filter !== "events" || row.events > 0),
-      )
-      .sort((a, b) => {
-        const difference =
-          sort === "points-asc"
-            ? a.points - b.points
-            : sort === "titles"
-              ? b.titles - a.titles
-              : sort === "events"
-                ? b.events - a.events
-                : b.points - a.points;
-        return (
-          difference || (originalOrder.get(a.teamId) ?? 0) - (originalOrder.get(b.teamId) ?? 0)
+  useLayoutEffect(() => {
+    activeAnimations.current.forEach((animation) => animation.cancel());
+    activeAnimations.current = [];
+    const nextRects = new Map<string, DOMRect>();
+    for (const row of visibleRows) {
+      const element = rowRefs.current.get(row.teamId);
+      if (element) nextRects.set(row.teamId, element.getBoundingClientRect());
+    }
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!reduceMotion && hasRendered.current) {
+      for (const row of visibleRows) {
+        const element = rowRefs.current.get(row.teamId);
+        const before = previousRects.current.get(row.teamId);
+        const after = nextRects.get(row.teamId);
+        if (!element || !after) continue;
+        const delta = before ? before.top - after.top : 8;
+        if (Math.abs(delta) < 1 && before) continue;
+        activeAnimations.current.push(
+          element.animate(
+            [
+              { transform: `translateY(${delta}px)`, opacity: before ? 1 : 0 },
+              { transform: "translateY(0)", opacity: 1 },
+            ],
+            { duration: 260, easing: "cubic-bezier(0.2, 0, 0, 1)" },
+          ),
         );
-      });
-  }, [rows, search, filter, sort]);
+      }
+    }
+    previousRects.current = nextRects;
+    hasRendered.current = true;
+  }, [visibleRows]);
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const cancelMotion = () => {
+      if (preference.matches) activeAnimations.current.forEach((animation) => animation.cancel());
+    };
+    preference.addEventListener("change", cancelMotion);
+    return () => {
+      preference.removeEventListener("change", cancelMotion);
+      activeAnimations.current.forEach((animation) => animation.cancel());
+    };
+  }, []);
 
   if (rows.length === 0)
     return (
@@ -56,7 +89,7 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
     );
 
   return (
-    <section className="panel overflow-hidden" aria-labelledby="ranking-title">
+    <section className="panel animate-slide overflow-hidden" aria-labelledby="ranking-title">
       <div className="border-b border-border bg-white/35 px-4 py-5 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -83,6 +116,7 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
                 aria-hidden="true"
               />
               <input
+                ref={searchRef}
                 id="ranking-search"
                 type="search"
                 value={search}
@@ -93,7 +127,10 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
               {search && (
                 <button
                   type="button"
-                  onClick={() => setSearch("")}
+                  onClick={() => {
+                    setSearch("");
+                    searchRef.current?.focus();
+                  }}
                   aria-label="Очистить поиск"
                   className="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                 >
@@ -129,7 +166,7 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
             <select
               id="ranking-sort"
               value={sort}
-              onChange={(event) => setSort(event.target.value as Sort)}
+              onChange={(event) => setSort(event.target.value as RankingSort)}
               className="h-10 w-full rounded-lg border border-border bg-white/75 px-3 text-sm font-semibold text-foreground shadow-sm transition-colors hover:border-primary/45 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 lg:w-auto"
             >
               <option value="points-desc">TDL: по убыванию</option>
@@ -144,7 +181,7 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
         Показано команд: {visibleRows.length}
       </p>
       {visibleRows.length === 0 ? (
-        <div className="px-6 py-12 text-center">
+        <div className="animate-slide px-6 py-12 text-center">
           <p className="font-semibold text-foreground">Команды не найдены</p>
           <p className="mt-1 text-sm text-muted-foreground">Попробуйте другой запрос или фильтр.</p>
           <button
@@ -152,6 +189,7 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
             onClick={() => {
               setSearch("");
               setFilter("all");
+              searchRef.current?.focus();
             }}
             className="mt-4 rounded-lg border border-primary/30 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
           >
@@ -159,7 +197,12 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
           </button>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary"
+          tabIndex={0}
+          role="region"
+          aria-label="Таблица рейтинга; прокрутите горизонтально для остальных столбцов"
+        >
           <table className="w-full min-w-[560px] border-collapse text-sm">
             <caption className="sr-only">Рейтинг команд по TDL points, титулам и участию</caption>
             <thead className="bg-secondary/70 text-secondary-foreground">
@@ -182,15 +225,19 @@ export function RankingView({ rows }: { rows: RankingRow[] }) {
               </tr>
             </thead>
             <tbody>
-              {visibleRows.map((row, index) => (
+              {visibleRows.map((row) => (
                 <tr
                   key={row.teamId}
+                  ref={(element) => {
+                    if (element) rowRefs.current.set(row.teamId, element);
+                    else rowRefs.current.delete(row.teamId);
+                  }}
                   className="group border-t border-border/65 bg-white/30 transition-colors duration-200 hover:bg-primary/8 focus-within:bg-primary/8"
                 >
                   <td
-                    className={`px-4 py-3 font-bold ${index === 0 ? "text-accent" : index === 1 ? "text-primary" : index === 2 ? "text-win" : "text-muted-foreground"}`}
+                    className={`px-4 py-3 font-bold ${row.rank === 1 ? "text-accent" : row.rank === 2 ? "text-primary" : row.rank === 3 ? "text-win" : "text-muted-foreground"}`}
                   >
-                    {index + 1}
+                    {row.rank}
                   </td>
                   <th scope="row" className="px-3 py-3 text-left font-medium text-foreground">
                     <span className="flex min-w-0 items-center gap-3">

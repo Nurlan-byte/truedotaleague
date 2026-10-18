@@ -75,7 +75,7 @@ function RatingTeamsPage() {
           <span className="sr-only">Загружаем рейтинг команд</span>
         </div>
       ) : isError ? (
-        <div className="panel p-6" role="alert">
+        <div className="panel animate-slide p-6" role="alert">
           <h2 className="text-xl text-foreground">Не удалось загрузить рейтинг</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Попробуйте ещё раз через несколько секунд.
