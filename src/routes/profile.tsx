@@ -54,7 +54,7 @@ function ProfilePage() {
     supabase
       .from("profiles")
       .select(
-        "nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team, discord_id, discord_username, discord_global_name",
+        "nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team",
       )
       .eq("id", user.id)
       .maybeSingle()
@@ -69,16 +69,29 @@ function ProfilePage() {
         setTeamName(data.team_name ?? "");
         setTeamRole(data.team_role ?? "");
         setLookingForTeam(Boolean(data.looking_for_team));
-        setDiscord(
-          data.discord_id
-            ? {
-                id: data.discord_id,
-                username: data.discord_username ?? "",
-                name: data.discord_global_name ?? "",
-              }
-            : null,
-        );
       });
+    supabase.rpc("get_my_discord_identity").then(({ data, error: identityError }) => {
+      if (!active) return;
+      if (identityError) {
+        setError("Не удалось загрузить привязку Discord. Обновите страницу.");
+        return;
+      }
+      const identity = data && typeof data === "object" && !Array.isArray(data) ? data : null;
+      const id = identity?.discord_id;
+      setDiscord(
+        typeof id === "string" && id
+          ? {
+              id,
+              username:
+                typeof identity?.discord_username === "string" ? identity.discord_username : "",
+              name:
+                typeof identity?.discord_global_name === "string"
+                  ? identity.discord_global_name
+                  : "",
+            }
+          : null,
+      );
+    });
     return () => {
       active = false;
     };
