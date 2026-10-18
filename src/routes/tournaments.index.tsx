@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { BookOpen, CalendarClock, MapPin, Plus, Search, Trophy, Users, Wifi } from "lucide-react";
 import { LoadingPanel, StatusBadge, TournamentImage } from "@/components/league";
+import { QueryFeedback } from "@/components/LeaguePageIntro";
 import { useAdmin } from "@/hooks/use-admin";
 import { useMyApplications } from "@/hooks/use-my-applications";
 import { catalogQuery, type CatalogItem } from "@/lib/league-api";
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/tournaments/")({
 
 function CatalogPage() {
   const { isAdmin } = useAdmin();
-  const { data, isLoading, error } = useQuery(catalogQuery());
+  const { data, isPending, isError, refetch } = useQuery(catalogQuery());
   const { byTournament } = useMyApplications();
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<CatalogSort>("default");
@@ -75,10 +76,16 @@ function CatalogPage() {
         </div>
       </div>
 
+      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        Актуальные соревнования лиги, открытые регистрации и результаты. Выберите турнир, чтобы увидеть расписание и условия участия.
+      </p>
+
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
         <label className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
+            type="search"
+            aria-label="Поиск турнира"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Поиск по названию"
@@ -99,10 +106,10 @@ function CatalogPage() {
       </div>
 
       <div className="mt-5">
-        {isLoading ? (
+        {isPending ? (
           <LoadingPanel text="Загружаем турниры…" />
-        ) : error ? (
-          <LoadingPanel text="Не удалось загрузить турниры. Обновите страницу." />
+        ) : isError ? (
+          <QueryFeedback text="Не удалось загрузить турниры." retry={() => void refetch()} />
         ) : list.length === 0 ? (
           <LoadingPanel text={q ? "Ничего не найдено." : "Турниров пока нет — следите за анонсами."} />
         ) : (
@@ -125,7 +132,6 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
   const next = nextMatch(t.matches);
   const nameOf = (id: string | null) => t.tournament_participants.find((p) => p.team_id === id)?.team_name ?? "—";
   const prize = formatPrize(t);
-  const open = () => navigate({ to: "/tournaments/$tournamentId", params: { tournamentId: t.id } });
 
   const btn =
     "relative z-10 inline-flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-bold shadow-sm";
@@ -245,8 +251,7 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
 
   return (
     <li
-      onClick={open}
-      className={`panel flex min-w-0 cursor-pointer flex-col overflow-hidden transition-shadow hover:shadow-lg ${
+      className={`panel relative flex min-w-0 flex-col overflow-hidden transition-shadow hover:shadow-lg focus-within:ring-2 focus-within:ring-primary ${
         t.status === "cancelled" ? "opacity-80" : ""
       }`}
     >
@@ -259,7 +264,7 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
           to="/tournaments/$tournamentId"
           params={{ tournamentId: t.id }}
           onClick={(e) => e.stopPropagation()}
-          className="line-clamp-2 break-words text-lg font-bold leading-tight text-foreground hover:text-primary"
+          className="line-clamp-2 break-words text-lg font-bold leading-tight text-foreground after:absolute after:inset-0 hover:text-primary"
         >
           {t.title}
         </Link>

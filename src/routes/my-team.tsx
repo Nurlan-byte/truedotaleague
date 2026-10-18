@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ImagePlus, Plus, Shield, Trash2, UserPlus, Users, X } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { LoadingPanel } from "@/components/league";
+import { QueryFeedback } from "@/components/LeaguePageIntro";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { myApplicationsQuery, myTeamsQuery } from "@/lib/league-api";
@@ -99,8 +100,8 @@ function MyTeamPage() {
       <div className="panel mt-5 p-5">
         <h2 className="text-lg font-semibold text-foreground">Создать команду</h2>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название команды" className={`${input} flex-1`} />
-          <input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="Тег (напр. TDL)" maxLength={8} className={`${input} sm:w-40`} />
+          <input aria-label="Название команды" value={name} onChange={(e) => setName(e.target.value)} placeholder="Название команды" className={`${input} flex-1`} />
+          <input aria-label="Тег команды" value={tag} onChange={(e) => setTag(e.target.value)} placeholder="Тег (напр. TDL)" maxLength={8} className={`${input} sm:w-40`} />
           <button
             onClick={create}
             disabled={run.isPending}
@@ -113,6 +114,8 @@ function MyTeamPage() {
 
       {teams.isLoading ? (
         <div className="mt-5"><LoadingPanel /></div>
+      ) : teams.isError ? (
+        <div className="mt-5"><QueryFeedback text="Не удалось загрузить ваши команды." retry={() => void teams.refetch()} /></div>
       ) : (teams.data ?? []).length === 0 ? (
         <div className="panel mt-5 p-5 text-sm text-muted-foreground">У вас пока нет команды. Создайте её выше.</div>
       ) : null}
@@ -205,18 +208,21 @@ function MyTeamPage() {
               {members.length < 7 && (
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                   <input
+                    aria-label={`Ник игрока команды ${team.name}`}
                     value={p.nickname}
                     onChange={(e) => setPlayer({ ...player, [team.id]: { ...p, nickname: e.target.value } })}
                     placeholder="Ник игрока"
                     className={`${input} flex-1`}
                   />
                   <input
+                    aria-label={`Роль игрока команды ${team.name}`}
                     value={p.role}
                     onChange={(e) => setPlayer({ ...player, [team.id]: { ...p, role: e.target.value } })}
                     placeholder="Роль (Carry, Mid…)"
                     className={`${input} sm:w-36`}
                   />
                   <input
+                    aria-label={`MMR игрока команды ${team.name}`}
                     value={p.mmr}
                     onChange={(e) => setPlayer({ ...player, [team.id]: { ...p, mmr: e.target.value } })}
                     placeholder="MMR"
@@ -254,6 +260,7 @@ function MyTeamPage() {
                   </p>
                   <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                     <input
+                      aria-label={`Ник капитана команды ${team.name}`}
                       value={captainNick[team.id] ?? ""}
                       onChange={(e) => setCaptainNick({ ...captainNick, [team.id]: e.target.value })}
                       placeholder="Ник пользователя на сайте"

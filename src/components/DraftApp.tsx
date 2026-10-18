@@ -18,7 +18,9 @@ function usePersisted() {
         setS(v);
         if (v.phase === "live") setRestored(true);
       }
-    } catch {}
+    } catch {
+      // Ignore an unreadable local draft and start with a clean setup.
+    }
     setReady(true);
   }, []);
   useEffect(() => {
@@ -65,6 +67,9 @@ export function DraftApp() {
 
   return (
     <div className="min-h-screen">
+      <p className="no-print border-b border-border bg-white/65 px-4 py-2 text-center text-xs text-muted-foreground">
+        Драфт работает в этом браузере. Его результаты не меняют официальные составы и турниры лиги.
+      </p>
       <header className="no-print sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-3 px-4 py-3">
           <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -133,7 +138,7 @@ export function DraftApp() {
       </main>
 
       {toast && (
-        <div className="no-print fixed bottom-5 left-1/2 z-50 -translate-x-1/2 animate-slide rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+          <div role="status" aria-live="polite" className="no-print fixed bottom-5 left-1/2 z-50 -translate-x-1/2 animate-slide rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
           {toast}
         </div>
       )}
@@ -233,9 +238,9 @@ function Setup({ s, setS }: SP) {
             Добавить {parseBulk(bulk).length || ""} игроков
           </button>
         </details>
-        <ul className="mt-3 max-h-[440px] space-y-1 overflow-y-auto pr-1">
+        <ul className="mt-3 max-h-[440px] space-y-1 overflow-auto pr-1">
           {s.players.map((pl, i) => (
-            <li key={pl.id} className="grid grid-cols-[24px_minmax(0,2fr)_minmax(0,1fr)_60px_20px] items-center gap-1.5">
+            <li key={pl.id} className="grid min-w-[390px] grid-cols-[24px_minmax(0,2fr)_minmax(0,1fr)_60px_20px] items-center gap-1.5">
               <span className="text-right text-xs text-muted-foreground">{i + 1}</span>
               <input className="field py-1" value={pl.name} onChange={(e) => updP(pl.id, { name: e.target.value })} />
               <input className="field py-1" value={pl.nick ?? ""} placeholder="ник" onChange={(e) => updP(pl.id, { nick: e.target.value || undefined })} />
@@ -327,8 +332,8 @@ function Live({ s, setS, cur, madePicks, totalPicks }: SP & { cur: ReturnType<ty
   const [last, setLast] = useState<{ name: string; team: string; color: string; key: number } | null>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
 
-  const avail = availablePlayers(s);
-  const availIds = new Set(avail.map((p) => p.id));
+  const avail = useMemo(() => availablePlayers(s), [s]);
+  const availIds = useMemo(() => new Set(avail.map((p) => p.id)), [avail]);
   const hasRatings = s.players.some((p) => p.rating != null);
   const list = useMemo(() => {
     const src = showTaken ? s.players : avail;

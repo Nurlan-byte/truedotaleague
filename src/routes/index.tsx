@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Crown, Medal, Plus, Radio, Shield, Trophy, Users } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
+import { StatusBadge, TournamentImage } from "@/components/league";
+import { QueryFeedback } from "@/components/LeaguePageIntro";
 import { useAdmin } from "@/hooks/use-admin";
 import { useQuery } from "@tanstack/react-query";
 import { allTeamsQuery, catalogQuery, rankingQuery } from "@/lib/league-api";
@@ -44,6 +46,14 @@ function HomePage() {
   });
   const state = { teams: (teamsQ.data ?? []).map((t) => ({ id: t.id, name: t.name, logo: t.logo_url ?? undefined })) };
   const totalPoints = (ranking.data ?? []).reduce((s, r) => s + r.points, 0);
+  const featured = sortCatalog((catalog.data ?? []).filter((t) => ["live", "registration_open", "registration_closed", "announced"].includes(t.status)))[0];
+
+  if (catalog.isPending || teamsQ.isPending || ranking.isPending) {
+    return <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8"><QueryFeedback text="Загружаем данные лиги…" /></div>;
+  }
+  if (catalog.isError || teamsQ.isError || ranking.isError) {
+    return <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8"><QueryFeedback text="Не удалось загрузить данные лиги." retry={() => { void catalog.refetch(); void teamsQ.refetch(); void ranking.refetch(); }} /></div>;
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8">
@@ -77,6 +87,20 @@ function HomePage() {
               <Plus className="size-4" /> Создать турнир
             </Link>
           )}
+        </div>
+      </section>
+
+      <section className="panel mt-6 overflow-hidden" aria-labelledby="featured-title">
+        <div className="grid md:grid-cols-[minmax(0,1fr)_13rem]">
+          <div className="p-5 sm:p-6">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Сейчас в лиге</p>
+            <h2 id="featured-title" className="mt-2 text-2xl text-foreground sm:text-3xl">{featured ? featured.title : "Новый турнир готовится"}</h2>
+            {featured ? <div className="mt-2"><StatusBadge status={featured.status} /></div> : <p className="mt-2 text-sm text-muted-foreground">Следующий турнир появится здесь после публикации.</p>}
+            <Link to={featured ? "/tournaments/$tournamentId" : "/tournaments"} params={featured ? { tournamentId: featured.id } : undefined} className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+              {featured ? "Открыть турнир" : "Все турниры"}
+            </Link>
+          </div>
+          <TournamentImage src={featured?.image_url ?? null} title={featured?.title ?? "TrueDotaLeague"} className="min-h-36 w-full text-4xl md:h-full" />
         </div>
       </section>
 
