@@ -14,7 +14,7 @@ Read-only checks after execution showed:
 | Authenticated direct `UPDATE` on the table | No |
 | Authenticated `EXECUTE` on the RPC | Yes; RPC checks `is_admin(auth.uid())` |
 
-The local UI, using its normal public connection to the live Cloud database, loaded `/draft` as a guest and displayed “Ведущий пока не опубликовал результат.” No production draft result was created for testing. The admin publication and guest/member display flows were exercised with the local in-memory fixture; SQL role, validation, version, and audit-rollback behavior was exercised separately using `npm run test:sql` in isolated PGlite.
+The local UI, using its normal public connection to the live Cloud database, loaded `/draft` as a guest and displayed the standard unpublished-result empty state. No production draft result was created for testing. The admin publication and guest/member display flows were exercised with the local in-memory fixture; SQL role, validation, version, and audit-rollback behavior was exercised separately using `npm run test:sql` in isolated PGlite.
 
 The Cloud SQL editor applies SQL outside the repository's migration ledger. The checked-in migration has an idempotent policy replacement, and `npm run test:sql` replays it twice. This prevents a duplicate-policy failure if the repository migration runner later executes the same file.
 
