@@ -55,6 +55,8 @@ try {
     "utf8",
   );
   await db.exec(migration);
+  // A manually applied Cloud migration must remain safe if the repo runner later sees it.
+  await db.exec(migration);
 
   for (const [label, result] of [
     ["missing title", { captainPlays: true, teams: valid.teams }],

@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.draft_publications (
 ALTER TABLE public.draft_publications ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.draft_publications FROM PUBLIC, anon, authenticated;
 GRANT SELECT (result, version, updated_at) ON public.draft_publications TO anon, authenticated;
+DROP POLICY IF EXISTS "draft published result public read" ON public.draft_publications;
 CREATE POLICY "draft published result public read" ON public.draft_publications
   FOR SELECT TO anon, authenticated USING (true);
 

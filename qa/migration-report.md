@@ -16,4 +16,6 @@ Read-only checks after execution showed:
 
 The local UI, using its normal public connection to the live Cloud database, loaded `/draft` as a guest and displayed “Ведущий пока не опубликовал результат.” No production draft result was created for testing. The admin publication and guest/member display flows were exercised with the local in-memory fixture; SQL role, validation, version, and audit-rollback behavior was exercised separately using `npm run test:sql` in isolated PGlite.
 
+The Cloud SQL editor applies SQL outside the repository's migration ledger. The checked-in migration has an idempotent policy replacement, and `npm run test:sql` replays it twice. This prevents a duplicate-policy failure if the repository migration runner later executes the same file.
+
 The original `qa/screenshots/after-draft-*` captures predate this migration and show the expected fetch error from the then-missing table. The live guest check above confirms that error is gone. Lovable Stage3 remains paused for approval; `main` and the published site remain unchanged.
