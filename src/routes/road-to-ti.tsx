@@ -55,9 +55,7 @@ function RoadToTiPage() {
           {rows.map((r, i) => (
             <li
               key={r.teamId}
-              className={`rounded-lg px-3 py-2.5 ${
-                i < SLOTS ? "bg-primary/10" : "bg-white/50"
-              }`}
+              className={`rounded-lg px-3 py-2.5 ${i < SLOTS ? "bg-primary/10" : "bg-white/50"}`}
             >
               <div className="flex items-center gap-3">
                 <span className="w-6 text-sm font-bold text-muted-foreground">{i + 1}</span>

@@ -15,9 +15,15 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Админка — роли и доступы — TrueDotaLeague" },
-      { name: "description", content: "Панель администратора TrueDotaLeague: роли участников и модераторы турниров." },
+      {
+        name: "description",
+        content: "Панель администратора TrueDotaLeague: роли участников и модераторы турниров.",
+      },
       { property: "og:title", content: "Админка — роли и доступы — TrueDotaLeague" },
-      { property: "og:description", content: "Управление ролями участников лиги по Дота 2: админ, модератор, игрок." },
+      {
+        property: "og:description",
+        content: "Управление ролями участников лиги по Дота 2: админ, модератор, игрок.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -27,7 +33,11 @@ export const Route = createFileRoute("/admin")({
 });
 
 type AppRole = "admin" | "moderator" | "user";
-const ROLE_LABEL: Record<AppRole, string> = { admin: "Админ", moderator: "Модератор", user: "Игрок" };
+const ROLE_LABEL: Record<AppRole, string> = {
+  admin: "Админ",
+  moderator: "Модератор",
+  user: "Игрок",
+};
 
 function AdminPage() {
   const { isAdmin, checking, user } = useAdmin();
@@ -46,7 +56,12 @@ function AdminPage() {
     qc.invalidateQueries({ queryKey: ["league"] });
   };
 
-  if (checking) return <div className="mx-auto max-w-3xl px-4 py-10"><LoadingPanel text="Проверяем доступ…" /></div>;
+  if (checking)
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10">
+        <LoadingPanel text="Проверяем доступ…" />
+      </div>
+    );
   if (!isAdmin)
     return (
       <div className="mx-auto max-w-3xl px-4 py-10">
@@ -54,9 +69,14 @@ function AdminPage() {
           <h1 className="flex items-center gap-2 text-3xl text-foreground">
             <Lock className="size-6 text-accent" /> Только для админов
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">Управление ролями доступно администраторам лиги.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Управление ролями доступно администраторам лиги.
+          </p>
           {!user && (
-            <Link to="/auth" className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+            <Link
+              to="/auth"
+              className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
+            >
               Войти
             </Link>
           )}
@@ -81,13 +101,19 @@ function AdminPage() {
         </Link>
       </div>
       <p className="text-sm text-muted-foreground">
-        У каждого аккаунта одна роль. Модератор ведёт только назначенные ему турниры; назначение — в форме турнира.
+        У каждого аккаунта одна роль. Модератор ведёт только назначенные ему турниры; назначение — в
+        форме турнира.
       </p>
 
       <div className="panel p-4">
         <label className="flex items-center gap-2 rounded-lg border border-border bg-white/70 px-3 py-2">
           <Search className="size-4 text-muted-foreground" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Поиск по никнейму или команде" className="w-full bg-transparent text-sm outline-none" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Поиск по никнейму или команде"
+            className="w-full bg-transparent text-sm outline-none"
+          />
         </label>
         {users.isLoading ? (
           <p className="mt-4 text-sm text-muted-foreground">Загружаем участников…</p>
@@ -96,13 +122,22 @@ function AdminPage() {
         ) : (
           <ul className="mt-4 space-y-2">
             {filtered.map((row) => (
-              <li key={row.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-white/60 p-3">
+              <li
+                key={row.id}
+                className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-white/60 p-3"
+              >
                 <TeamLogo name={row.nickname || "?"} logo={row.avatar_url ?? undefined} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <Link to="/players/$playerId" params={{ playerId: row.id }} className="block truncate font-bold text-foreground hover:text-primary">
+                  <Link
+                    to="/players/$playerId"
+                    params={{ playerId: row.id }}
+                    className="block truncate font-bold text-foreground hover:text-primary"
+                  >
                     {row.nickname || "Без никнейма"}
                   </Link>
-                  <p className="truncate text-xs text-muted-foreground">{row.team_name || "Без команды"}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {row.team_name || "Без команды"}
+                  </p>
                 </div>
                 <select
                   aria-label="Роль"
@@ -112,7 +147,9 @@ function AdminPage() {
                   className="rounded-lg border border-input bg-white/70 px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
                 >
                   {(Object.keys(ROLE_LABEL) as AppRole[]).map((r) => (
-                    <option key={r} value={r}>{ROLE_LABEL[r]}</option>
+                    <option key={r} value={r}>
+                      {ROLE_LABEL[r]}
+                    </option>
                   ))}
                 </select>
               </li>
@@ -131,10 +168,16 @@ function AdminPage() {
               <li key={a.id} className="flex flex-wrap gap-2 rounded-lg bg-white/50 px-3 py-1.5">
                 <span className="font-semibold">{nick.get(a.user_id) ?? "—"}</span>
                 <span>→</span>
-                <Link to="/tournaments/$tournamentId" params={{ tournamentId: a.tournament_id }} className="text-primary hover:underline">
+                <Link
+                  to="/tournaments/$tournamentId"
+                  params={{ tournamentId: a.tournament_id }}
+                  className="text-primary hover:underline"
+                >
                   {a.tournaments?.title ?? "Турнир"}
                 </Link>
-                <span className="text-xs text-muted-foreground">с {formatLeagueDate(a.assigned_at)}</span>
+                <span className="text-xs text-muted-foreground">
+                  с {formatLeagueDate(a.assigned_at)}
+                </span>
               </li>
             ))}
           </ul>

@@ -1,10 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { countdown, formatLeagueDate, formatPrize, freePlaces, sortCatalog, teamsThatPlayed } from "./league";
+import {
+  countdown,
+  formatLeagueDate,
+  formatPrize,
+  freePlaces,
+  leagueYear,
+  sortCatalog,
+  teamsThatPlayed,
+} from "./league";
 
 describe("league helpers", () => {
   it("shows dates in league time UTC+5 with label", () => {
     expect(formatLeagueDate("2026-09-03T13:00:00Z")).toContain("18:00");
     expect(formatLeagueDate("2026-09-03T13:00:00Z")).toContain("(UTC+5)");
+  });
+
+  it("uses the league time zone for archive year at the UTC year boundary", () => {
+    const value = "2026-12-31T20:00:00Z";
+    expect(leagueYear(value)).toBe(2027);
+    expect(formatLeagueDate(value, false)).toContain("2027");
   });
 
   it("countdown never goes negative", () => {
@@ -17,19 +31,32 @@ describe("league helpers", () => {
   });
 
   it("prize TBA shows «Будет объявлен»", () => {
-    expect(formatPrize({ prize_tba: true, prize_amount: 100, prize_currency: "KZT" })).toBe("Будет объявлен");
+    expect(formatPrize({ prize_tba: true, prize_amount: 100, prize_currency: "KZT" })).toBe(
+      "Будет объявлен",
+    );
   });
 
   it("default order: live, then upcoming by nearest start, then finished newest first", () => {
     const base = { title: "x", created_at: "" };
     const list = [
       { ...base, id: "f-old", status: "finished" as const, starts_at: "2025-01-01T00:00:00Z" },
-      { ...base, id: "reg-far", status: "registration_open" as const, starts_at: "2026-12-01T00:00:00Z" },
+      {
+        ...base,
+        id: "reg-far",
+        status: "registration_open" as const,
+        starts_at: "2026-12-01T00:00:00Z",
+      },
       { ...base, id: "f-new", status: "finished" as const, starts_at: "2026-01-01T00:00:00Z" },
       { ...base, id: "ann-near", status: "announced" as const, starts_at: "2026-10-20T00:00:00Z" },
       { ...base, id: "live", status: "live" as const, starts_at: "2026-10-01T00:00:00Z" },
     ];
-    expect(sortCatalog(list).map((t) => t.id)).toEqual(["live", "ann-near", "reg-far", "f-new", "f-old"]);
+    expect(sortCatalog(list).map((t) => t.id)).toEqual([
+      "live",
+      "ann-near",
+      "reg-far",
+      "f-new",
+      "f-old",
+    ]);
   });
 
   it("counts only teams that actually played a scored match", () => {

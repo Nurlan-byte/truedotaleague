@@ -15,6 +15,13 @@
       "when": 1792182298477,
       "tag": "0001_stage3_admin_rpcs",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792346400000,
+      "tag": "0002_draft_publication",
+      "breakpoints": true
     }
   ]
 }

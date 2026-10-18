@@ -132,9 +132,7 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
               while (!userId && page <= 20) {
                 const list = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
                 if (list.error) break;
-                const match = list.data.users.find(
-                  (u) => (u.email ?? "").toLowerCase() === email,
-                );
+                const match = list.data.users.find((u) => (u.email ?? "").toLowerCase() === email);
                 if (match) userId = match.id;
                 if (list.data.users.length < 200) break;
                 page += 1;
@@ -150,19 +148,17 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
           }
 
           // 4. Keep the profile in sync with Discord.
-          await supabaseAdmin
-            .from("profiles")
-            .upsert(
-              {
-                id: userId,
-                discord_id: discordUser.id,
-                discord_username: discordUser.username,
-                discord_global_name: discordUser.global_name ?? "",
-                ...(linked?.nickname ? {} : { nickname: displayName }),
-                ...(linked?.avatar_url ? {} : { avatar_url: avatar }),
-              },
-              { onConflict: "id" },
-            );
+          await supabaseAdmin.from("profiles").upsert(
+            {
+              id: userId,
+              discord_id: discordUser.id,
+              discord_username: discordUser.username,
+              discord_global_name: discordUser.global_name ?? "",
+              ...(linked?.nickname ? {} : { nickname: displayName }),
+              ...(linked?.avatar_url ? {} : { avatar_url: avatar }),
+            },
+            { onConflict: "id" },
+          );
 
           // 5. Mint a one-time link and let the browser turn it into a session.
           const link = await supabaseAdmin.auth.admin.generateLink({

@@ -66,7 +66,9 @@ function PlayersPage() {
     let active = true;
     supabase
       .from("profiles")
-      .select("id, nickname, avatar_url, mmr, role_position, team_name, team_role, looking_for_team")
+      .select(
+        "id, nickname, avatar_url, mmr, role_position, team_name, team_role, looking_for_team",
+      )
       .order("mmr", { ascending: false, nullsFirst: false })
       .then(({ data }) => {
         if (active) setRows((data as Row[]) ?? []);

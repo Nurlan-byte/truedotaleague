@@ -17,7 +17,8 @@ async function fetchCatalog() {
   }
 }
 export type CatalogItem = Awaited<ReturnType<typeof fetchCatalog>>[number];
-export const catalogQuery = () => queryOptions({ queryKey: ["league", "catalog"], queryFn: fetchCatalog });
+export const catalogQuery = () =>
+  queryOptions({ queryKey: ["league", "catalog"], queryFn: fetchCatalog });
 
 async function fetchTournament(id: string) {
   {
@@ -59,10 +60,18 @@ export const myTeamsQuery = (userId: string | undefined) =>
     enabled: !!userId,
     queryFn: async () => {
       if (!userId) return [];
-      const { data: caps } = await supabase.from("team_captains").select("team_id").eq("user_id", userId);
+      const { data: caps } = await supabase
+        .from("team_captains")
+        .select("team_id")
+        .eq("user_id", userId);
       const capIds = (caps ?? []).map((c) => c.team_id);
-      let q = supabase.from("teams").select("*, team_members(*), team_captains(user_id)").order("created_at");
-      q = capIds.length ? q.or(`owner_id.eq.${userId},id.in.(${capIds.join(",")})`) : q.eq("owner_id", userId);
+      let q = supabase
+        .from("teams")
+        .select("*, team_members(*), team_captains(user_id)")
+        .order("created_at");
+      q = capIds.length
+        ? q.or(`owner_id.eq.${userId},id.in.(${capIds.join(",")})`)
+        : q.eq("owner_id", userId);
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
@@ -78,7 +87,9 @@ export const myApplicationsQuery = (teamIds: string[]) =>
       if (!teamIds.length) return [];
       const { data, error } = await supabase
         .from("applications")
-        .select("id, tournament_id, team_id, status, reject_reason, created_at, regulation_version_id, tournaments(title, registration_closes_at, status)")
+        .select(
+          "id, tournament_id, team_id, status, reject_reason, created_at, regulation_version_id, tournaments(title, registration_closes_at, status)",
+        )
         .in("team_id", teamIds)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -99,7 +110,14 @@ export const allTeamsQuery = () =>
     },
   });
 
-export type RankingRow = { teamId: string; name: string; logo?: string; points: number; titles: number; events: number };
+export type RankingRow = {
+  teamId: string;
+  name: string;
+  logo?: string;
+  points: number;
+  titles: number;
+  events: number;
+};
 
 /** Рейтинг по points_ledger (по id команды). Имя и логотип — из последнего снимка участия. */
 export const rankingQuery = () =>
@@ -109,11 +127,15 @@ export const rankingQuery = () =>
       const [ledger, placements, participants] = await Promise.all([
         supabase.from("points_ledger").select("team_id, points, tournament_id"),
         supabase.from("placements").select("team_id, tournament_id, place"),
-        supabase.from("tournament_participants").select("team_id, team_name, logo_url, created_at").order("created_at"),
+        supabase
+          .from("tournament_participants")
+          .select("team_id, team_name, logo_url, created_at")
+          .order("created_at"),
       ]);
       if (ledger.error) throw ledger.error;
       const snap = new Map<string, { name: string; logo?: string }>();
-      for (const p of participants.data ?? []) snap.set(p.team_id, { name: p.team_name, logo: p.logo_url ?? undefined });
+      for (const p of participants.data ?? [])
+        snap.set(p.team_id, { name: p.team_name, logo: p.logo_url ?? undefined });
       const rows = new Map<string, RankingRow>();
       const get = (id: string) => {
         let r = rows.get(id);

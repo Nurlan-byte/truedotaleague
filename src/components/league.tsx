@@ -23,7 +23,15 @@ export function StatusBadge({ status }: { status: TournamentStatus }) {
 }
 
 /** Картинка турнира или фирменная заглушка TDL. */
-export function TournamentImage({ src, title, className = "" }: { src: string | null; title: string; className?: string }) {
+export function TournamentImage({
+  src,
+  title,
+  className = "",
+}: {
+  src: string | null;
+  title: string;
+  className?: string;
+}) {
   if (src) {
     return <img src={src} alt={title} loading="lazy" className={`object-cover ${className}`} />;
   }
@@ -41,13 +49,15 @@ export function TournamentImage({ src, title, className = "" }: { src: string | 
 export function SafeMarkdown({ body }: { body: string }) {
   const blocks = body.replace(/\r\n/g, "\n").split(/\n{2,}/);
   const inline = (text: string): ReactNode[] =>
-    text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-      part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
-        <strong key={i}>{part.slice(2, -2)}</strong>
-      ) : (
-        part
-      ),
-    );
+    text
+      .split(/(\*\*[^*]+\*\*)/g)
+      .map((part, i) =>
+        part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
+          <strong key={i}>{part.slice(2, -2)}</strong>
+        ) : (
+          part
+        ),
+      );
   return (
     <div className="space-y-3 text-sm leading-relaxed text-foreground">
       {blocks.map((block, i) => {
@@ -63,11 +73,17 @@ export function SafeMarkdown({ body }: { body: string }) {
         }
         if (lines.every((l) => /^\s*([-*]|\d+\.)\s+/.test(l))) {
           const ordered = /^\s*\d+\./.test(lines[0]);
-          const items = lines.map((l, j) => <li key={j}>{inline(l.replace(/^\s*([-*]|\d+\.)\s+/, ""))}</li>);
+          const items = lines.map((l, j) => (
+            <li key={j}>{inline(l.replace(/^\s*([-*]|\d+\.)\s+/, ""))}</li>
+          ));
           return ordered ? (
-            <ol key={i} className="list-decimal space-y-1 pl-5">{items}</ol>
+            <ol key={i} className="list-decimal space-y-1 pl-5">
+              {items}
+            </ol>
           ) : (
-            <ul key={i} className="list-disc space-y-1 pl-5">{items}</ul>
+            <ul key={i} className="list-disc space-y-1 pl-5">
+              {items}
+            </ul>
           );
         }
         return (

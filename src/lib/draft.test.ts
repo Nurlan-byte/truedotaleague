@@ -1,11 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { captainIndexForTurn, currentTurn, initialState, ORG, pick, resultsText, undo, availablePlayers, type DraftState } from "./draft";
+import {
+  captainIndexForTurn,
+  currentTurn,
+  initialState,
+  ORG,
+  pick,
+  resultsText,
+  undo,
+  availablePlayers,
+  MAX_DRAFT_CAPTAINS,
+  MAX_DRAFT_PICKS_PER_TEAM,
+  validate,
+  type DraftState,
+} from "./draft";
 
 const order = (n: number, snake: boolean, turns: number) =>
   Array.from({ length: turns }, (_, t) => "ABCDEFG"[captainIndexForTurn(t, n, snake)]).join("");
 
 describe("draft order", () => {
-  it("snake with 4 captains: ABCD DCBA ABCD", () => expect(order(4, true, 12)).toBe("ABCDDCBAABCD"));
+  it("snake with 4 captains: ABCD DCBA ABCD", () =>
+    expect(order(4, true, 12)).toBe("ABCDDCBAABCD"));
   it("snake with 3 captains", () => expect(order(3, true, 9)).toBe("ABCCBAABC"));
   it("linear keeps order", () => expect(order(4, false, 8)).toBe("ABCDABCD"));
 });
@@ -18,7 +32,11 @@ const make = (): DraftState => ({
     { id: "a", name: "A", team: "TA", color: "#fff" },
     { id: "b", name: "B", team: "TB", color: "#fff" },
   ],
-  players: [{ id: "p1", name: "P1" }, { id: "p2", name: "P2" }, { id: "p3", name: "P3" }],
+  players: [
+    { id: "p1", name: "P1" },
+    { id: "p2", name: "P2" },
+    { id: "p3", name: "P3" },
+  ],
 });
 
 describe("picks", () => {
@@ -45,5 +63,31 @@ describe("results export", () => {
     expect(ORG).toBe("TrueDotaLeague");
     const s = pick(pick(make(), "p1"), "p2");
     expect(resultsText(s).split("\n")[0]).toBe("TrueDotaLeague");
+  });
+});
+
+describe("publication limits", () => {
+  it("accepts 32 teams and 16 picks per team, rejects the next value", () => {
+    const base = make();
+    const captains = Array.from({ length: MAX_DRAFT_CAPTAINS }, (_, index) => ({
+      id: String(index),
+      name: `Captain ${index}`,
+      team: `Team ${index}`,
+      color: "#fff",
+    }));
+    const atLimit = { ...base, captains, teamSize: MAX_DRAFT_PICKS_PER_TEAM + 1 };
+    expect(validate(atLimit)).toEqual([]);
+    expect(validate({ ...atLimit, captains: [...captains, captains[0]!] })).toContain(
+      "Не более 32 капитанов",
+    );
+    expect(validate({ ...atLimit, teamSize: MAX_DRAFT_PICKS_PER_TEAM + 2 })).toContain(
+      "Не более 16 пиков на команду",
+    );
+    expect(validate({ ...base, captainCounts: false, teamSize: MAX_DRAFT_PICKS_PER_TEAM })).toEqual(
+      [],
+    );
+    expect(
+      validate({ ...base, captainCounts: false, teamSize: MAX_DRAFT_PICKS_PER_TEAM + 1 }),
+    ).toContain("Не более 16 пиков на команду");
   });
 });

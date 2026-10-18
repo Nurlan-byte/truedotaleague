@@ -39,7 +39,11 @@ function EditTournamentPage() {
       ) : (
         <TournamentEditor key={data.id} tournament={data} />
       )}
-      <Link to="/tournaments/$tournamentId" params={{ tournamentId }} className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
+      <Link
+        to="/tournaments/$tournamentId"
+        params={{ tournamentId }}
+        className="mt-4 inline-block text-sm font-semibold text-primary hover:underline"
+      >
         ← К турниру
       </Link>
     </div>

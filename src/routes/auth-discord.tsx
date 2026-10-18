@@ -10,7 +10,8 @@ export const Route = createFileRoute("/auth-discord")({
       { title: "Вход через Discord — TrueDotaLeague" },
       {
         name: "description",
-        content: "Завершение входа через Discord в TrueDotaLeague: создаём сессию и возвращаем вас на сайт.",
+        content:
+          "Завершение входа через Discord в TrueDotaLeague: создаём сессию и возвращаем вас на сайт.",
       },
       { property: "og:title", content: "Вход через Discord — TrueDotaLeague" },
       {

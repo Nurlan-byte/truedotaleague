@@ -2,7 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { myTeamsQuery, regulationQuery } from "@/lib/league-api";
@@ -95,10 +101,15 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
               />
               <span>
                 Я ознакомился с{" "}
-                <Link to="/regulations" target="_blank" className="font-semibold text-primary hover:underline">
+                <Link
+                  to="/regulations"
+                  target="_blank"
+                  className="font-semibold text-primary hover:underline"
+                >
                   регламентом
                 </Link>{" "}
-                (опубликован {formatLeagueDate(regulation.data.published_at, false)}) и принимаю его.
+                (опубликован {formatLeagueDate(regulation.data.published_at, false)}) и принимаю
+                его.
               </span>
             </label>
             <button

@@ -32,7 +32,9 @@ export function BracketView({ matches, teams, onScore, readOnly = false }: Props
           <Trophy className="size-6 text-accent" />
           <TeamLogo name={championTeam.name} logo={championTeam.logo} size="lg" />
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Чемпион</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Чемпион
+            </p>
             <p className="font-display text-2xl text-foreground">{championTeam.name}</p>
           </div>
         </div>
@@ -41,9 +43,7 @@ export function BracketView({ matches, teams, onScore, readOnly = false }: Props
       <div className="overflow-x-auto pb-2">
         <div className="flex min-w-max gap-6">
           {Array.from({ length: totalRounds }, (_, i) => i + 1).map((round) => {
-            const rms = matches
-              .filter((m) => m.round === round)
-              .sort((a, b) => a.order - b.order);
+            const rms = matches.filter((m) => m.round === round).sort((a, b) => a.order - b.order);
             return (
               <div key={round} className="flex w-64 flex-col justify-around gap-4">
                 <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">

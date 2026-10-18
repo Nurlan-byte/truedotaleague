@@ -46,7 +46,6 @@ export type Application = {
   note?: string;
 };
 
-
 /** TDL-очки за место в турнире. */
 export const PLACE_POINTS: Record<number, number> = { 1: 50, 2: 25, 3: 12, 4: 6 };
 
@@ -99,7 +98,6 @@ export function formatMatchTime(value?: string | null): string | null {
   });
 }
 
-
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function shuffle<T>(arr: T[]): T[] {
@@ -122,7 +120,6 @@ export function buildBracket(teams: Team[]): Match[] {
   teams.forEach((t, i) => {
     slots[i < half ? i * 2 : (i - half) * 2 + 1] = t.id;
   });
-
 
   const matches: Match[] = [];
   let round = 1;
@@ -273,9 +270,7 @@ export function standings(group: Team[], matches: GroupMatch[]): Standing[] {
 
   return [...table.values()].sort(
     (x, y) =>
-      y.points - x.points ||
-      y.scored - y.conceded - (x.scored - x.conceded) ||
-      y.scored - x.scored,
+      y.points - x.points || y.scored - y.conceded - (x.scored - x.conceded) || y.scored - x.scored,
   );
 }
 
@@ -318,12 +313,8 @@ export function finalPlacements(matches: Match[], teams: Team[]): Placement[] {
   });
 }
 
-
 /** Места по групповому этапу — резерв, если плей-офф не проводился/не доигран. */
-export function groupPlacements(
-  groups: Team[][],
-  groupMatches: GroupMatch[],
-): Placement[] {
+export function groupPlacements(groups: Team[][], groupMatches: GroupMatch[]): Placement[] {
   const rows = groups.flatMap((g, gi) =>
     standings(
       g,
@@ -347,8 +338,13 @@ export function groupPlacements(
     }));
 }
 
-
-export type RankRow = { teamName: string; logo?: string; points: number; titles: number; events: number };
+export type RankRow = {
+  teamName: string;
+  logo?: string;
+  points: number;
+  titles: number;
+  events: number;
+};
 
 /** Общий рейтинг команд по всем сохранённым турнирам. */
 export function leaderboard(history: TournamentRecord[]): RankRow[] {
