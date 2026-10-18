@@ -834,6 +834,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      get_my_discord_identity: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
       publish_draft_result: {
         Args: { p_expected_version: number; p_result: Json };
         Returns: Database["public"]["Tables"]["draft_publications"]["Row"];
