@@ -186,6 +186,40 @@ createServer(async (req, res) => {
     );
   if (url.pathname === "/auth/v1/logout") return json(res, 204, null);
   if (url.pathname === "/rest/v1/tournaments") return json(res, 200, tournaments);
+  if (url.pathname === "/rest/v1/points_ledger")
+    return json(res, 200, [
+      { team_id: teamId, points: 50, tournament_id: tournaments[1].id },
+      {
+        team_id: "66666666-6666-4666-8666-666666666666",
+        points: 25,
+        tournament_id: tournaments[1].id,
+      },
+      {
+        team_id: "77777777-7777-4777-8777-777777777777",
+        points: 12,
+        tournament_id: tournaments[1].id,
+      },
+    ]);
+  if (url.pathname === "/rest/v1/placements")
+    return json(res, 200, [
+      { team_id: teamId, tournament_id: tournaments[1].id, place: 1 },
+      {
+        team_id: "66666666-6666-4666-8666-666666666666",
+        tournament_id: tournaments[1].id,
+        place: 2,
+      },
+      {
+        team_id: "77777777-7777-4777-8777-777777777777",
+        tournament_id: tournaments[1].id,
+        place: 3,
+      },
+    ]);
+  if (url.pathname === "/rest/v1/tournament_participants")
+    return json(res, 200, [
+      { team_id: teamId, team_name: "Aurora", logo_url: null },
+      { team_id: "66666666-6666-4666-8666-666666666666", team_name: "Vanguard", logo_url: null },
+      { team_id: "77777777-7777-4777-8777-777777777777", team_name: "Zenith", logo_url: null },
+    ]);
   if (url.pathname === "/rest/v1/teams") {
     if (req.method === "POST") {
       const input = await readBody(req);
