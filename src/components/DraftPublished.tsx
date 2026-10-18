@@ -49,7 +49,11 @@ export function DraftPublished() {
               <section className="panel p-5" key={`${team.name}-${index}`}>
                 <p className="label-xs">Команда {index + 1}</p>
                 <h3 className="mb-3 text-xl font-bold">{team.name}</h3>
-                <p className="mb-3 text-sm text-muted-foreground">Капитан: {team.captain}</p>
+                <p className="mb-3 text-sm text-muted-foreground">
+                  Капитан: {team.captain}
+                  {team.captainNick ? ` (${team.captainNick})` : ""} ·{" "}
+                  {result.captainPlays ? "играет в составе" : "не входит в игровой состав"}
+                </p>
                 {team.players.length ? (
                   <ol className="space-y-2">
                     {team.players.map((player, playerIndex) => (

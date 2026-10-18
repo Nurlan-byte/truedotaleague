@@ -36,6 +36,8 @@ export type DraftState = {
 };
 
 export const ORG = "TrueDotaLeague";
+export const MAX_DRAFT_CAPTAINS = 32;
+export const MAX_DRAFT_PICKS_PER_TEAM = 16;
 
 export const TEAM_COLORS = [
   "#3ec5ff",
@@ -149,8 +151,10 @@ export function undo(s: DraftState): DraftState {
 export function validate(s: DraftState): string[] {
   const e: string[] = [];
   if (s.captains.length < 2) e.push("Нужно минимум 2 капитана");
+  if (s.captains.length > MAX_DRAFT_CAPTAINS) e.push("Не более 32 капитанов");
   if (s.players.length === 0) e.push("Добавьте игроков");
   if (slotsPerTeam(s) < 1) e.push("Размер команды слишком мал");
+  if (slotsPerTeam(s) > MAX_DRAFT_PICKS_PER_TEAM) e.push("Не более 16 пиков на команду");
   return e;
 }
 

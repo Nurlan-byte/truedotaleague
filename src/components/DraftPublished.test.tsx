@@ -18,8 +18,14 @@ describe("public draft view", () => {
         updated_at: "2026-10-18T12:00:00Z",
         result: {
           title: "Test Night",
+          captainPlays: false,
           teams: [
-            { name: "Blue", captain: "Alex", players: [{ name: "Player One", nick: "P1" }] },
+            {
+              name: "Blue",
+              captain: "Alex",
+              captainNick: "A",
+              players: [{ name: "Player One", nick: "P1" }],
+            },
             { name: "Red", captain: "Bora", players: [] },
           ],
         },
@@ -28,6 +34,8 @@ describe("public draft view", () => {
     const html = renderToStaticMarkup(<DraftPublished />);
     expect(html).toContain("Test Night");
     expect(html).toContain("Player One");
+    expect(html).toContain("Alex (A)");
+    expect(html).toContain("не входит в игровой состав");
     expect(html).not.toContain("Опубликовать результат");
     expect(html).not.toContain("Добавить капитана");
   });
@@ -35,5 +43,24 @@ describe("public draft view", () => {
   it("explains the empty public state", () => {
     useDraftPublication.mockReturnValue({ isPending: false, isError: false, data: null });
     expect(renderToStaticMarkup(<DraftPublished />)).toContain("пока не опубликовал");
+  });
+
+  it("marks a playing captain as part of the roster", () => {
+    useDraftPublication.mockReturnValue({
+      isPending: false,
+      isError: false,
+      data: {
+        updated_at: "2026-10-18T12:00:00Z",
+        result: {
+          title: "Match",
+          captainPlays: true,
+          teams: [
+            { name: "Blue", captain: "Alex", players: [] },
+            { name: "Red", captain: "Bora", players: [] },
+          ],
+        },
+      },
+    });
+    expect(renderToStaticMarkup(<DraftPublished />)).toContain("играет в составе");
   });
 });

@@ -10,7 +10,7 @@ export function useDraftPublication() {
       const { data, error } = await supabase
         .from("draft_publications")
         .select("result, version, updated_at")
-        .eq("id", 1)
+        .limit(1)
         .maybeSingle();
       if (error) throw error;
       return data;

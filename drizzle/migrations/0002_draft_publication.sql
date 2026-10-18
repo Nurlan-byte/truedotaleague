@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.draft_publications (
 
 ALTER TABLE public.draft_publications ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.draft_publications FROM PUBLIC, anon, authenticated;
-GRANT SELECT ON public.draft_publications TO anon, authenticated;
+GRANT SELECT (result, version, updated_at) ON public.draft_publications TO anon, authenticated;
 CREATE POLICY "draft published result public read" ON public.draft_publications
   FOR SELECT TO anon, authenticated USING (true);
 
@@ -31,34 +31,47 @@ BEGIN
     RAISE EXCEPTION 'invalid version';
   END IF;
   IF p_result IS NULL OR pg_column_size(p_result) > 65536
-     OR jsonb_typeof(p_result) <> 'object'
-     OR jsonb_typeof(p_result -> 'title') <> 'string'
-     OR length(p_result ->> 'title') NOT BETWEEN 1 AND 160
-     OR jsonb_typeof(p_result -> 'teams') <> 'array'
-     OR jsonb_array_length(p_result -> 'teams') NOT BETWEEN 2 AND 32
+     OR jsonb_typeof(p_result) IS DISTINCT FROM 'object' THEN
+    RAISE EXCEPTION 'invalid result';
+  END IF;
+  IF jsonb_typeof(p_result -> 'title') IS DISTINCT FROM 'string'
+     OR length(COALESCE(p_result ->> 'title', '')) NOT BETWEEN 1 AND 160
+     OR jsonb_typeof(p_result -> 'captainPlays') IS DISTINCT FROM 'boolean'
+     OR jsonb_typeof(p_result -> 'teams') IS DISTINCT FROM 'array'
      OR EXISTS (SELECT 1 FROM jsonb_object_keys(p_result) AS k(name)
-                WHERE k.name NOT IN ('title', 'teams')) THEN
+                WHERE k.name NOT IN ('title', 'captainPlays', 'teams')) THEN
+    RAISE EXCEPTION 'invalid result';
+  END IF;
+  IF jsonb_array_length(p_result -> 'teams') NOT BETWEEN 2 AND 32 THEN
     RAISE EXCEPTION 'invalid result';
   END IF;
   FOR team IN SELECT value FROM jsonb_array_elements(p_result -> 'teams') LOOP
-    IF jsonb_typeof(team) <> 'object'
-       OR jsonb_typeof(team -> 'name') <> 'string'
-       OR length(team ->> 'name') NOT BETWEEN 1 AND 160
-       OR jsonb_typeof(team -> 'captain') <> 'string'
-       OR length(team ->> 'captain') NOT BETWEEN 1 AND 160
-       OR jsonb_typeof(team -> 'players') <> 'array'
-       OR jsonb_array_length(team -> 'players') > 16
+    IF jsonb_typeof(team) IS DISTINCT FROM 'object' THEN
+      RAISE EXCEPTION 'invalid team';
+    END IF;
+    IF jsonb_typeof(team -> 'name') IS DISTINCT FROM 'string'
+       OR length(COALESCE(team ->> 'name', '')) NOT BETWEEN 1 AND 160
+       OR jsonb_typeof(team -> 'captain') IS DISTINCT FROM 'string'
+       OR length(COALESCE(team ->> 'captain', '')) NOT BETWEEN 1 AND 160
+       OR (team ? 'captainNick' AND (jsonb_typeof(team -> 'captainNick') IS DISTINCT FROM 'string'
+            OR length(COALESCE(team ->> 'captainNick', '')) > 160))
+       OR jsonb_typeof(team -> 'players') IS DISTINCT FROM 'array'
        OR EXISTS (SELECT 1 FROM jsonb_object_keys(team) AS k(name)
-                  WHERE k.name NOT IN ('name', 'captain', 'players')) THEN
+                  WHERE k.name NOT IN ('name', 'captain', 'captainNick', 'players')) THEN
+      RAISE EXCEPTION 'invalid team';
+    END IF;
+    IF jsonb_array_length(team -> 'players') > 16 THEN
       RAISE EXCEPTION 'invalid team';
     END IF;
     FOR player IN SELECT value FROM jsonb_array_elements(team -> 'players') LOOP
-      IF jsonb_typeof(player) <> 'object'
-         OR jsonb_typeof(player -> 'name') <> 'string'
-         OR length(player ->> 'name') NOT BETWEEN 1 AND 160
-         OR (player ? 'nick' AND (jsonb_typeof(player -> 'nick') <> 'string'
-              OR length(player ->> 'nick') > 160))
-         OR (player ? 'rating' AND jsonb_typeof(player -> 'rating') <> 'number')
+      IF jsonb_typeof(player) IS DISTINCT FROM 'object' THEN
+        RAISE EXCEPTION 'invalid player';
+      END IF;
+      IF jsonb_typeof(player -> 'name') IS DISTINCT FROM 'string'
+         OR length(COALESCE(player ->> 'name', '')) NOT BETWEEN 1 AND 160
+         OR (player ? 'nick' AND (jsonb_typeof(player -> 'nick') IS DISTINCT FROM 'string'
+              OR length(COALESCE(player ->> 'nick', '')) > 160))
+         OR (player ? 'rating' AND jsonb_typeof(player -> 'rating') IS DISTINCT FROM 'number')
          OR EXISTS (SELECT 1 FROM jsonb_object_keys(player) AS k(name)
                     WHERE k.name NOT IN ('name', 'nick', 'rating')) THEN
         RAISE EXCEPTION 'invalid player';
@@ -66,6 +79,8 @@ BEGIN
     END LOOP;
   END LOOP;
 
+  -- Serialize the first insert too: a missing row cannot be locked with FOR UPDATE.
+  PERFORM pg_advisory_xact_lock(781234, 1);
   SELECT * INTO old_row FROM public.draft_publications WHERE id = 1 FOR UPDATE;
   IF old_row.id IS NULL THEN
     IF p_expected_version <> 0 THEN RAISE EXCEPTION 'stale version'; END IF;

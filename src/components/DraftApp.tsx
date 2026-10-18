@@ -9,6 +9,8 @@ import {
   type Player,
   ORG,
   TEAM_COLORS,
+  MAX_DRAFT_CAPTAINS,
+  MAX_DRAFT_PICKS_PER_TEAM,
   availablePlayers,
   currentTurn,
   initialState,
@@ -74,6 +76,8 @@ export function DraftApp() {
       if (s.phase !== "done" || publication.isError || publication.isPending) {
         throw new Error("Публикация недоступна до загрузки текущей версии.");
       }
+      const issues = validate(s);
+      if (issues.length) throw new Error(issues.join("; "));
       const { error } = await supabase.rpc("publish_draft_result", {
         p_expected_version: publication.data?.version ?? 0,
         p_result: publishedDraftFromState(s),
@@ -341,20 +345,24 @@ function Setup({ s, setS }: SP) {
     setPRating("");
   };
   const addCaptain = () => {
-    if (!cName.trim()) return;
-    setS((p) => ({
-      ...p,
-      captains: [
-        ...p.captains,
-        {
-          id: uid(),
-          name: cName.trim(),
-          nick: cNick.trim() || undefined,
-          team: cTeam.trim() || `Команда ${cName.trim()}`,
-          color: TEAM_COLORS[p.captains.length % TEAM_COLORS.length]!,
-        },
-      ],
-    }));
+    if (!cName.trim() || s.captains.length >= MAX_DRAFT_CAPTAINS) return;
+    setS((p) =>
+      p.captains.length >= MAX_DRAFT_CAPTAINS
+        ? p
+        : {
+            ...p,
+            captains: [
+              ...p.captains,
+              {
+                id: uid(),
+                name: cName.trim(),
+                nick: cNick.trim() || undefined,
+                team: cTeam.trim() || `Команда ${cName.trim()}`,
+                color: TEAM_COLORS[p.captains.length % TEAM_COLORS.length]!,
+              },
+            ],
+          },
+    );
     setCName("");
     setCNick("");
     setCTeam("");
@@ -421,7 +429,11 @@ function Setup({ s, setS }: SP) {
             onKeyDown={(e) => e.key === "Enter" && addCaptain()}
           />
         </div>
-        <button className="btn btn-primary mt-2 w-full" onClick={addCaptain}>
+        <button
+          className="btn btn-primary mt-2 w-full"
+          onClick={addCaptain}
+          disabled={s.captains.length >= MAX_DRAFT_CAPTAINS}
+        >
           + Добавить капитана
         </button>
         <ol className="mt-4 space-y-2">
@@ -637,14 +649,30 @@ function Setup({ s, setS }: SP) {
                 className="field text-center font-display text-xl"
                 type="number"
                 min={1}
+                max={MAX_DRAFT_PICKS_PER_TEAM + (s.captainCounts ? 1 : 0)}
                 value={s.teamSize}
                 onChange={(e) =>
-                  setS((p) => ({ ...p, teamSize: Math.max(1, Number(e.target.value) || 1) }))
+                  setS((p) => ({
+                    ...p,
+                    teamSize: Math.min(
+                      MAX_DRAFT_PICKS_PER_TEAM + (p.captainCounts ? 1 : 0),
+                      Math.max(1, Number(e.target.value) || 1),
+                    ),
+                  }))
                 }
               />
               <button
                 className="btn"
-                onClick={() => setS((p) => ({ ...p, teamSize: p.teamSize + 1 }))}
+                disabled={s.teamSize >= MAX_DRAFT_PICKS_PER_TEAM + (s.captainCounts ? 1 : 0)}
+                onClick={() =>
+                  setS((p) => ({
+                    ...p,
+                    teamSize: Math.min(
+                      MAX_DRAFT_PICKS_PER_TEAM + (p.captainCounts ? 1 : 0),
+                      p.teamSize + 1,
+                    ),
+                  }))
+                }
               >
                 +
               </button>
@@ -655,7 +683,16 @@ function Setup({ s, setS }: SP) {
               type="checkbox"
               className="h-4 w-4 accent-[var(--primary)]"
               checked={s.captainCounts}
-              onChange={(e) => setS((p) => ({ ...p, captainCounts: e.target.checked }))}
+              onChange={(e) =>
+                setS((p) => ({
+                  ...p,
+                  captainCounts: e.target.checked,
+                  teamSize: Math.min(
+                    p.teamSize,
+                    MAX_DRAFT_PICKS_PER_TEAM + (e.target.checked ? 1 : 0),
+                  ),
+                }))
+              }
             />
             Капитан входит в состав команды
           </label>
