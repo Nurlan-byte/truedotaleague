@@ -3,13 +3,21 @@ import { TeamLogo } from "@/components/TeamLogo";
 import type { RankingRow } from "@/lib/league-api";
 
 const placeColor = (place: number) =>
-  place === 1 ? "text-accent" : place === 2 ? "text-primary" : place === 3 ? "text-win" : "text-muted-foreground";
+  place === 1
+    ? "text-accent"
+    : place === 2
+      ? "text-primary"
+      : place === 3
+        ? "text-win"
+        : "text-muted-foreground";
 
 export function RankingView({ rows }: { rows: RankingRow[] }) {
   if (rows.length === 0) {
     return (
       <div className="panel p-5">
-        <p className="text-sm text-muted-foreground">Пока нет завершённых турниров с начисленными TDL points.</p>
+        <p className="text-sm text-muted-foreground">
+          Пока нет завершённых турниров с начисленными TDL points.
+        </p>
         <p className="mt-2 text-xs text-muted-foreground">
           1 место — 50 TDL · 2 место — 25 TDL · 3 место — 12 TDL · 4 место — 6 TDL.
         </p>

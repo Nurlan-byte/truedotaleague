@@ -32,7 +32,9 @@ const POSITIONS = ["Керри (1)", "Мид (2)", "Хардлайн (3)", "Ро
 function ProfilePage() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [discord, setDiscord] = useState<{ id: string; username: string; name: string } | null>(null);
+  const [discord, setDiscord] = useState<{ id: string; username: string; name: string } | null>(
+    null,
+  );
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
   const [mmr, setMmr] = useState("");
@@ -67,7 +69,15 @@ function ProfilePage() {
         setTeamName(data.team_name ?? "");
         setTeamRole(data.team_role ?? "");
         setLookingForTeam(Boolean(data.looking_for_team));
-        setDiscord(data.discord_id ? { id: data.discord_id, username: data.discord_username ?? "", name: data.discord_global_name ?? "" } : null);
+        setDiscord(
+          data.discord_id
+            ? {
+                id: data.discord_id,
+                username: data.discord_username ?? "",
+                name: data.discord_global_name ?? "",
+              }
+            : null,
+        );
       });
     return () => {
       active = false;
@@ -175,9 +185,7 @@ function ProfilePage() {
         <p className="panel mt-6 p-5 text-sm text-muted-foreground">Загрузка…</p>
       ) : !user ? (
         <div className="panel mt-6 p-5">
-          <p className="text-sm text-foreground">
-            Чтобы заполнить профиль, войдите в аккаунт.
-          </p>
+          <p className="text-sm text-foreground">Чтобы заполнить профиль, войдите в аккаунт.</p>
           <Link
             to="/auth"
             className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-105 active:scale-95"
@@ -188,12 +196,17 @@ function ProfilePage() {
       ) : (
         <div className="panel mt-6 space-y-4 p-5">
           <div className="flex items-center gap-3">
-            <TeamLogo name={nickname || user.email || "?"} logo={avatarUrl ?? undefined} size="lg" />
+            <TeamLogo
+              name={nickname || user.email || "?"}
+              logo={avatarUrl ?? undefined}
+              size="lg"
+            />
             <div>
               <p className="text-sm font-bold text-foreground">{nickname || "Без ника"}</p>
               {discord ? (
                 <p className="text-xs text-muted-foreground">
-                  Discord: {discord.name || discord.username} (@{discord.username}) · ID {discord.id}
+                  Discord: {discord.name || discord.username} (@{discord.username}) · ID{" "}
+                  {discord.id}
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">{user.email}</p>
@@ -209,7 +222,8 @@ function ProfilePage() {
               </button>
               <div className="mt-2 flex items-center gap-3">
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary hover:text-primary">
-                  <ImagePlus className="size-4" /> {avatarUrl ? "Заменить аватар" : "Загрузить аватар"}
+                  <ImagePlus className="size-4" />{" "}
+                  {avatarUrl ? "Заменить аватар" : "Загрузить аватар"}
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
@@ -335,7 +349,6 @@ function ProfilePage() {
             />
             Ищу команду
           </label>
-
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="bio">

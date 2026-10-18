@@ -14,7 +14,6 @@ import {
   type Placement,
   type RosterTeam,
   type Team,
-
   type TournamentRecord,
 } from "@/lib/tournament";
 
@@ -35,7 +34,6 @@ export type TournamentState = {
   /** Заявки на участие в турнире (проверяет админ). */
   applications: Application[];
   history: TournamentRecord[];
-
 };
 
 export const initialState: TournamentState = {
@@ -49,9 +47,7 @@ export const initialState: TournamentState = {
   roster: [],
   applications: [],
   history: [],
-
 };
-
 
 function read(): TournamentState {
   try {
@@ -107,21 +103,18 @@ export function useTournamentState() {
 
   const refresh = useCallback(() => setStateRaw(read()), []);
 
-  const setState = useCallback(
-    (updater: (s: TournamentState) => TournamentState) => {
-      setStateRaw((prev) => {
-        const next = updater(prev);
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {
-          /* storage full — keep app usable */
-        }
-        window.dispatchEvent(new Event(SYNC_EVENT));
-        return next;
-      });
-    },
-    [],
-  );
+  const setState = useCallback((updater: (s: TournamentState) => TournamentState) => {
+    setStateRaw((prev) => {
+      const next = updater(prev);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* storage full — keep app usable */
+      }
+      window.dispatchEvent(new Event(SYNC_EVENT));
+      return next;
+    });
+  }, []);
 
   const parseScore = (v: string) => {
     if (v.trim() === "") return null;
@@ -202,9 +195,7 @@ export function useTournamentState() {
         roster: s.roster.map((t) => (t.id === id ? { ...t, ...patch } : t)),
         // Название и логотип синхронизируются с уже поданной заявкой.
         teams: s.teams.map((t) =>
-          t.rosterId === id
-            ? { ...t, name: patch.name ?? t.name, logo: patch.logo ?? t.logo }
-            : t,
+          t.rosterId === id ? { ...t, name: patch.name ?? t.name, logo: patch.logo ?? t.logo } : t,
         ),
       })),
     removeRosterTeam: (id: string) =>
@@ -318,7 +309,6 @@ export function useTournamentState() {
         applications: s.applications.filter((a) => a.rosterId !== teamId),
       })),
 
-
     setBracketScore: (id: string, side: "A" | "B", value: string) =>
       setState((s) => ({
         ...s,
@@ -339,9 +329,7 @@ export function useTournamentState() {
     setMatchTime: (id: string, value: string) =>
       setState((s) => ({
         ...s,
-        bracket: s.bracket.map((m) =>
-          m.id === id ? { ...m, scheduledAt: value || null } : m,
-        ),
+        bracket: s.bracket.map((m) => (m.id === id ? { ...m, scheduledAt: value || null } : m)),
         groupMatches: s.groupMatches.map((m) =>
           m.id === id ? { ...m, scheduledAt: value || null } : m,
         ),

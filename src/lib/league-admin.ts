@@ -1,6 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { buildBracket, buildGroups, type GroupMatch, type Match, type Team } from "@/lib/tournament";
+import {
+  buildBracket,
+  buildGroups,
+  type GroupMatch,
+  type Match,
+  type Team,
+} from "@/lib/tournament";
 import type { TournamentFormat, TournamentRow } from "@/lib/league";
 
 /** Лига живёт по Кызылорде: фиксированный UTC+5 без перехода на летнее время. */
@@ -88,14 +94,18 @@ export function validateForm(f: TournamentForm, publish: boolean): Record<string
   if (publish && !f.title.trim()) e.title = "Укажите название";
   if (publish && !start) e.starts_at = "Укажите дату и время начала";
   if (publish && !close) e.registration_closes_at = "Укажите закрытие регистрации";
-  if (!f.reg_manual && !open && publish) e.registration_opens_at = "Укажите время открытия или выберите «вручную»";
-  if (start && close && close > start) e.registration_closes_at = "Закрытие регистрации не может быть позже начала";
-  if (open && close && open >= close) e.registration_opens_at = "Открытие должно быть раньше закрытия";
+  if (!f.reg_manual && !open && publish)
+    e.registration_opens_at = "Укажите время открытия или выберите «вручную»";
+  if (start && close && close > start)
+    e.registration_closes_at = "Закрытие регистрации не может быть позже начала";
+  if (open && close && open >= close)
+    e.registration_opens_at = "Открытие должно быть раньше закрытия";
   if (f.mode === "offline" && (!f.venue_name.trim() || !f.venue_address.trim()))
     e.venue = "Для офлайн-турнира укажите площадку и адрес";
   if (!f.prize_tba) {
     const n = Number(f.prize_amount.replace(",", "."));
-    if (f.prize_amount.trim() === "" || !Number.isFinite(n) || n < 0) e.prize = "Сумма должна быть числом ≥ 0";
+    if (f.prize_amount.trim() === "" || !Number.isFinite(n) || n < 0)
+      e.prize = "Сумма должна быть числом ≥ 0";
     else if (!f.prize_currency.trim()) e.prize = "Укажите валюту";
   }
   const lim = Number(f.team_limit);
@@ -123,8 +133,13 @@ export function formToPayload(f: TournamentForm) {
 }
 
 /** Состав изменён после подачи/принятия заявки? Сравниваем ники по порядку. */
-export function rosterChanged(snapshot: unknown, live: { nickname: string; position?: number }[]): boolean {
-  const snap = ((snapshot as { members?: { nickname: string }[] })?.members ?? []).map((m) => m.nickname.trim().toLowerCase());
+export function rosterChanged(
+  snapshot: unknown,
+  live: { nickname: string; position?: number }[],
+): boolean {
+  const snap = ((snapshot as { members?: { nickname: string }[] })?.members ?? []).map((m) =>
+    m.nickname.trim().toLowerCase(),
+  );
   const now = [...live]
     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
     .map((m) => m.nickname.trim().toLowerCase());
@@ -135,18 +150,21 @@ export function rosterChanged(snapshot: unknown, live: { nickname: string; posit
 export function bracketPayload(teams: Team[]) {
   return {
     matches: buildBracket(teams).map((m) => ({
-        round: m.round,
-        slot: m.order,
-        team_a_id: m.round === 1 ? m.teamA : null,
-        team_b_id: m.round === 1 ? m.teamB : null,
-      })),
+      round: m.round,
+      slot: m.order,
+      team_a_id: m.round === 1 ? m.teamA : null,
+      team_b_id: m.round === 1 ? m.teamB : null,
+    })),
   };
 }
 
 export function groupsPayload(teams: Team[], groupCount: number) {
   const { groups, matches } = buildGroups(teams, groupCount);
   return {
-    groups: groups.map((g, i) => ({ name: `Группа ${String.fromCharCode(65 + i)}`, team_ids: g.map((t) => t.id) })),
+    groups: groups.map((g, i) => ({
+      name: `Группа ${String.fromCharCode(65 + i)}`,
+      team_ids: g.map((t) => t.id),
+    })),
     matches: matches.map((m) => ({ group_idx: m.group, team_a_id: m.teamA, team_b_id: m.teamB })),
   };
 }
@@ -160,7 +178,13 @@ type LegacyState = {
   bracket?: Match[];
   groups?: Team[][];
   groupMatches?: GroupMatch[];
-  roster?: { id: string; name: string; tag?: string; logo?: string; players?: { nickname: string; role?: string; mmr?: number | null }[] }[];
+  roster?: {
+    id: string;
+    name: string;
+    tag?: string;
+    logo?: string;
+    players?: { nickname: string; role?: string; mmr?: number | null }[];
+  }[];
   applications?: { id: string; teamName: string; status: string; playersCount: number }[];
   history?: {
     id: string;
@@ -203,7 +227,10 @@ export const isStaffQuery = (tournamentId: string, uid: string | undefined) =>
     enabled: !!uid,
     queryFn: async () => {
       if (!uid) return false;
-      const { data } = await supabase.rpc("is_staff_for", { _uid: uid, _tournament_id: tournamentId });
+      const { data } = await supabase.rpc("is_staff_for", {
+        _uid: uid,
+        _tournament_id: tournamentId,
+      });
       return !!data;
     },
   });
@@ -214,7 +241,9 @@ export const tournamentApplicationsQuery = (tournamentId: string) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("applications")
-        .select("*, teams(name, tag, owner_id, team_members(nickname, position, profile_id), team_captains(user_id))")
+        .select(
+          "*, teams(name, tag, owner_id, team_members(nickname, position, profile_id), team_captains(user_id))",
+        )
         .eq("tournament_id", tournamentId)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -319,11 +348,29 @@ export const AUDIT_LABEL: Record<string, string> = {
   import_legacy_tournament: "Импорт из старой версии",
 };
 
-const TRACKED = ["title", "starts_at", "registration_opens_at", "registration_closes_at", "mode", "venue_name", "venue_address", "prize_amount", "prize_currency", "prize_tba", "team_limit", "format", "status", "description", "image_url"];
+const TRACKED = [
+  "title",
+  "starts_at",
+  "registration_opens_at",
+  "registration_closes_at",
+  "mode",
+  "venue_name",
+  "venue_address",
+  "prize_amount",
+  "prize_currency",
+  "prize_tba",
+  "team_limit",
+  "format",
+  "status",
+  "description",
+  "image_url",
+];
 
 /** Список изменённых полей между before/after (для истории изменений). */
 export function changedFields(before: unknown, after: unknown): string[] {
   const b = (before ?? {}) as Record<string, unknown>;
   const a = (after ?? {}) as Record<string, unknown>;
-  return TRACKED.filter((k) => k in a && JSON.stringify(b[k] ?? null) !== JSON.stringify(a[k] ?? null));
+  return TRACKED.filter(
+    (k) => k in a && JSON.stringify(b[k] ?? null) !== JSON.stringify(a[k] ?? null),
+  );
 }

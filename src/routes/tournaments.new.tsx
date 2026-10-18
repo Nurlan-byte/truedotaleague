@@ -8,7 +8,10 @@ export const Route = createFileRoute("/tournaments/new")({
   head: () => ({
     meta: [
       { title: "Новый турнир — TrueDotaLeague" },
-      { name: "description", content: "Создание турнира лиги TrueDotaLeague (только для администраторов)." },
+      {
+        name: "description",
+        content: "Создание турнира лиги TrueDotaLeague (только для администраторов).",
+      },
       { property: "og:title", content: "Новый турнир — TrueDotaLeague" },
       { property: "og:description", content: "Раздел администраторов лиги для создания турниров." },
       { property: "og:type", content: "website" },
@@ -31,7 +34,12 @@ function NewTournamentPage() {
       ) : !isAdmin ? (
         <>
           <LoadingPanel text="Создавать турниры могут только администраторы лиги." />
-          <Link to="/tournaments" className="mt-3 inline-block text-sm font-semibold text-primary hover:underline">← Все турниры</Link>
+          <Link
+            to="/tournaments"
+            className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+          >
+            ← Все турниры
+          </Link>
         </>
       ) : (
         <TournamentEditor />

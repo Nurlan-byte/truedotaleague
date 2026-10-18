@@ -58,7 +58,9 @@ export function GroupStage({ groups, matches, onScore, readOnly = false }: Props
                         </span>
                       </td>
                       <td className="px-3 py-2 text-center text-muted-foreground">{row.played}</td>
-                      <td className="px-3 py-2 text-center font-bold text-foreground">{row.points}</td>
+                      <td className="px-3 py-2 text-center font-bold text-foreground">
+                        {row.points}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -102,7 +104,6 @@ export function GroupStage({ groups, matches, onScore, readOnly = false }: Props
                   <span className="flex-1 truncate text-right text-sm text-foreground">
                     {group.find((t) => t.id === m.teamB)?.name}
                   </span>
-
                 </div>
               ))}
             </div>

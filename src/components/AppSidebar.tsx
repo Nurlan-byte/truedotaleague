@@ -1,5 +1,18 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Archive, Home, Inbox, ListChecks, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
+import {
+  Archive,
+  Home,
+  Inbox,
+  ListChecks,
+  Plus,
+  Radio,
+  Route as RouteIcon,
+  Shield,
+  ShieldPlus,
+  Trophy,
+  UserCog,
+  Users,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -26,17 +39,13 @@ const items = [
   { title: "Дорога к TI", url: "/road-to-ti", icon: RouteIcon },
 ] as const;
 
-
-
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const { isAdmin } = useAdmin();
 
-  const visibleItems = items.filter((item) =>
-    item.url !== "/tournaments/new" || isAdmin,
-  );
+  const visibleItems = items.filter((item) => item.url !== "/tournaments/new" || isAdmin);
 
   return (
     <Sidebar collapsible="icon">
@@ -52,7 +61,14 @@ export function AppSidebar() {
             <SidebarMenu>
               {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild isActive={item.url === "/" ? currentPath === "/" : currentPath === item.url || currentPath.startsWith(item.url + "/")}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={
+                      item.url === "/"
+                        ? currentPath === "/"
+                        : currentPath === item.url || currentPath.startsWith(item.url + "/")
+                    }
+                  >
                     <Link to={item.url} className="flex items-center gap-2">
                       <item.icon className="size-4" />
                       {!collapsed && <span>{item.title}</span>}
@@ -88,7 +104,6 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
-
       </SidebarContent>
     </Sidebar>
   );

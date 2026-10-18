@@ -28,10 +28,14 @@ export const Route = createFileRoute("/tournaments/")({
       { title: "Турниры — TrueDotaLeague" },
       {
         name: "description",
-        content: "Все турниры лиги по Dota 2: анонсы, открытая регистрация, идущие турниры и итоги.",
+        content:
+          "Все турниры лиги по Dota 2: анонсы, открытая регистрация, идущие турниры и итоги.",
       },
       { property: "og:title", content: "Турниры TrueDotaLeague" },
-      { property: "og:description", content: "Каталог турниров лиги: регистрация команд, расписание и результаты." },
+      {
+        property: "og:description",
+        content: "Каталог турниров лиги: регистрация команд, расписание и результаты.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -77,7 +81,8 @@ function CatalogPage() {
       </div>
 
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-        Актуальные соревнования лиги, открытые регистрации и результаты. Выберите турнир, чтобы увидеть расписание и условия участия.
+        Актуальные соревнования лиги, открытые регистрации и результаты. Выберите турнир, чтобы
+        увидеть расписание и условия участия.
       </p>
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
@@ -111,7 +116,9 @@ function CatalogPage() {
         ) : isError ? (
           <QueryFeedback text="Не удалось загрузить турниры." retry={() => void refetch()} />
         ) : list.length === 0 ? (
-          <LoadingPanel text={q ? "Ничего не найдено." : "Турниров пока нет — следите за анонсами."} />
+          <LoadingPanel
+            text={q ? "Ничего не найдено." : "Турниров пока нет — следите за анонсами."}
+          />
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {list.map((t) => (
@@ -130,7 +137,8 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
   const accepted = t.tournament_participants.length;
   const winner = t.placements.find((p) => p.place === 1);
   const next = nextMatch(t.matches);
-  const nameOf = (id: string | null) => t.tournament_participants.find((p) => p.team_id === id)?.team_name ?? "—";
+  const nameOf = (id: string | null) =>
+    t.tournament_participants.find((p) => p.team_id === id)?.team_name ?? "—";
   const prize = formatPrize(t);
 
   const btn =
@@ -140,7 +148,12 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
 
   let details: ReactNode = null;
   let action: ReactNode = (
-    <Link to="/tournaments/$tournamentId" params={{ tournamentId: t.id }} className={secondary} onClick={(e) => e.stopPropagation()}>
+    <Link
+      to="/tournaments/$tournamentId"
+      params={{ tournamentId: t.id }}
+      className={secondary}
+      onClick={(e) => e.stopPropagation()}
+    >
       Подробнее
     </Link>
   );
@@ -156,7 +169,8 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
         <>
           {t.registration_closes_at && (
             <span className="block">
-              Приём заявок до {formatLeagueDate(t.registration_closes_at)} · осталось {countdown(t.registration_closes_at)}
+              Приём заявок до {formatLeagueDate(t.registration_closes_at)} · осталось{" "}
+              {countdown(t.registration_closes_at)}
             </span>
           )}
           <span className="block">
@@ -175,7 +189,11 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
                 setReturnTo(path);
                 navigate({ to: "/auth" });
               } else {
-                navigate({ to: "/tournaments/$tournamentId", params: { tournamentId: t.id }, search: { apply: true } });
+                navigate({
+                  to: "/tournaments/$tournamentId",
+                  params: { tournamentId: t.id },
+                  search: { apply: true },
+                });
               }
             }}
           >
@@ -198,13 +216,19 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
           <span className="block">Участников: {accepted}</span>
           {next && (
             <span className="block">
-              Следующий матч: {nameOf(next.team_a_id)} — {nameOf(next.team_b_id)}, {formatLeagueDate(next.scheduled_at)}
+              Следующий матч: {nameOf(next.team_a_id)} — {nameOf(next.team_b_id)},{" "}
+              {formatLeagueDate(next.scheduled_at)}
             </span>
           )}
         </>
       );
       action = (
-        <Link to="/tournaments/$tournamentId" params={{ tournamentId: t.id }} className={primary} onClick={(e) => e.stopPropagation()}>
+        <Link
+          to="/tournaments/$tournamentId"
+          params={{ tournamentId: t.id }}
+          className={primary}
+          onClick={(e) => e.stopPropagation()}
+        >
           Смотреть турнир
         </Link>
       );
@@ -212,7 +236,11 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
     case "finished":
       details = (
         <>
-          {winner && <span className="block font-semibold text-foreground">🏆 Победитель: {winner.team_name}</span>}
+          {winner && (
+            <span className="block font-semibold text-foreground">
+              🏆 Победитель: {winner.team_name}
+            </span>
+          )}
           <span className="block">Команд сыграло: {teamsThatPlayed(t.matches)}</span>
         </>
       );
@@ -229,7 +257,11 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
       );
       break;
     case "cancelled":
-      details = <span className="font-semibold text-destructive">Турнир отменён{t.cancel_reason ? `: ${t.cancel_reason}` : ""}</span>;
+      details = (
+        <span className="font-semibold text-destructive">
+          Турнир отменён{t.cancel_reason ? `: ${t.cancel_reason}` : ""}
+        </span>
+      );
       break;
   }
 
@@ -255,7 +287,11 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
         t.status === "cancelled" ? "opacity-80" : ""
       }`}
     >
-      <TournamentImage src={t.image_url} title={t.title} className="aspect-[16/7] w-full text-4xl" />
+      <TournamentImage
+        src={t.image_url}
+        title={t.title}
+        className="aspect-[16/7] w-full text-4xl"
+      />
       <div className="flex min-w-0 flex-1 flex-col gap-2 p-4">
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={t.status} />
@@ -274,7 +310,11 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
             {t.starts_at ? `Старт: ${formatLeagueDate(t.starts_at)}` : "Дата старта не объявлена"}
           </li>
           <li className="flex items-center gap-1.5">
-            {t.mode === "offline" ? <MapPin className="size-3.5 shrink-0" /> : <Wifi className="size-3.5 shrink-0" />}
+            {t.mode === "offline" ? (
+              <MapPin className="size-3.5 shrink-0" />
+            ) : (
+              <Wifi className="size-3.5 shrink-0" />
+            )}
             {t.mode === "offline" ? "Офлайн" : "Онлайн"}
           </li>
           {prize && (
@@ -286,7 +326,9 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
             <Users className="size-3.5 shrink-0" /> Лимит команд: {t.team_limit}
           </li>
         </ul>
-        {details && <div className="space-y-0.5 break-words text-xs text-muted-foreground">{details}</div>}
+        {details && (
+          <div className="space-y-0.5 break-words text-xs text-muted-foreground">{details}</div>
+        )}
         <div className="mt-auto pt-2">{action}</div>
       </div>
     </li>

@@ -82,7 +82,9 @@ function AuthPage() {
         });
         if (err) throw err;
         if (!data.session) {
-          setNotice("Мы отправили письмо для подтверждения. Проверьте почту и перейдите по ссылке.");
+          setNotice(
+            "Мы отправили письмо для подтверждения. Проверьте почту и перейдите по ссылке.",
+          );
         }
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
@@ -103,14 +105,17 @@ function AuthPage() {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
-      setError(provider === "google" ? "Не удалось войти через Google" : "Не удалось войти через Microsoft");
+      setError(
+        provider === "google"
+          ? "Не удалось войти через Google"
+          : "Не удалось войти через Microsoft",
+      );
       setBusy(false);
       return;
     }
     if (result.redirected) return;
     navigate({ to: "/", replace: true });
   };
-
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
@@ -207,15 +212,18 @@ function AuthPage() {
           Продолжить с Microsoft
         </button>
 
-
         <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-widest text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> или email <span className="h-px flex-1 bg-border" />
+          <span className="h-px flex-1 bg-border" /> или email{" "}
+          <span className="h-px flex-1 bg-border" />
         </div>
 
         <form onSubmit={submit} className="space-y-3">
           {mode === "signup" && (
             <div>
-              <label htmlFor="nick" className="mb-1 block text-xs font-semibold text-muted-foreground">
+              <label
+                htmlFor="nick"
+                className="mb-1 block text-xs font-semibold text-muted-foreground"
+              >
                 Ник
               </label>
               <input
@@ -228,7 +236,10 @@ function AuthPage() {
             </div>
           )}
           <div>
-            <label htmlFor="email" className="mb-1 block text-xs font-semibold text-muted-foreground">
+            <label
+              htmlFor="email"
+              className="mb-1 block text-xs font-semibold text-muted-foreground"
+            >
               Email
             </label>
             <input
@@ -242,7 +253,10 @@ function AuthPage() {
             />
           </div>
           <div>
-            <label htmlFor="pass" className="mb-1 block text-xs font-semibold text-muted-foreground">
+            <label
+              htmlFor="pass"
+              className="mb-1 block text-xs font-semibold text-muted-foreground"
+            >
               Пароль
             </label>
             <input

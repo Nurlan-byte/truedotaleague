@@ -16,7 +16,8 @@ export const Route = createFileRoute("/rating-teams")({
       { property: "og:title", content: "Рейтинг команд TrueDotaLeague" },
       {
         property: "og:description",
-        content: "TDL points команд лиги: 50 за первое место, 25 за второе, 12 за третье, 6 за четвёртое.",
+        content:
+          "TDL points команд лиги: 50 за первое место, 25 за второе, 12 за третье, 6 за четвёртое.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

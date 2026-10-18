@@ -15,7 +15,10 @@ export const Route = createFileRoute("/regulations")({
   head: () => ({
     meta: [
       { title: "Регламент лиги — TrueDotaLeague" },
-      { name: "description", content: "Официальный регламент турниров лиги TrueDotaLeague по Dota 2." },
+      {
+        name: "description",
+        content: "Официальный регламент турниров лиги TrueDotaLeague по Dota 2.",
+      },
       { property: "og:title", content: "Регламент TrueDotaLeague" },
       { property: "og:description", content: "Правила участия команд в турнирах лиги по Dota 2." },
       { property: "og:type", content: "article" },
@@ -43,7 +46,9 @@ function RegulationsPage() {
         )}
       </div>
       <div className="mt-5 space-y-5">
-        {isAdmin && editing && <RegulationEditor publishedBody={data?.body ?? ""} onClose={() => setEditing(false)} />}
+        {isAdmin && editing && (
+          <RegulationEditor publishedBody={data?.body ?? ""} onClose={() => setEditing(false)} />
+        )}
         {isLoading ? (
           <LoadingPanel />
         ) : error ? (
@@ -65,7 +70,13 @@ function RegulationsPage() {
   );
 }
 
-function RegulationEditor({ publishedBody, onClose }: { publishedBody: string; onClose: () => void }) {
+function RegulationEditor({
+  publishedBody,
+  onClose,
+}: {
+  publishedBody: string;
+  onClose: () => void;
+}) {
   const qc = useQueryClient();
   const versions = useQuery(regulationVersionsQuery());
   const draft = (versions.data ?? []).find((v) => v.status === "draft");
@@ -79,13 +90,20 @@ function RegulationEditor({ publishedBody, onClose }: { publishedBody: string; o
     setBusy(true);
     try {
       if (draft) {
-        const { error } = await supabase.from("regulation_versions").update({ body: text }).eq("id", draft.id);
+        const { error } = await supabase
+          .from("regulation_versions")
+          .update({ body: text })
+          .eq("id", draft.id);
         if (error) throw error;
         return draft.id;
       }
       let { data: reg } = await supabase.from("regulations").select("id").limit(1).maybeSingle();
       if (!reg) {
-        const ins = await supabase.from("regulations").insert({ title: "Регламент лиги", singleton: true }).select("id").single();
+        const ins = await supabase
+          .from("regulations")
+          .insert({ title: "Регламент лиги", singleton: true })
+          .select("id")
+          .single();
         if (ins.error) throw ins.error;
         reg = ins.data;
       }
@@ -134,28 +152,51 @@ function RegulationEditor({ publishedBody, onClose }: { publishedBody: string; o
         </button>
       </div>
       {preview ? (
-        <div className="rounded-lg border border-border bg-white/60 p-4"><SafeMarkdown body={text} /></div>
+        <div className="rounded-lg border border-border bg-white/60 p-4">
+          <SafeMarkdown body={text} />
+        </div>
       ) : (
-        <textarea className={field + " min-h-80 font-mono"} value={text} onChange={(e) => setBody(e.target.value)} />
+        <textarea
+          className={field + " min-h-80 font-mono"}
+          value={text}
+          onChange={(e) => setBody(e.target.value)}
+        />
       )}
       <label className="block space-y-1 text-sm">
         <span className="font-semibold">Действует с {LEAGUE_TZ_LABEL} (пусто — сразу)</span>
-        <input type="datetime-local" className={field + " max-w-xs"} value={effective} onChange={(e) => setEffective(e.target.value)} />
+        <input
+          type="datetime-local"
+          className={field + " max-w-xs"}
+          value={effective}
+          onChange={(e) => setEffective(e.target.value)}
+        />
       </label>
       <div className="flex flex-wrap gap-2">
-        <button className={btnGhost} disabled={busy} onClick={async () => (await saveDraft()) && toast.success("Черновик сохранён")}>
+        <button
+          className={btnGhost}
+          disabled={busy}
+          onClick={async () => (await saveDraft()) && toast.success("Черновик сохранён")}
+        >
           Сохранить черновик
         </button>
         <button className={btnPrimary} disabled={busy} onClick={publish}>
           <Send className="size-4" /> Опубликовать
         </button>
-        <button className={btnGhost} onClick={onClose}>Закрыть</button>
+        <button className={btnGhost} onClick={onClose}>
+          Закрыть
+        </button>
       </div>
     </div>
   );
 }
 
-function VersionHistory({ viewId, onView }: { viewId: string | null; onView: (id: string | null) => void }) {
+function VersionHistory({
+  viewId,
+  onView,
+}: {
+  viewId: string | null;
+  onView: (id: string | null) => void;
+}) {
   const { data = [] } = useQuery(regulationVersionsQuery());
   const users = useQuery(usersWithRolesQuery());
   const nick = new Map((users.data ?? []).map((u) => [u.id, u.nickname]));
@@ -166,21 +207,32 @@ function VersionHistory({ viewId, onView }: { viewId: string | null; onView: (id
       <h2 className="text-xl text-foreground">История версий</h2>
       <ul className="space-y-1.5 text-sm">
         {data.map((v) => (
-          <li key={v.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-white/50 px-3 py-1.5">
-            <span className="font-semibold">{v.status === "published" ? "Опубликована" : "Черновик"}</span>
+          <li
+            key={v.id}
+            className="flex flex-wrap items-center gap-2 rounded-lg bg-white/50 px-3 py-1.5"
+          >
+            <span className="font-semibold">
+              {v.status === "published" ? "Опубликована" : "Черновик"}
+            </span>
             <span className="text-xs text-muted-foreground">
               создана {formatLeagueDate(v.created_at)}
               {v.published_at && ` · опубликована ${formatLeagueDate(v.published_at)}`}
-              {v.effective_from && ` · действует с ${formatLeagueDate(v.effective_from)}`} · автор {nick.get(v.author_id ?? "") ?? "—"}
+              {v.effective_from && ` · действует с ${formatLeagueDate(v.effective_from)}`} · автор{" "}
+              {nick.get(v.author_id ?? "") ?? "—"}
             </span>
-            <button className="ml-auto text-xs font-semibold text-primary" onClick={() => onView(viewId === v.id ? null : v.id)}>
+            <button
+              className="ml-auto text-xs font-semibold text-primary"
+              onClick={() => onView(viewId === v.id ? null : v.id)}
+            >
               {viewId === v.id ? "Скрыть" : "Открыть"}
             </button>
           </li>
         ))}
       </ul>
       {viewing && (
-        <div className="rounded-lg border border-border bg-white/60 p-4"><SafeMarkdown body={viewing.body} /></div>
+        <div className="rounded-lg border border-border bg-white/60 p-4">
+          <SafeMarkdown body={viewing.body} />
+        </div>
       )}
     </section>
   );

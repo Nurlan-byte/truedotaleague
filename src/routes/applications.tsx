@@ -15,7 +15,10 @@ export const Route = createFileRoute("/applications")({
       { title: "Заявки на турниры — TrueDotaLeague" },
       { name: "description", content: "Рассмотрение заявок команд на участие в турнирах лиги." },
       { property: "og:title", content: "Заявки на турниры — TrueDotaLeague" },
-      { property: "og:description", content: "Раздел администраторов: принятие и отклонение заявок команд." },
+      {
+        property: "og:description",
+        content: "Раздел администраторов: принятие и отклонение заявок команд.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -24,7 +27,12 @@ export const Route = createFileRoute("/applications")({
   component: ApplicationsPage,
 });
 
-type Snapshot = { name?: string; tag?: string; logo_url?: string | null; members?: { nickname: string }[] };
+type Snapshot = {
+  name?: string;
+  tag?: string;
+  logo_url?: string | null;
+  members?: { nickname: string }[];
+};
 
 function ApplicationsPage() {
   const { isAdmin, checking, user } = useAdmin();
@@ -47,13 +55,21 @@ function ApplicationsPage() {
     onError: (e) => toast.error(rpcErrorText(e)),
   });
 
-  if (checking) return <div className="mx-auto max-w-4xl px-4 py-8"><LoadingPanel /></div>;
+  if (checking)
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <LoadingPanel />
+      </div>
+    );
   if (!isAdmin)
     return (
       <div className="mx-auto max-w-4xl px-4 py-8">
         <LoadingPanel text="Раздел доступен только администраторам." />
         {!user && (
-          <Link to="/auth" className="mt-3 inline-block text-sm font-semibold text-primary hover:underline">
+          <Link
+            to="/auth"
+            className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+          >
             Войти
           </Link>
         )}
@@ -74,7 +90,8 @@ function ApplicationsPage() {
               {s.name} {s.tag && <span className="text-xs text-primary">[{s.tag}]</span>}
             </p>
             <p className="break-words text-xs text-muted-foreground">
-              {a.tournaments?.title} · подана {formatLeagueDate(a.created_at)} · игроков: {s.members?.length ?? 0}
+              {a.tournaments?.title} · подана {formatLeagueDate(a.created_at)} · игроков:{" "}
+              {s.members?.length ?? 0}
             </p>
             {!actions && (
               <p className="text-xs text-muted-foreground">
@@ -121,12 +138,16 @@ function ApplicationsPage() {
         <Inbox className="size-7 text-primary" /> Заявки на турниры
       </h1>
       {isLoading ? (
-        <div className="mt-5"><LoadingPanel /></div>
+        <div className="mt-5">
+          <LoadingPanel />
+        </div>
       ) : (
         <>
           <h2 className="mt-6 text-xl text-foreground">Ожидают решения ({pending.length})</h2>
           {pending.length === 0 ? (
-            <div className="mt-3"><LoadingPanel text="Новых заявок нет." /></div>
+            <div className="mt-3">
+              <LoadingPanel text="Новых заявок нет." />
+            </div>
           ) : (
             <ul className="mt-3 space-y-3">{pending.map((a) => card(a, true))}</ul>
           )}

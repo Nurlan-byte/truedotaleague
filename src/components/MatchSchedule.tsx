@@ -32,7 +32,6 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
   const teamOf = (id: string | null) => (id ? teams.find((t) => t.id === id) : undefined);
   const totalRounds = bracket.length ? Math.max(...bracket.map((m) => m.round)) : 0;
 
-
   const rows: Row[] = [
     ...groupMatches.map((m) => ({
       id: m.id,
@@ -62,7 +61,6 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
         winner: matchWinner(m),
       })),
   ];
-
 
   if (rows.length === 0) {
     return (
@@ -102,7 +100,6 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
             <li
               key={r.id}
               className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-white/50 px-3 py-2"
-
             >
               <span className="w-24 shrink-0 truncate text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 {r.stage}
@@ -113,7 +110,9 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
                 }`}
               >
                 <span className="truncate">{teamOf(r.teamA)?.name ?? "Ожидание"}</span>
-                {r.teamA && <TeamLogo name={teamOf(r.teamA)?.name ?? ""} logo={teamOf(r.teamA)?.logo} />}
+                {r.teamA && (
+                  <TeamLogo name={teamOf(r.teamA)?.name ?? ""} logo={teamOf(r.teamA)?.logo} />
+                )}
               </span>
               <span className="shrink-0 rounded-md bg-secondary px-2 py-0.5 text-xs font-bold text-secondary-foreground">
                 {done ? `${r.scoreA} : ${r.scoreB}` : "—"}
@@ -123,7 +122,9 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
                   r.winner && r.winner === r.teamB ? "font-bold text-win" : "text-foreground"
                 }`}
               >
-                {r.teamB && <TeamLogo name={teamOf(r.teamB)?.name ?? ""} logo={teamOf(r.teamB)?.logo} />}
+                {r.teamB && (
+                  <TeamLogo name={teamOf(r.teamB)?.name ?? ""} logo={teamOf(r.teamB)?.logo} />
+                )}
                 <span className="truncate">{teamOf(r.teamB)?.name ?? "Ожидание"}</span>
               </span>
               {onTime ? (
@@ -137,16 +138,13 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
               ) : (
                 <span
                   className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${
-                    when
-                      ? "bg-primary/10 text-primary"
-                      : "bg-secondary text-muted-foreground"
+                    when ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"
                   }`}
                 >
                   <Clock className="size-3" /> {when ?? "время не назначено"}
                 </span>
               )}
             </li>
-
           );
         })}
       </ul>

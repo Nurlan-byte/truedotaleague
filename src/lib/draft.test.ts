@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { captainIndexForTurn, currentTurn, initialState, ORG, pick, resultsText, undo, availablePlayers, type DraftState } from "./draft";
+import {
+  captainIndexForTurn,
+  currentTurn,
+  initialState,
+  ORG,
+  pick,
+  resultsText,
+  undo,
+  availablePlayers,
+  type DraftState,
+} from "./draft";
 
 const order = (n: number, snake: boolean, turns: number) =>
   Array.from({ length: turns }, (_, t) => "ABCDEFG"[captainIndexForTurn(t, n, snake)]).join("");
 
 describe("draft order", () => {
-  it("snake with 4 captains: ABCD DCBA ABCD", () => expect(order(4, true, 12)).toBe("ABCDDCBAABCD"));
+  it("snake with 4 captains: ABCD DCBA ABCD", () =>
+    expect(order(4, true, 12)).toBe("ABCDDCBAABCD"));
   it("snake with 3 captains", () => expect(order(3, true, 9)).toBe("ABCCBAABC"));
   it("linear keeps order", () => expect(order(4, false, 8)).toBe("ABCDABCD"));
 });
@@ -18,7 +29,11 @@ const make = (): DraftState => ({
     { id: "a", name: "A", team: "TA", color: "#fff" },
     { id: "b", name: "B", team: "TB", color: "#fff" },
   ],
-  players: [{ id: "p1", name: "P1" }, { id: "p2", name: "P2" }, { id: "p3", name: "P3" }],
+  players: [
+    { id: "p1", name: "P1" },
+    { id: "p2", name: "P2" },
+    { id: "p3", name: "P3" },
+  ],
 });
 
 describe("picks", () => {

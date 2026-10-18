@@ -39,15 +39,7 @@ type Row = {
   created_at: string;
 };
 
-function Stat({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-lg border border-border bg-white/60 p-3">
       <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
@@ -150,7 +142,9 @@ function PlayerPage() {
               <Stat
                 icon={<Shield className="size-3" />}
                 label="Команда"
-                value={inTeam ? row.team_name : row.looking_for_team ? "Ищет команду" : "Без команды"}
+                value={
+                  inTeam ? row.team_name : row.looking_for_team ? "Ищет команду" : "Без команды"
+                }
               />
             </div>
 
@@ -170,7 +164,11 @@ function PlayerPage() {
 
           <div className="panel p-6">
             <h2 className="flex items-center gap-2 text-2xl leading-none text-foreground">
-              {inTeam ? <Shield className="size-5 text-primary" /> : <UserSearch className="size-5 text-accent" />}
+              {inTeam ? (
+                <Shield className="size-5 text-primary" />
+              ) : (
+                <UserSearch className="size-5 text-accent" />
+              )}
               {inTeam ? "Состав команды" : "Статус состава"}
             </h2>
 
