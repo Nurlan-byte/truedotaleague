@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { draftPublicationKey, useDraftPublication } from "@/hooks/use-draft-publication";
+import { publishedDraftFromState } from "@/lib/draft-publication";
 import {
   type Captain,
   type DraftState,
@@ -63,6 +67,23 @@ function download(name: string, content: string, type: string) {
 
 export function DraftApp() {
   const { s, setS, restored, dismissRestored } = usePersisted();
+  const publication = useDraftPublication();
+  const queryClient = useQueryClient();
+  const publish = useMutation({
+    mutationFn: async () => {
+      if (s.phase !== "done" || publication.isError || publication.isPending) {
+        throw new Error("Публикация недоступна до загрузки текущей версии.");
+      }
+      const { error } = await supabase.rpc("publish_draft_result", {
+        p_expected_version: publication.data?.version ?? 0,
+        p_result: publishedDraftFromState(s),
+      });
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: draftPublicationKey });
+    },
+  });
   const [toast, setToast] = useState<string | null>(null);
   const flash = (m: string) => {
     setToast(m);
@@ -192,6 +213,49 @@ export function DraftApp() {
             <button className="btn" onClick={dismissRestored}>
               OK
             </button>
+          </div>
+        </div>
+      )}
+
+      {s.phase === "done" && (
+        <div className="no-print mx-auto mt-4 max-w-[1600px] px-4">
+          <div className="panel flex flex-wrap items-center justify-between gap-3 p-4">
+            <div>
+              <p className="font-semibold">Публикация результата</p>
+              <p className="text-sm text-muted-foreground">
+                Зрители видят только опубликованные составы. Изменения в этом браузере сами не
+                публикуются.
+              </p>
+              {publication.isError && (
+                <p className="mt-1 text-sm text-destructive" role="alert">
+                  Сервер публикации недоступен. Проверьте миграцию и повторите загрузку.
+                </p>
+              )}
+              {publish.isError && (
+                <p className="mt-1 text-sm text-destructive" role="alert">
+                  Не удалось опубликовать: {publish.error.message}
+                </p>
+              )}
+              {publish.isSuccess && (
+                <p className="mt-1 text-sm text-primary" role="status">
+                  Результат опубликован.
+                </p>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {publication.isError && (
+                <button className="btn" onClick={() => publication.refetch()}>
+                  Повторить загрузку
+                </button>
+              )}
+              <button
+                className="btn btn-primary"
+                disabled={publication.isPending || publication.isError || publish.isPending}
+                onClick={() => publish.mutate()}
+              >
+                {publish.isPending ? "Публикуем…" : "Опубликовать результат"}
+              </button>
+            </div>
           </div>
         </div>
       )}

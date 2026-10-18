@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DraftApp } from "@/components/DraftApp";
+import { DraftPublished } from "@/components/DraftPublished";
+import { useAdmin } from "@/hooks/use-admin";
 
 export const Route = createFileRoute("/draft")({
   head: () => ({
@@ -23,5 +25,13 @@ export const Route = createFileRoute("/draft")({
 });
 
 function DraftPage() {
-  return <DraftApp />;
+  const { isAdmin, checking } = useAdmin();
+  if (checking) {
+    return (
+      <main className="mx-auto max-w-6xl p-6" role="status">
+        Проверяем доступ к драфту…
+      </main>
+    );
+  }
+  return isAdmin ? <DraftApp /> : <DraftPublished />;
 }

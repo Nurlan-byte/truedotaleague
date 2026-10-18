@@ -8,6 +8,30 @@ export type Database = {
   };
   public: {
     Tables: {
+      draft_publications: {
+        Row: {
+          id: number;
+          result: Json;
+          version: number;
+          updated_at: string;
+          updated_by: string;
+        };
+        Insert: {
+          id?: number;
+          result: Json;
+          version?: number;
+          updated_at?: string;
+          updated_by: string;
+        };
+        Update: {
+          id?: number;
+          result?: Json;
+          version?: number;
+          updated_at?: string;
+          updated_by?: string;
+        };
+        Relationships: [];
+      };
       applications: {
         Row: {
           created_at: string;
@@ -810,6 +834,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      publish_draft_result: {
+        Args: { p_expected_version: number; p_result: Json };
+        Returns: Database["public"]["Tables"]["draft_publications"]["Row"];
+      };
       assign_moderator: {
         Args: { p_tournament_id: string; p_user_id: string };
         Returns: {
