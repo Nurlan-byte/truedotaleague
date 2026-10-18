@@ -52,8 +52,20 @@ export function formatLeagueDate(value: string | null | undefined, withTime = tr
   return `${text} ${LEAGUE_TZ_LABEL}`;
 }
 
+export function leagueYear(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: LEAGUE_TZ, year: "numeric" }).format(date),
+  );
+}
+
 /** Оставшееся время, никогда не отрицательное: «2 д 3 ч», «45 мин», «0 мин». */
-export function countdown(target: string | null | undefined, now: number = Date.now()): string | null {
+export function countdown(
+  target: string | null | undefined,
+  now: number = Date.now(),
+): string | null {
   if (!target) return null;
   const t = new Date(target).getTime();
   if (Number.isNaN(t)) return null;
@@ -71,7 +83,9 @@ export function freePlaces(teamLimit: number, accepted: number): number {
   return Math.max(0, teamLimit - accepted);
 }
 
-export function formatPrize(t: Pick<TournamentRow, "prize_tba" | "prize_amount" | "prize_currency">): string | null {
+export function formatPrize(
+  t: Pick<TournamentRow, "prize_tba" | "prize_amount" | "prize_currency">,
+): string | null {
   if (t.prize_tba) return "Будет объявлен";
   if (t.prize_amount === null || t.prize_amount === undefined) return null;
   const amount = Number(t.prize_amount).toLocaleString("ru-RU");
@@ -99,7 +113,10 @@ export function sortCatalog<T extends Sortable>(list: T[], sort: CatalogSort = "
   if (sort === "title") return out.sort((a, b) => a.title.localeCompare(b.title, "ru"));
   if (sort === "start_asc") return out.sort((a, b) => ts(a.starts_at) - ts(b.starts_at));
   if (sort === "start_desc")
-    return out.sort((a, b) => (b.starts_at ? ts(b.starts_at) : -Infinity) - (a.starts_at ? ts(a.starts_at) : -Infinity));
+    return out.sort(
+      (a, b) =>
+        (b.starts_at ? ts(b.starts_at) : -Infinity) - (a.starts_at ? ts(a.starts_at) : -Infinity),
+    );
   return out.sort((a, b) => {
     const r = catalogRank(a.status) - catalogRank(b.status);
     if (r !== 0) return r;
@@ -110,7 +127,9 @@ export function sortCatalog<T extends Sortable>(list: T[], sort: CatalogSort = "
 }
 
 /** Число команд, которые реально сыграли хотя бы один матч с результатом. */
-export function teamsThatPlayed(matches: Pick<MatchRow, "team_a_id" | "team_b_id" | "score_a" | "score_b">[]): number {
+export function teamsThatPlayed(
+  matches: Pick<MatchRow, "team_a_id" | "team_b_id" | "score_a" | "score_b">[],
+): number {
   const ids = new Set<string>();
   for (const m of matches) {
     if (m.score_a === null || m.score_b === null) continue;
@@ -121,17 +140,30 @@ export function teamsThatPlayed(matches: Pick<MatchRow, "team_a_id" | "team_b_id
 }
 
 /** Ближайший запланированный, ещё не сыгранный матч. */
-export function nextMatch<T extends Pick<MatchRow, "scheduled_at" | "score_a">>(matches: T[], now = Date.now()): T | null {
+export function nextMatch<T extends Pick<MatchRow, "scheduled_at" | "score_a">>(
+  matches: T[],
+  now = Date.now(),
+): T | null {
   return (
     matches
-      .filter((m) => m.scheduled_at && m.score_a === null && new Date(m.scheduled_at).getTime() >= now)
+      .filter(
+        (m) => m.scheduled_at && m.score_a === null && new Date(m.scheduled_at).getTime() >= now,
+      )
       .sort((a, b) => ts(a.scheduled_at) - ts(b.scheduled_at))[0] ?? null
   );
 }
 
 /** Перевод строк БД в формат существующих компонентов сетки и групп. */
-export function toViewModel(participants: ParticipantRow[], matches: MatchRow[], groups: GroupRow[]) {
-  const teams: Team[] = participants.map((p) => ({ id: p.team_id, name: p.team_name, logo: p.logo_url ?? undefined }));
+export function toViewModel(
+  participants: ParticipantRow[],
+  matches: MatchRow[],
+  groups: GroupRow[],
+) {
+  const teams: Team[] = participants.map((p) => ({
+    id: p.team_id,
+    name: p.team_name,
+    logo: p.logo_url ?? undefined,
+  }));
   const byId = new Map(teams.map((t) => [t.id, t]));
   const sortedGroups = [...groups].sort((a, b) => a.idx - b.idx);
   const groupIndex = new Map(sortedGroups.map((g) => [g.id, g.idx]));

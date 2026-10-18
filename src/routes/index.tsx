@@ -34,26 +34,33 @@ function HomePage() {
   const catalog = useQuery(catalogQuery());
   const teamsQ = useQuery(allTeamsQuery());
   const ranking = useQuery(rankingQuery());
-  const finished = sortCatalog((catalog.data ?? []).filter((t) => t.status === "finished")).map((t) => {
-    const win = t.placements.find((p) => p.place === 1);
-    const snap = t.tournament_participants.find((p) => p.team_id === win?.team_id);
-    return {
+  const finished = sortCatalog((catalog.data ?? []).filter((t) => t.status === "finished")).map(
+    (t) => {
+      const win = t.placements.find((p) => p.place === 1);
+      const snap = t.tournament_participants.find((p) => p.team_id === win?.team_id);
+      return {
+        id: t.id,
+        title: t.title,
+        date: formatLeagueDate(t.starts_at, false) ?? "",
+        placements: win
+          ? [{ teamName: win.team_name, logo: snap?.logo_url ?? undefined, points: win.points }]
+          : [],
+      };
+    },
+  );
+  const state = {
+    teams: (teamsQ.data ?? []).map((t) => ({
       id: t.id,
-      title: t.title,
-      date: formatLeagueDate(t.starts_at, false) ?? "",
-      placements: win ? [{ teamName: win.team_name, logo: snap?.logo_url ?? undefined, points: win.points }] : [],
-    };
-  });
-  const state = { teams: (teamsQ.data ?? []).map((t) => ({ id: t.id, name: t.name, logo: t.logo_url ?? undefined })) };
+      name: t.name,
+      logo: t.logo_url ?? undefined,
+    })),
+  };
   const totalPoints = (ranking.data ?? []).reduce((s, r) => s + r.points, 0);
-  const featured = sortCatalog((catalog.data ?? []).filter((t) => ["live", "registration_open", "registration_closed", "announced"].includes(t.status)))[0];
-
-  if (catalog.isPending || teamsQ.isPending || ranking.isPending) {
-    return <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8"><QueryFeedback text="Загружаем данные лиги…" /></div>;
-  }
-  if (catalog.isError || teamsQ.isError || ranking.isError) {
-    return <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8"><QueryFeedback text="Не удалось загрузить данные лиги." retry={() => { void catalog.refetch(); void teamsQ.refetch(); void ranking.refetch(); }} /></div>;
-  }
+  const featured = sortCatalog(
+    (catalog.data ?? []).filter((t) =>
+      ["live", "registration_open", "registration_closed", "announced"].includes(t.status),
+    ),
+  )[0];
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8">
@@ -93,31 +100,86 @@ function HomePage() {
       <section className="panel mt-6 overflow-hidden" aria-labelledby="featured-title">
         <div className="grid md:grid-cols-[minmax(0,1fr)_13rem]">
           <div className="p-5 sm:p-6">
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">Сейчас в лиге</p>
-            <h2 id="featured-title" className="mt-2 text-2xl text-foreground sm:text-3xl">{featured ? featured.title : "Новый турнир готовится"}</h2>
-            {featured ? <div className="mt-2"><StatusBadge status={featured.status} /></div> : <p className="mt-2 text-sm text-muted-foreground">Следующий турнир появится здесь после публикации.</p>}
-            <Link to={featured ? "/tournaments/$tournamentId" : "/tournaments"} params={featured ? { tournamentId: featured.id } : undefined} className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary">
+              Сейчас в лиге
+            </p>
+            <h2 id="featured-title" className="mt-2 text-2xl text-foreground sm:text-3xl">
+              {catalog.isPending
+                ? "Загружаем турниры…"
+                : featured
+                  ? featured.title
+                  : catalog.isError
+                    ? "Турниры временно недоступны"
+                    : "Новый турнир готовится"}
+            </h2>
+            {catalog.isError ? (
+              <div className="mt-3">
+                <QueryFeedback
+                  text="Не удалось загрузить турниры."
+                  retry={() => void catalog.refetch()}
+                />
+              </div>
+            ) : featured ? (
+              <div className="mt-2">
+                <StatusBadge status={featured.status} />
+              </div>
+            ) : (
+              !catalog.isPending && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Следующий турнир появится здесь после публикации.
+                </p>
+              )
+            )}
+            <Link
+              to={featured ? "/tournaments/$tournamentId" : "/tournaments"}
+              params={featured ? { tournamentId: featured.id } : undefined}
+              className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
+            >
               {featured ? "Открыть турнир" : "Все турниры"}
             </Link>
           </div>
-          <TournamentImage src={featured?.image_url ?? null} title={featured?.title ?? "TrueDotaLeague"} className="min-h-36 w-full text-4xl md:h-full" />
+          <TournamentImage
+            src={featured?.image_url ?? null}
+            title={featured?.title ?? "TrueDotaLeague"}
+            className="min-h-36 w-full text-4xl md:h-full"
+          />
         </div>
       </section>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {[
-          { label: "Завершённых турниров", value: finished.length, icon: Crown },
-          { label: "Команд в лиге", value: state.teams.length, icon: Shield },
+          {
+            label: "Завершённых турниров",
+            value: catalog.isPending ? "…" : catalog.isError ? "—" : finished.length,
+            icon: Crown,
+            retry: catalog.isError ? () => void catalog.refetch() : null,
+          },
+          {
+            label: "Команд в лиге",
+            value: teamsQ.isPending ? "…" : teamsQ.isError ? "—" : state.teams.length,
+            icon: Shield,
+            retry: teamsQ.isError ? () => void teamsQ.refetch() : null,
+          },
           {
             label: "Разыграно TDL points",
-            value: totalPoints,
+            value: ranking.isPending ? "…" : ranking.isError ? "—" : totalPoints,
             icon: Trophy,
+            retry: ranking.isError ? () => void ranking.refetch() : null,
           },
         ].map((card) => (
           <div key={card.label} className="panel p-5">
             <card.icon className="size-5 text-primary" />
             <p className="mt-2 text-3xl font-bold text-foreground">{card.value}</p>
             <p className="text-xs text-muted-foreground">{card.label}</p>
+            {card.retry && (
+              <button
+                type="button"
+                onClick={card.retry}
+                className="mt-2 text-xs font-semibold text-primary underline"
+              >
+                Повторить загрузку
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -132,7 +194,14 @@ function HomePage() {
               Архив
             </Link>
           </div>
-          {finished.length === 0 ? (
+          {catalog.isPending ? (
+            <QueryFeedback text="Загружаем архив…" />
+          ) : catalog.isError ? (
+            <QueryFeedback
+              text="Не удалось загрузить архив."
+              retry={() => void catalog.refetch()}
+            />
+          ) : finished.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Завершённых турниров пока нет — они появятся здесь после финала.
             </p>
@@ -140,18 +209,22 @@ function HomePage() {
             <ul className="space-y-3">
               {finished.slice(0, 4).map((t) => (
                 <li key={t.id}>
-                  <Link to="/tournaments/$tournamentId" params={{ tournamentId: t.id }} className="block rounded-lg border border-border bg-white/50 p-3 hover:border-primary">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="break-words font-bold text-foreground">{t.title}</p>
-                    <p className="text-xs text-muted-foreground">{t.date}</p>
-                  </div>
-                  {t.placements[0] && (
-                    <p className="mt-2 flex items-center gap-2 text-sm text-foreground">
-                      <Medal className="size-4 text-accent" />
-                      <TeamLogo name={t.placements[0].teamName} logo={t.placements[0].logo} />
-                      <span className="truncate">{t.placements[0].teamName}</span>
-                    </p>
-                  )}
+                  <Link
+                    to="/tournaments/$tournamentId"
+                    params={{ tournamentId: t.id }}
+                    className="block rounded-lg border border-border bg-white/50 p-3 hover:border-primary"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="break-words font-bold text-foreground">{t.title}</p>
+                      <p className="text-xs text-muted-foreground">{t.date}</p>
+                    </div>
+                    {t.placements[0] && (
+                      <p className="mt-2 flex items-center gap-2 text-sm text-foreground">
+                        <Medal className="size-4 text-accent" />
+                        <TeamLogo name={t.placements[0].teamName} logo={t.placements[0].logo} />
+                        <span className="truncate">{t.placements[0].teamName}</span>
+                      </p>
+                    )}
                   </Link>
                 </li>
               ))}
@@ -168,7 +241,14 @@ function HomePage() {
               Все команды
             </Link>
           </div>
-          {state.teams.length === 0 ? (
+          {teamsQ.isPending ? (
+            <QueryFeedback text="Загружаем команды…" />
+          ) : teamsQ.isError ? (
+            <QueryFeedback
+              text="Не удалось загрузить команды."
+              retry={() => void teamsQ.refetch()}
+            />
+          ) : state.teams.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Команд пока нет — создайте свою в разделе{" "}
               <Link to="/my-team" className="font-semibold text-primary hover:underline">
