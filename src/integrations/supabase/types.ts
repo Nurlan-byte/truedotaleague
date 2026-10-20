@@ -536,14 +536,36 @@ export type Database = {
           },
         ];
       };
+      team_invitations: {
+        Row: {
+          id: string;
+          team_id: string;
+          invited_user_id: string;
+          invited_by: string;
+          status: "pending" | "accepted" | "declined" | "cancelled";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          invited_user_id: string;
+          invited_by: string;
+          status?: "pending" | "accepted" | "declined" | "cancelled";
+          created_at?: string;
+        };
+        Update: { status?: "pending" | "accepted" | "declined" | "cancelled" };
+        Relationships: [];
+      };
       team_members: {
         Row: {
           created_at: string;
           id: string;
           mmr: number | null;
+          roster_slot: "main" | "reserve";
+          roster_place: number;
           nickname: string;
           position: number;
-          profile_id: string | null;
+          profile_id: string;
           role: string;
           team_id: string;
           updated_at: string;
@@ -552,6 +574,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           mmr?: number | null;
+          roster_slot?: "main" | "reserve";
+          roster_place?: number;
           nickname: string;
           position?: number;
           profile_id?: string | null;
@@ -563,6 +587,8 @@ export type Database = {
           created_at?: string;
           id?: string;
           mmr?: number | null;
+          roster_slot?: "main" | "reserve";
+          roster_place?: number;
           nickname?: string;
           position?: number;
           profile_id?: string | null;
@@ -834,6 +860,21 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      team_system_version: { Args: Record<string, never>; Returns: number };
+      create_team: { Args: { p_name: string; p_tag?: string }; Returns: string };
+      manage_team: {
+        Args: {
+          p_team_id: string;
+          p_action: string;
+          p_user_id?: string | null;
+          p_value?: string | null;
+        };
+        Returns: undefined;
+      };
+      create_team_invitation: { Args: { p_team_id: string; p_user_id: string }; Returns: string };
+      list_team_invitations: { Args: Record<string, never>; Returns: Json };
+      search_team_players: { Args: { p_team_id: string; p_query: string }; Returns: Json };
+      respond_team_invitation: { Args: { p_id: string; p_action: string }; Returns: string };
       get_my_discord_identity: {
         Args: Record<PropertyKey, never>;
         Returns: Json;

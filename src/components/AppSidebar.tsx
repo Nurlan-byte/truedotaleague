@@ -1,3 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { invitationsQuery, teamSystemQuery } from "@/lib/team-invitations";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Archive,
@@ -44,6 +47,12 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const { isAdmin } = useAdmin();
+  const { user } = useAuth();
+  const system = useQuery(teamSystemQuery(user?.id));
+  const invites = useQuery(invitationsQuery(user?.id, system.data === true));
+  const count = (invites.data ?? []).filter(
+    (i) => i.invited_user_id === user?.id && i.status === "pending",
+  ).length;
 
   const visibleItems = items.filter((item) => item.url !== "/tournaments/new" || isAdmin);
 
@@ -59,6 +68,21 @@ export function AppSidebar() {
           <SidebarGroupLabel>Лига</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              {user && system.data && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <a
+                      href="/my-team#invitations"
+                      aria-label={
+                        invites.isError ? "Приглашения: ошибка загрузки" : `Приглашения: ${count}`
+                      }
+                    >
+                      <Inbox className="size-4" />
+                      {!collapsed && "Приглашения"} <span>{invites.isError ? "!" : count}</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton

@@ -60,11 +60,22 @@ export const myTeamsQuery = (userId: string | undefined) =>
     enabled: !!userId,
     queryFn: async () => {
       if (!userId) return [];
-      const { data: caps } = await supabase
+      const { data: caps, error: capsError } = await supabase
         .from("team_captains")
         .select("team_id")
         .eq("user_id", userId);
-      const capIds = (caps ?? []).map((c) => c.team_id);
+      if (capsError) throw capsError;
+      const { data: membership, error: memberError } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("profile_id", userId);
+      if (memberError) throw memberError;
+      const capIds = [
+        ...new Set([
+          ...(caps ?? []).map((c) => c.team_id),
+          ...(membership ?? []).map((m) => m.team_id),
+        ]),
+      ];
       let q = supabase
         .from("teams")
         .select("*, team_members(*), team_captains(user_id)")

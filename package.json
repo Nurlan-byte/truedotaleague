@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:sql": "node qa/draft-sql-check.mjs && node qa/profile-privacy-sql-check.mjs"
+    "test:sql": "node qa/draft-sql-check.mjs && node qa/profile-privacy-sql-check.mjs",
+    "test:team-sql": "node qa/team-invitations-sql-check.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
