@@ -41,7 +41,7 @@ try {
     GRANT USAGE ON SCHEMA public,auth TO anon,authenticated,service_role;
   `);
   const directory = new URL("../supabase/migrations/", import.meta.url);
-  for (const name of (await readdir(directory)).filter((n) => n < migrationPath).sort()) {
+  for (const name of (await readdir(directory)).filter((n) => n < "20261021185000_legacy_team_guard.sql").sort()) {
     if (name.endsWith(".sql")) await db.exec(await readFile(new URL(name, directory), "utf8"));
   }
   for (const name of ["0000_roles_and_tournament_schema.sql", "0001_stage3_admin_rpcs.sql", "0002_draft_publication.sql", "0003_private_discord_profile.sql"]) {
@@ -78,7 +78,9 @@ try {
   await db.exec("ROLLBACK");
   assert.equal(await scalar("SELECT nickname FROM team_members"), "das");
   await db.exec("DELETE FROM team_members; DELETE FROM teams;");
+  await db.exec(await readFile(new URL("../supabase/migrations/20261021185000_legacy_team_guard.sql", import.meta.url), "utf8"));
   await db.exec(migration);
+  assert.equal(await scalar("SELECT to_regclass('public.team_membership_guard') IS NULL"), true);
   assert.equal(await scalar("SELECT to_regclass('public.team_captains') IS NULL"), true);
   assert.equal(await scalar("SELECT count(*)::int FROM information_schema.columns WHERE table_schema='public' AND table_name='team_members' AND column_name IN ('nickname','role','mmr')"), 0);
   assert.equal(await scalar("SELECT to_regprocedure('public.is_team_captain(uuid,uuid)') IS NULL"), true);

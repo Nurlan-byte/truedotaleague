@@ -9,6 +9,10 @@ import { QueryFeedback } from "@/components/LeaguePageIntro";
 import {
   legacySupabase as supabase,
   legacyMyTeamsQuery as myTeamsQuery,
+  legacyTeamEligibilityQuery,
+  createLegacyTeam,
+  TEAM_ASSOCIATED_TEXT,
+  TEAM_ELIGIBILITY_ERROR,
 } from "@/lib/legacy-team-api";
 import { useAuth } from "@/hooks/use-auth";
 import { myApplicationsQuery } from "@/lib/league-api";
@@ -24,6 +28,12 @@ export function LegacyMyTeam() {
   const { user, loading } = useAuth();
   const qc = useQueryClient();
   const teams = useQuery(myTeamsQuery(user?.id));
+  const eligibility = useQuery(legacyTeamEligibilityQuery(user?.id));
+  const canCreate =
+    eligibility.data === true &&
+    !eligibility.isPending &&
+    !eligibility.isFetching &&
+    !eligibility.isError;
   const apps = useQuery(myApplicationsQuery((teams.data ?? []).map((t) => t.id)));
   const effectiveReg = useQuery(effectiveRegulationQuery());
   const [name, setName] = useState("");
@@ -76,10 +86,11 @@ export function LegacyMyTeam() {
   const create = () => {
     if (!name.trim()) return toast.error("Введите название команды");
     run.mutate(async () => {
-      const { error } = await supabase
-        .from("teams")
-        .insert({ name: name.trim(), tag: tag.trim(), owner_id: user.id });
-      check(error);
+      if (!canCreate)
+        throw new Error(
+          `!${eligibility.data === false ? TEAM_ASSOCIATED_TEXT : TEAM_ELIGIBILITY_ERROR}`,
+        );
+      await createLegacyTeam(user.id, name, tag);
       toast.success("Команда создана");
       setName("");
       setTag("");
@@ -120,12 +131,31 @@ export function LegacyMyTeam() {
           />
           <button
             onClick={create}
-            disabled={run.isPending}
+            disabled={run.isPending || !canCreate}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm disabled:opacity-50"
           >
             <Plus className="size-4" /> Создать
           </button>
         </div>
+        {!canCreate && (
+          <div className="mt-3 text-sm text-muted-foreground" role="status">
+            {eligibility.isError
+              ? TEAM_ELIGIBILITY_ERROR
+              : eligibility.isPending || eligibility.isFetching
+                ? "Проверяем участие в командах…"
+                : eligibility.data === false
+                  ? TEAM_ASSOCIATED_TEXT
+                  : TEAM_ELIGIBILITY_ERROR}
+            {eligibility.isError && (
+              <button
+                className="ml-2 font-semibold text-primary"
+                onClick={() => void eligibility.refetch()}
+              >
+                Повторить проверку
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {teams.isLoading ? (

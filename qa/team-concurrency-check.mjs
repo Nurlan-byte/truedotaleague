@@ -85,12 +85,13 @@ try {
   `);
   const name = "20261021190000_team_membership.sql";
   const directory = new URL("../supabase/migrations/", import.meta.url);
-  for (const file of (await readdir(directory)).filter((f) => f < name && f.endsWith(".sql")).sort()) {
+  for (const file of (await readdir(directory)).filter((f) => f < "20261021185000_legacy_team_guard.sql" && f.endsWith(".sql")).sort()) {
     await admin.unsafe(await readFile(new URL(file, directory), "utf8"));
   }
   for (const file of ["0000_roles_and_tournament_schema.sql", "0001_stage3_admin_rpcs.sql", "0002_draft_publication.sql", "0003_private_discord_profile.sql"]) {
     await admin.unsafe(await readFile(new URL(`../drizzle/migrations/${file}`, import.meta.url), "utf8"));
   }
+  await admin.unsafe(await readFile(new URL("20261021185000_legacy_team_guard.sql", directory), "utf8"));
   await admin.unsafe(await readFile(new URL(name, directory), "utf8"));
   for (let n = 1; n <= 20; n++) await admin.unsafe("INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES($1,$2,$3)", [id(n), `fixture${n}@invalid.test`, JSON.stringify({ nickname: `Player ${n}` })]);
   const a = await create(1, "A");

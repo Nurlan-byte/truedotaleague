@@ -28,6 +28,14 @@ DO $$ BEGIN
     RAISE EXCEPTION 'migration_roster_positions_require_review'; END IF;
 END $$;
 
+-- Superseded only after the full migration's data-preservation gate succeeds.
+-- These objects contain coordination revisions, never roster/profile data.
+DROP TRIGGER IF EXISTS legacy_teams_membership_guard ON public.teams;
+DROP TRIGGER IF EXISTS legacy_members_membership_guard ON public.team_members;
+DROP TRIGGER IF EXISTS legacy_captains_membership_guard ON public.team_captains;
+DROP FUNCTION IF EXISTS public.guard_legacy_team_membership();
+DROP TABLE IF EXISTS public.team_membership_guard;
+
 CREATE FUNCTION public.is_team_owner(_uid uuid, _team_id uuid) RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
   SELECT _uid IS NOT NULL AND EXISTS(SELECT 1 FROM public.teams WHERE id=_team_id AND owner_id=_uid)
