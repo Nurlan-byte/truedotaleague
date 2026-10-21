@@ -1,3 +1,10 @@
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -97,17 +104,17 @@ function CatalogPage() {
             className="w-full rounded-lg border border-input bg-white/70 py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-primary focus:bg-white"
           />
         </label>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as CatalogSort)}
-          aria-label="Сортировка"
-          className="rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground"
-        >
-          <option value="default">Сначала актуальные</option>
-          <option value="start_asc">По дате старта ↑</option>
-          <option value="start_desc">По дате старта ↓</option>
-          <option value="title">По названию</option>
-        </select>
+        <Select value={sort} onValueChange={(value) => setSort(value as CatalogSort)}>
+          <SelectTrigger aria-label="Сортировка" className="sort-trigger sm:w-56">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="sort-menu">
+            <SelectItem value="default">Сначала актуальные</SelectItem>
+            <SelectItem value="start_asc">По дате старта ↑</SelectItem>
+            <SelectItem value="start_desc">По дате старта ↓</SelectItem>
+            <SelectItem value="title">По названию</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="mt-5">

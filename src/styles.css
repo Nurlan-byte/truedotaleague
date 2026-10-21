@@ -10,8 +10,8 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --font-display: "Bebas Neue", "Arial Narrow", sans-serif;
-  --font-sans: "Barlow", system-ui, sans-serif;
+  --font-display: "Noto Sans", sans-serif;
+  --font-sans: "Noto Sans", sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -91,10 +91,9 @@
     oklch(0.78 0.1 230 / 0.25) 0%,
     oklch(0.9 0.05 230 / 0.55) 100%
   );
-  --shadow-panel: 0 1px 0 oklch(1 0 0 / 0.7) inset,
-    0 10px 30px -12px oklch(0.25 0.05 260 / 0.25);
-  --shadow-glow: 0 0 0 1px oklch(0.55 0.18 250 / 0.35),
-    0 12px 30px -14px oklch(0.55 0.18 250 / 0.45);
+  --shadow-panel: 0 1px 0 oklch(1 0 0 / 0.7) inset, 0 10px 30px -12px oklch(0.25 0.05 260 / 0.25);
+  --shadow-glow:
+    0 0 0 1px oklch(0.55 0.18 250 / 0.35), 0 12px 30px -14px oklch(0.55 0.18 250 / 0.45);
 }
 
 .dark {
@@ -114,10 +113,13 @@
   body {
     min-height: 100vh;
     background-color: var(--color-background);
-    background-image: var(--sky-overlay),
+    background-image:
+      var(--sky-overlay),
       url("/__l5e/assets-v1/fccdab76-83d0-4ddb-90ed-cbbd5aa9cf92/sky-clouds-bg.jpg");
     background-size: cover, cover;
-    background-position: center top, center top;
+    background-position:
+      center top,
+      center top;
     background-attachment: fixed, fixed;
     background-repeat: no-repeat, no-repeat;
     color: var(--color-foreground);
@@ -133,7 +135,8 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: 0.04em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -173,7 +176,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
@@ -185,4 +190,38 @@
   .no-print {
     display: none !important;
   }
+}
+
+/* Form controls and portal menus use the same Cyrillic face as the page. */
+@layer base {
+  button,
+  input,
+  select,
+  textarea,
+  option {
+    font-family: inherit;
+  }
+}
+
+.sort-trigger {
+  min-width: 0;
+  height: 2.5rem;
+  border-radius: var(--radius);
+  background: oklch(1 0 0 / 0.75);
+  color: var(--foreground);
+}
+.sort-menu {
+  border-radius: var(--radius);
+  background: oklch(1 0 0 / 0.95);
+  backdrop-filter: blur(14px);
+  font-family: var(--font-sans);
+}
+.sort-menu [role="option"] {
+  border-radius: calc(var(--radius) - 4px);
+  padding-block: 0.625rem;
+}
+.sort-menu [role="option"][data-state="checked"],
+.sort-menu [role="option"][data-highlighted] {
+  background: oklch(0.55 0.18 250 / 0.12);
+  color: var(--primary);
 }

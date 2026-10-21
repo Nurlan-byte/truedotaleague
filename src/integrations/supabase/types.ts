@@ -510,25 +510,25 @@ export type Database = {
         };
         Relationships: [];
       };
-      team_captains: {
+      team_invites: {
         Row: {
-          created_at: string;
+          id: string;
           team_id: string;
-          user_id: string;
+          invited_user_id: string;
+          status: "pending" | "accepted" | "declined" | "cancelled";
+          created_at: string;
         };
         Insert: {
-          created_at?: string;
+          id?: string;
           team_id: string;
-          user_id: string;
-        };
-        Update: {
+          invited_user_id: string;
+          status?: "pending" | "accepted" | "declined" | "cancelled";
           created_at?: string;
-          team_id?: string;
-          user_id?: string;
         };
+        Update: { status?: "pending" | "accepted" | "declined" | "cancelled" };
         Relationships: [
           {
-            foreignKeyName: "team_captains_team_id_fkey";
+            foreignKeyName: "team_invites_team_id_fkey";
             columns: ["team_id"];
             isOneToOne: false;
             referencedRelation: "teams";
@@ -540,33 +540,24 @@ export type Database = {
         Row: {
           created_at: string;
           id: string;
-          mmr: number | null;
-          nickname: string;
           position: number;
-          profile_id: string | null;
-          role: string;
+          profile_id: string;
           team_id: string;
           updated_at: string;
         };
         Insert: {
           created_at?: string;
           id?: string;
-          mmr?: number | null;
-          nickname: string;
           position?: number;
-          profile_id?: string | null;
-          role?: string;
+          profile_id: string;
           team_id: string;
           updated_at?: string;
         };
         Update: {
           created_at?: string;
           id?: string;
-          mmr?: number | null;
-          nickname?: string;
           position?: number;
-          profile_id?: string | null;
-          role?: string;
+          profile_id?: string;
           team_id?: string;
           updated_at?: string;
         };
@@ -621,7 +612,15 @@ export type Database = {
           updated_at?: string;
           version?: number;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "teams_owner_membership";
+            columns: ["id", "owner_id"];
+            isOneToOne: true;
+            referencedRelation: "team_members";
+            referencedColumns: ["team_id", "profile_id"];
+          },
+        ];
       };
       tournament_moderators: {
         Row: {
@@ -831,9 +830,40 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      team_roster: {
+        Row: {
+          id: string;
+          team_id: string;
+          profile_id: string;
+          position: number;
+          created_at: string;
+          updated_at: string;
+          nickname: string;
+          mmr: number | null;
+          is_captain: boolean;
+          roster_slot: "main" | "reserve";
+        };
+        Relationships: [];
+      };
     };
     Functions: {
+      create_team: { Args: { p_name: string; p_tag: string }; Returns: string };
+      invite_player: { Args: { p_team_id: string; p_user_id: string }; Returns: string };
+      accept_invite: { Args: { p_invite_id: string }; Returns: undefined };
+      decline_invite: { Args: { p_invite_id: string }; Returns: undefined };
+      cancel_invite: { Args: { p_invite_id: string }; Returns: undefined };
+      manage_team: {
+        Args: {
+          p_team_id: string;
+          p_action: string;
+          p_user_id?: string | null;
+          p_value?: string | null;
+        };
+        Returns: undefined;
+      };
+      search_team_players: { Args: { p_team_id: string; p_query: string }; Returns: Json };
+      list_team_invites: { Args: Record<PropertyKey, never>; Returns: Json };
+      team_system_version: { Args: Record<PropertyKey, never>; Returns: number };
       get_my_discord_identity: {
         Args: Record<PropertyKey, never>;
         Returns: Json;
@@ -981,7 +1011,7 @@ export type Database = {
         Args: { _tournament_id: string; _uid: string };
         Returns: boolean;
       };
-      is_team_captain: {
+      is_team_owner: {
         Args: { _team_id: string; _uid: string };
         Returns: boolean;
       };

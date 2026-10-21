@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { myTeamsQuery, regulationQuery } from "@/lib/league-api";
 import { formatLeagueDate, rpcErrorText } from "@/lib/league";
+import { teamSystemQuery } from "@/lib/team-invitations";
+import { legacyMyTeamsQuery } from "@/lib/legacy-team-api";
 
 type Props = {
   tournamentId: string;
@@ -24,7 +26,23 @@ type Props = {
 export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const teams = useQuery(myTeamsQuery(user?.id));
+  const system = useQuery(teamSystemQuery(user?.id));
+  const modernTeams = useQuery({
+    ...myTeamsQuery(user?.id),
+    enabled: !!user && system.data === true,
+  });
+  const legacyTeams = useQuery({
+    ...legacyMyTeamsQuery(user?.id),
+    enabled: !!user && system.data === false,
+  });
+  const teams = system.data === true ? modernTeams : legacyTeams;
+  const ownedTeams = useMemo(
+    () =>
+      system.data === true
+        ? modernTeams.data?.filter((team) => team.owner_id === user?.id)
+        : legacyTeams.data,
+    [system.data, modernTeams.data, legacyTeams.data, user?.id],
+  );
   const regulation = useQuery(regulationQuery());
   const [teamId, setTeamId] = useState("");
   const [agreed, setAgreed] = useState(false);
@@ -32,11 +50,13 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
   const idempotencyKey = useMemo(() => (open ? crypto.randomUUID() : ""), [open]);
 
   useEffect(() => {
-    if (!teamId && teams.data?.[0]) setTeamId(teams.data[0].id);
-  }, [teams.data, teamId]);
+    if (!ownedTeams?.some((team) => team.id === teamId)) setTeamId(ownedTeams?.[0]?.id ?? "");
+  }, [ownedTeams, teamId]);
 
   const submit = useMutation({
     mutationFn: async () => {
+      if (!system.isSuccess || !ownedTeams?.some((team) => team.id === teamId))
+        throw new Error("Изменения заявок пока недоступны.");
       const { data, error } = await supabase.rpc("submit_application", {
         p_tournament_id: tournamentId,
         p_team_id: teamId,
@@ -62,11 +82,17 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
           <DialogDescription className="break-words">«{title}»</DialogDescription>
         </DialogHeader>
 
-        {teams.isLoading || regulation.isLoading ? (
+        {teams.isLoading || regulation.isLoading || (user && system.isPending) ? (
           <p className="text-sm text-muted-foreground">Загружаем…</p>
-        ) : !teams.data?.length ? (
+        ) : teams.isError || system.isError ? (
           <p className="text-sm text-muted-foreground">
-            У вас нет команды, где вы владелец или капитан.{" "}
+            Не удалось проверить доступ к заявкам. Обновите страницу.
+          </p>
+        ) : !ownedTeams?.length ? (
+          <p className="text-sm text-muted-foreground">
+            {system.data
+              ? "У вас нет собственной команды. Заявку подаёт только её создатель."
+              : "У вас нет команды, где вы владелец или капитан."}{" "}
             <Link to="/my-team" className="font-semibold text-primary hover:underline">
               Создайте команду
             </Link>{" "}
@@ -85,7 +111,7 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
                 onChange={(e) => setTeamId(e.target.value)}
                 className="w-full rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground"
               >
-                {teams.data.map((t) => (
+                {ownedTeams.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.name} · игроков: {t.team_members.length}
                   </option>
@@ -113,7 +139,7 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
               </span>
             </label>
             <button
-              disabled={!agreed || !teamId || submit.isPending}
+              disabled={!agreed || !teamId || submit.isPending || !system.isSuccess}
               onClick={() => submit.mutate()}
               className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm disabled:opacity-50"
             >

@@ -53,28 +53,57 @@ export const regulationQuery = () =>
     },
   });
 
-/** Команды, которыми пользователь владеет или где он капитан. */
+/** Both schemas are readable: only unlinked legacy rows retain their saved name.
+ * The member wildcard survives removal of legacy columns; projection never returns their role/MMR.
+ */
+export function projectTeamMembers<
+  T extends {
+    team_members: {
+      id: string;
+      profile_id: string | null;
+      position: number;
+      nickname?: string;
+      profiles: { nickname: string; mmr: number | null } | null;
+    }[];
+  },
+>(team: T) {
+  const { team_members, ...fields } = team;
+  return {
+    ...fields,
+    team_members: team_members.map((member) => ({
+      id: member.id,
+      profile_id: member.profile_id,
+      position: member.position,
+      nickname:
+        (member.profiles?.nickname ??
+          (member.profile_id === null ? member.nickname?.trim() : undefined)) ||
+        "Профиль не привязан",
+      mmr: member.profiles?.mmr ?? null,
+    })),
+  };
+}
 export const myTeamsQuery = (userId: string | undefined) =>
   queryOptions({
     queryKey: ["league", "my-teams", userId ?? "guest"],
     enabled: !!userId,
     queryFn: async () => {
       if (!userId) return [];
-      const { data: caps } = await supabase
-        .from("team_captains")
+      const { data: memberships, error: membershipError } = await supabase
+        .from("team_members")
         .select("team_id")
-        .eq("user_id", userId);
-      const capIds = (caps ?? []).map((c) => c.team_id);
-      let q = supabase
+        .eq("profile_id", userId);
+      if (membershipError) throw membershipError;
+      const ids = (memberships ?? []).map((member) => member.team_id);
+      let query = supabase
         .from("teams")
-        .select("*, team_members(*), team_captains(user_id)")
+        .select("*, team_members!team_members_team_id_fkey(*, profiles(nickname, mmr))")
         .order("created_at");
-      q = capIds.length
-        ? q.or(`owner_id.eq.${userId},id.in.(${capIds.join(",")})`)
-        : q.eq("owner_id", userId);
-      const { data, error } = await q;
+      query = ids.length
+        ? query.or(`owner_id.eq.${userId},id.in.(${ids.join(",")})`)
+        : query.eq("owner_id", userId);
+      const { data, error } = await query;
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map(projectTeamMembers);
     },
   });
 
@@ -103,10 +132,10 @@ export const allTeamsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("teams")
-        .select("*, team_members(id, nickname, role, mmr, position)")
+        .select("*, team_members!team_members_team_id_fkey(*, profiles(nickname, mmr))")
         .order("name");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map(projectTeamMembers);
     },
   });
 

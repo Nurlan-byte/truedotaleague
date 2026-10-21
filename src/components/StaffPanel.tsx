@@ -24,11 +24,13 @@ import {
   fromLeagueInput,
   groupsPayload,
   rosterChanged,
+  staffHasTeamConflict,
   toLeagueInput,
   tournamentApplicationsQuery,
   usersWithRolesQuery,
 } from "@/lib/league-admin";
 import { finalPlacements, groupPlacements, PLACE_POINTS, roundName } from "@/lib/tournament";
+import { teamSystemQuery } from "@/lib/team-invitations";
 
 type Props = { t: TournamentDetail; isAdmin: boolean; isStaff: boolean; userId: string };
 
@@ -426,7 +428,14 @@ function StaffApplications({
 }) {
   const qc = useQueryClient();
   const { ask, dialog } = useReasonDialog();
-  const { data = [], isLoading } = useQuery(tournamentApplicationsQuery(tournamentId));
+  const system = useQuery(teamSystemQuery(userId));
+  const {
+    data = [],
+    isLoading,
+    isError,
+  } = useQuery(
+    tournamentApplicationsQuery(tournamentId, system.isSuccess ? system.data : undefined),
+  );
   const decide = async (id: string, accept: boolean) => {
     let reason: string | null = "";
     if (!accept) {
@@ -448,8 +457,12 @@ function StaffApplications({
   return (
     <Box title={`Заявки (${data.length})`}>
       {dialog}
-      {isLoading ? (
+      {isLoading || system.isPending ? (
         <p className="text-sm text-muted-foreground">Загружаем…</p>
+      ) : isError || system.isError ? (
+        <p className="text-sm text-muted-foreground">
+          Не удалось загрузить заявки. Обновите страницу.
+        </p>
       ) : sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">Заявок пока нет.</p>
       ) : (
@@ -457,12 +470,7 @@ function StaffApplications({
           {sorted.map((a) => {
             const s = (a.roster_snapshot ?? {}) as Snap;
             const team = a.teams;
-            const own =
-              !isAdmin &&
-              !!team &&
-              (team.owner_id === userId ||
-                team.team_captains.some((c) => c.user_id === userId) ||
-                team.team_members.some((m) => m.profile_id === userId));
+            const own = staffHasTeamConflict(team, userId, isAdmin);
             const changed =
               a.status !== "withdrawn" &&
               a.status !== "rejected" &&

@@ -1,3 +1,5 @@
+import { projectTeamMembers } from "@/lib/league-api";
+import { legacySupabase } from "@/lib/legacy-team-api";
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -235,21 +237,57 @@ export const isStaffQuery = (tournamentId: string, uid: string | undefined) =>
     },
   });
 
-export const tournamentApplicationsQuery = (tournamentId: string) =>
+export const tournamentApplicationsQuery = (tournamentId: string, modern: boolean | undefined) =>
   queryOptions({
-    queryKey: ["league", "t-applications", tournamentId],
+    queryKey: ["league", "t-applications", tournamentId, modern],
+    enabled: modern !== undefined,
     queryFn: async () => {
+      if (modern === undefined) throw new Error("Team schema has not been detected");
+      if (!modern) {
+        const { data, error } = await legacySupabase
+          .from("applications")
+          .select(
+            "*, teams(name, tag, owner_id, team_members(nickname, position, profile_id), team_captains(user_id))",
+          )
+          .eq("tournament_id", tournamentId)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data ?? [];
+      }
       const { data, error } = await supabase
         .from("applications")
         .select(
-          "*, teams(name, tag, owner_id, team_members(nickname, position, profile_id), team_captains(user_id))",
+          "*, teams(name, tag, owner_id, team_members!team_members_team_id_fkey(*, profiles(nickname, mmr)))",
         )
         .eq("tournament_id", tournamentId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map((row) => ({
+        ...row,
+        teams: row.teams
+          ? { ...projectTeamMembers(row.teams), team_captains: [] as { user_id: string }[] }
+          : null,
+      }));
     },
   });
+
+export function staffHasTeamConflict(
+  team: {
+    owner_id: string;
+    team_members: { profile_id: string | null }[];
+    team_captains: { user_id: string }[];
+  } | null,
+  userId: string,
+  isAdmin: boolean,
+): boolean {
+  return (
+    !isAdmin &&
+    !!team &&
+    (team.owner_id === userId ||
+      team.team_members.some((member) => member.profile_id === userId) ||
+      team.team_captains.some((captain) => captain.user_id === userId))
+  );
+}
 
 export const auditQuery = (tournamentId: string) =>
   queryOptions({

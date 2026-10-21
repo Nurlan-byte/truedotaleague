@@ -1,11 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, Shield, Users } from "lucide-react";
-import { TeamLogo } from "@/components/TeamLogo";
+import { Search } from "lucide-react";
+import { TeamList } from "@/components/TeamList";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { LeaguePageIntro, QueryFeedback } from "@/components/LeaguePageIntro";
 import { allTeamsQuery } from "@/lib/league-api";
-import { orderTeamMembers } from "@/lib/team-members";
 
 export const Route = createFileRoute("/teams")({
   head: () => ({
@@ -70,15 +76,15 @@ function TeamsPage() {
             className="w-full rounded-lg border border-input bg-white/80 py-2 pl-9 pr-3 text-sm"
           />
         </label>
-        <select
-          aria-label="Сортировка команд"
-          value={sort}
-          onChange={(event) => setSort(event.target.value as "name" | "members")}
-          className="rounded-lg border border-input bg-white/80 px-3 py-2 text-sm"
-        >
-          <option value="name">По названию</option>
-          <option value="members">По числу игроков</option>
-        </select>
+        <Select value={sort} onValueChange={(value) => setSort(value as "name" | "members")}>
+          <SelectTrigger aria-label="Сортировка команд" className="sort-trigger sm:w-52">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="sort-menu">
+            <SelectItem value="name">По названию</SelectItem>
+            <SelectItem value="members">По числу игроков</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       {teams.isPending ? (
         <QueryFeedback text="Загружаем команды…" />
@@ -93,51 +99,7 @@ function TeamsPage() {
           }
         />
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
-          {list.map((team) => {
-            const members = orderTeamMembers(team.team_members);
-            return (
-              <li key={team.id} className="panel min-w-0 p-5">
-                <div className="flex min-w-0 items-center gap-3">
-                  <TeamLogo name={team.name} logo={team.logo_url ?? undefined} size="lg" />
-                  <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-xl text-foreground">{team.name}</h2>
-                    {team.tag && (
-                      <p className="text-xs font-bold uppercase tracking-widest text-primary">
-                        [{team.tag}]
-                      </p>
-                    )}
-                  </div>
-                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
-                    <Users className="size-3.5" />
-                    {members.length}
-                  </span>
-                </div>
-                <div className="mt-4 border-t border-border pt-3">
-                  <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    <Shield className="size-4" />
-                    Состав
-                  </p>
-                  {members.length ? (
-                    <ol className="mt-2 grid gap-1 text-sm text-foreground sm:grid-cols-2">
-                      {members.map((member, index) => (
-                        <li
-                          key={member.id}
-                          className="min-w-0 truncate rounded-md bg-white/50 px-2 py-1.5"
-                        >
-                          <span className="mr-2 text-xs text-muted-foreground">{index + 1}.</span>
-                          {member.nickname}
-                        </li>
-                      ))}
-                    </ol>
-                  ) : (
-                    <p className="mt-2 text-sm text-muted-foreground">Состав ещё не указан.</p>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <TeamList teams={list} />
       )}
     </div>
   );
