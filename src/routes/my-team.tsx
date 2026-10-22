@@ -176,7 +176,7 @@ export function ModernMyTeamPage() {
               </label>
               <button
                 disabled={run.isPending || !name.trim() || !tag.trim()}
-                className={`${button} self-end bg-primary text-primary-foreground`}
+                className="min-h-10 w-full self-end rounded-lg border border-primary bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors enabled:hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:border-border disabled:bg-secondary disabled:text-secondary-foreground sm:w-auto"
               >
                 Создать
               </button>
