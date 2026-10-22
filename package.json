@@ -13,7 +13,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "test:sql": "node qa/draft-sql-check.mjs && node qa/profile-privacy-sql-check.mjs && node qa/team-membership-sql-check.mjs",
-    "test:sql:concurrency": "node qa/team-concurrency-check.mjs"
+    "test:sql:concurrency": "node qa/team-concurrency-check.mjs",
+    "test:sql:profiles": "node qa/profile-verification-check.mjs",
+    "test:sql:invitations": "node qa/team-invitations-check.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
