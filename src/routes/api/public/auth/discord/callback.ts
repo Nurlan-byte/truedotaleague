@@ -147,18 +147,32 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
             if (existing.data?.user?.email) authEmail = existing.data.user.email.toLowerCase();
           }
 
-          // 4. Keep the profile in sync with Discord.
-          await supabaseAdmin.from("profiles").upsert(
-            {
-              id: userId,
+          // 4. OAuth links identity; it must not replace reviewed profile fields.
+          // The e-mail fallback can resolve an existing profile without `linked`.
+          const { data: profile, error: profileError } = await supabaseAdmin
+            .from("profiles")
+            .select("id, nickname, avatar_url")
+            .eq("id", userId)
+            .maybeSingle();
+          if (profileError) throw profileError;
+          if (!profile) {
+            const { error } = await supabaseAdmin
+              .from("profiles")
+              .upsert(
+                { id: userId, nickname: displayName, avatar_url: avatar },
+                { onConflict: "id", ignoreDuplicates: true },
+              );
+            if (error) throw error;
+          }
+          const { error: identityError } = await supabaseAdmin
+            .from("profiles")
+            .update({
               discord_id: discordUser.id,
               discord_username: discordUser.username,
               discord_global_name: discordUser.global_name ?? "",
-              ...(linked?.nickname ? {} : { nickname: displayName }),
-              ...(linked?.avatar_url ? {} : { avatar_url: avatar }),
-            },
-            { onConflict: "id" },
-          );
+            })
+            .eq("id", userId);
+          if (identityError) throw identityError;
 
           // 5. Mint a one-time link and let the browser turn it into a session.
           const link = await supabaseAdmin.auth.admin.generateLink({
