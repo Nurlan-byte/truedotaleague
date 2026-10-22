@@ -230,6 +230,7 @@ const ERRORS: Record<string, string> = {
 
 export function rpcErrorText(err: { message?: string } | null | undefined): string {
   const msg = err?.message ?? "";
+  if (msg.includes("minimum_five_main_players")) return "Для заявки нужны пять зарегистрированных игроков в основном составе.";
   for (const [key, text] of Object.entries(ERRORS)) if (msg.includes(key)) return text;
   return "Не удалось выполнить действие. Попробуйте ещё раз.";
 }

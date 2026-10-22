@@ -123,7 +123,15 @@ export function InvitePlayer({ teamId, disabled }: { teamId: string; disabled: b
     queryFn: () => teamRpc<Player[]>("search_team_players", { p_team_id: teamId, p_query: search }),
   });
   const mutation = useMutation({
-    mutationFn: () => teamRpc("invite_player", { p_team_id: teamId, p_user_id: selected!.id }),
+    mutationFn: async () => {
+      if (disabled || !selected) throw new Error("Выберите доступного игрока.");
+      if (
+        selected.already_in_team ||
+        players.data?.find((player) => player.id === selected.id)?.already_in_team
+      )
+        throw new Error("Игрок уже в команде. Приглашение недоступно.");
+      return teamRpc("invite_player", { p_team_id: teamId, p_user_id: selected.id });
+    },
     onSuccess: () => {
       setText("");
       setSelected(null);
@@ -162,13 +170,16 @@ export function InvitePlayer({ teamId, disabled }: { teamId: string; disabled: b
               <li key={player.id}>
                 <button
                   className={`${button} w-full break-words text-left`}
+                  disabled={player.already_in_team === true}
                   onClick={() => {
+                    if (player.already_in_team) return;
                     setSelected(player);
                     setText(player.nickname);
                   }}
                 >
                   {player.nickname} · {player.mmr ?? "—"} MMR{" "}
                   <span className="text-xs text-muted-foreground">({player.id.slice(0, 8)})</span>
+                  {player.already_in_team && <span className="ml-2 text-xs">Уже в команде</span>}
                 </button>
               </li>
             ))
@@ -184,7 +195,15 @@ export function InvitePlayer({ teamId, disabled }: { teamId: string; disabled: b
       )}
       <button
         className={button}
-        disabled={disabled || mutation.isPending || !selected}
+        disabled={
+          disabled ||
+          mutation.isPending ||
+          !selected ||
+          selected.already_in_team === true ||
+          players.data?.some(
+            (player) => player.id === selected?.id && player.already_in_team === true,
+          )
+        }
         onClick={() => mutation.mutate()}
       >
         Пригласить

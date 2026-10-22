@@ -15,6 +15,7 @@ import { myTeamsQuery, regulationQuery } from "@/lib/league-api";
 import { formatLeagueDate, rpcErrorText } from "@/lib/league";
 import { teamSystemQuery } from "@/lib/team-invitations";
 import { legacyMyTeamsQuery } from "@/lib/legacy-team-api";
+import { applicationRoster } from "@/lib/application-roster";
 
 type Props = {
   tournamentId: string;
@@ -44,6 +45,8 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
   const regulation = useQuery(regulationQuery());
   const [teamId, setTeamId] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const selectedTeam = ownedTeams?.find((team) => team.id === teamId);
+  const roster = applicationRoster(selectedTeam?.team_members ?? []);
   // Один ключ на открытие формы: повторное нажатие не создаёт дубль.
   const idempotencyKey = useMemo(() => (open ? crypto.randomUUID() : ""), [open]);
 
@@ -53,6 +56,7 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
 
   const submit = useMutation({
     mutationFn: async () => {
+      if (!roster.ready) throw new Error("minimum_five_main_players");
       if (!available || teams.isError || !ownedTeams?.some((team) => team.id === teamId))
         throw new Error("Изменения заявок пока недоступны.");
       const { data, error } = await supabase.rpc("submit_application", {
@@ -113,11 +117,16 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
               >
                 {ownedTeams.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name} · игроков: {t.team_members.length}
+                    {t.name} · основных: {applicationRoster(t.team_members).count}/5
                   </option>
                 ))}
               </select>
             </label>
+            <p role="status" className="text-sm text-muted-foreground">
+              Основной состав: {roster.count}/5. Для заявки нужны пять разных зарегистрированных
+              игроков в основных слотах. Приглашения без принятия и запасные не учитываются.
+              {!roster.ready && " Дополните основной состав перед подачей заявки."}
+            </p>
             <label className="flex items-start gap-2 text-sm text-foreground">
               <input
                 type="checkbox"
@@ -139,7 +148,7 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
               </span>
             </label>
             <button
-              disabled={!agreed || !teamId || submit.isPending || !available}
+              disabled={!agreed || !teamId || submit.isPending || !available || !roster.ready}
               onClick={() => submit.mutate()}
               className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm disabled:opacity-50"
             >

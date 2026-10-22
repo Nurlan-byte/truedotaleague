@@ -13,10 +13,17 @@ export type Invitation = {
   status: "pending" | "accepted" | "declined" | "cancelled";
   created_at: string;
 };
-export type Player = { id: string; nickname: string; mmr: number | null };
+export type Player = {
+  id: string;
+  nickname: string;
+  mmr: number | null;
+  already_in_team?: boolean;
+};
 const errors: Record<string, string> = {
-  legacy_data_requires_review: "В составе есть старые записи. Их изменение требует отдельной проверки администратором.",
-  "40001": "Данные изменились одновременно с вашим запросом. Обновите страницу и повторите действие.",
+  legacy_data_requires_review:
+    "В составе есть старые записи. Их изменение требует отдельной проверки администратором.",
+  "40001":
+    "Данные изменились одновременно с вашим запросом. Обновите страницу и повторите действие.",
   already_in_team: "Пользователь уже состоит в команде или владеет ею.",
   owner_required: "Это действие доступно только капитану — создателю команды.",
   not_team_owner: "Это действие доступно только капитану — создателю команды.",
