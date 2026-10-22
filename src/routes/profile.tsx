@@ -12,6 +12,13 @@ import { ArrowLeft, ImagePlus, Save, Trophy, User as UserIcon } from "lucide-rea
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogo } from "@/components/TeamLogo";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 
 export const Route = createFileRoute("/profile")({
@@ -324,19 +331,34 @@ function ProfilePage() {
               <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="pos">
                 Основная роль
               </label>
-              <select
-                id="pos"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                className={field}
+              <Select
+                value={position || "none"}
+                onValueChange={(value) => setPosition(value === "none" ? "" : value)}
               >
-                <option value="">Не выбрана</option>
-                {POSITIONS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  id="pos"
+                  className="h-11 min-w-0 rounded-xl border-primary/20 bg-white/80 text-left shadow-sm backdrop-blur-md transition-colors hover:border-primary/40 focus:ring-2 focus:ring-primary/25"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-w-[calc(100vw-2rem)] rounded-xl border-primary/20 bg-white/95 p-1 shadow-xl backdrop-blur-xl">
+                  <SelectItem
+                    value="none"
+                    className="min-h-10 rounded-lg focus:bg-primary/10 focus:text-primary"
+                  >
+                    Не выбрана
+                  </SelectItem>
+                  {POSITIONS.map((p) => (
+                    <SelectItem
+                      key={p}
+                      value={p}
+                      className="min-h-10 rounded-lg focus:bg-primary/10 focus:text-primary"
+                    >
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

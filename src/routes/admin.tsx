@@ -12,6 +12,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
 import { TeamLogo } from "@/components/TeamLogo";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { LoadingPanel } from "@/components/league";
 import { btnGhost } from "@/components/TournamentEditor";
 import { formatLeagueDate, rpcErrorText } from "@/lib/league";
@@ -156,19 +163,29 @@ function AdminPage() {
                     {row.team_name || "Без команды"}
                   </p>
                 </div>
-                <select
-                  aria-label="Роль"
+                <Select
                   disabled={busy === row.id}
                   value={row.role}
-                  onChange={(e) => void setRole(row.id, e.target.value as AppRole)}
-                  className="rounded-lg border border-input bg-white/70 px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
+                  onValueChange={(value) => void setRole(row.id, value as AppRole)}
                 >
-                  {(Object.keys(ROLE_LABEL) as AppRole[]).map((r) => (
-                    <option key={r} value={r}>
-                      {ROLE_LABEL[r]}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    aria-label={`Роль: ${row.nickname || "Без никнейма"}`}
+                    className="h-11 w-full min-w-0 rounded-xl border-primary/20 bg-white/80 text-left font-semibold shadow-sm backdrop-blur-md transition-colors hover:border-primary/40 focus:ring-2 focus:ring-primary/25 sm:w-44"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-w-[calc(100vw-2rem)] rounded-xl border-primary/20 bg-white/95 p-1 shadow-xl backdrop-blur-xl">
+                    {(Object.keys(ROLE_LABEL) as AppRole[]).map((r) => (
+                      <SelectItem
+                        key={r}
+                        value={r}
+                        className="min-h-10 rounded-lg focus:bg-primary/10 focus:text-primary"
+                      >
+                        {ROLE_LABEL[r]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </li>
             ))}
           </ul>
