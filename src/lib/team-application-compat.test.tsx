@@ -7,9 +7,14 @@ const fixture = vi.hoisted(() => ({
   error: false,
   rows: [] as unknown[],
   selects: [] as string[],
+  loading: false,
+  fetching: false,
+  mutation: null as null | (() => Promise<unknown>),
+  rpc: vi.fn(async () => ({ data: {}, error: null })),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
+    rpc: fixture.rpc,
     from: () => ({
       select: (selection: string) => {
         fixture.selects.push(selection);
@@ -43,13 +48,17 @@ vi.mock("@tanstack/react-query", async (original) => ({
           : enabled
             ? fixture.rows
             : undefined,
-    isLoading: false,
+    isLoading: fixture.loading,
+    isFetching: fixture.fetching,
     isPending: false,
     isError: queryKey[1] === "team-system" && fixture.error,
     isSuccess: !fixture.error,
   }),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
-  useMutation: () => ({ isPending: false, mutate: vi.fn() }),
+  useMutation: ({ mutationFn }: { mutationFn: () => Promise<unknown> }) => {
+    fixture.mutation = mutationFn;
+    return { isPending: false, mutate: vi.fn() };
+  },
 }));
 import { ApplyDialog } from "@/components/ApplyDialog";
 import {
@@ -70,8 +79,49 @@ beforeEach(() => {
   fixture.error = false;
   fixture.rows = [team];
   fixture.selects = [];
+  fixture.loading = false;
+  fixture.fetching = false;
+  fixture.rpc.mockClear();
 });
 describe("application schema compatibility", () => {
+  const renderDialog = () => renderToStaticMarkup(<ApplyDialog tournamentId="cup" title="Cup" open onOpenChange={() => {}} />);
+  const fullTeam = () => ({ ...team, owner_id: "captain", tag: "TAG", team_members: Array.from({ length: 5 }, (_, position) => ({ profile_id: `p${position}`, position })) });
+  it("has no submission for zero owned teams", async () => {
+    fixture.modern = true; fixture.rows = [];
+    expect(renderDialog()).not.toContain("Отправить заявку");
+    await expect(fixture.mutation!()).rejects.toThrow();
+    expect(fixture.rpc).not.toHaveBeenCalled();
+  });
+  it("automatically submits the single owner's team id", async () => {
+    fixture.modern = true; fixture.rows = [fullTeam()];
+    const html = renderDialog();
+    expect(html).toContain("TAG");
+    expect(html).not.toContain("combobox");
+    await fixture.mutation!();
+    expect(fixture.rpc).toHaveBeenCalledWith("submit_application", expect.objectContaining({ p_team_id: "t" }));
+  });
+  it("blocks multiple legacy owned teams instead of choosing one", async () => {
+    fixture.modern = true; fixture.rows = [fullTeam(), { ...fullTeam(), id: "second" }];
+    expect(renderDialog()).toContain("Найдено несколько ваших команд");
+    await expect(fixture.mutation!()).rejects.toThrow();
+    expect(fixture.rpc).not.toHaveBeenCalled();
+  });
+  it("shows loading rather than a false missing-team state", () => {
+    fixture.modern = true; fixture.rows = []; fixture.loading = true;
+    expect(renderDialog()).toContain("Загружаем");
+  });
+  it("blocks submission during roster refetch and after ownership changes", async () => {
+    fixture.modern = true; fixture.rows = [fullTeam()]; fixture.fetching = true;
+    renderDialog(); await expect(fixture.mutation!()).rejects.toThrow();
+    fixture.fetching = false; fixture.rows = [{ ...fullTeam(), owner_id: "other" }];
+    renderDialog(); await expect(fixture.mutation!()).rejects.toThrow();
+    expect(fixture.rpc).not.toHaveBeenCalled();
+  });
+  it("still blocks a unique owner with fewer than five main players", async () => {
+    fixture.modern = true; fixture.rows = [{ ...team, owner_id: "captain" }];
+    renderDialog(); await expect(fixture.mutation!()).rejects.toThrow("minimum_five_main_players");
+    expect(fixture.rpc).not.toHaveBeenCalled();
+  });
   it("blocks applications without the invitations backend", () => {
     const html = renderToStaticMarkup(
       <ApplyDialog tournamentId="tournament" title="Cup" open onOpenChange={() => {}} />,
@@ -94,9 +144,8 @@ describe("application schema compatibility", () => {
     const html = renderToStaticMarkup(
       <ApplyDialog tournamentId="tournament" title="Cup" open onOpenChange={() => {}} />,
     );
-    // Radix options mount in a portal after opening; SSR checks the accessible trigger.
-    expect(html).toContain('role="combobox"');
-    expect(html).toContain('id="application-team"');
+    expect(html).toContain('Legacy team');
+    expect(html).not.toContain('role="combobox"');
     expect(html).toContain("Отправить заявку");
   });
   it("does not grant application rights to a linked roster member", () => {

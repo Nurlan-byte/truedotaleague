@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -16,7 +16,6 @@ import { formatLeagueDate, rpcErrorText } from "@/lib/league";
 import { teamSystemQuery } from "@/lib/team-invitations";
 import { legacyMyTeamsQuery } from "@/lib/legacy-team-api";
 import { applicationRoster } from "@/lib/application-roster";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Props = {
   tournamentId: string;
@@ -44,22 +43,18 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
     [teams.data, user?.id],
   );
   const regulation = useQuery(regulationQuery());
-  const [teamId, setTeamId] = useState("");
   const [agreed, setAgreed] = useState(false);
-  const selectedTeam = ownedTeams?.find((team) => team.id === teamId);
+  const selectedTeam = ownedTeams?.length === 1 ? ownedTeams[0] : undefined;
+  const teamId = selectedTeam?.id;
   const roster = applicationRoster(selectedTeam?.team_members ?? []);
   // Один ключ на открытие формы: повторное нажатие не создаёт дубль.
   const idempotencyKey = useMemo(() => (open ? crypto.randomUUID() : ""), [open]);
 
-  useEffect(() => {
-    if (!ownedTeams?.some((team) => team.id === teamId)) setTeamId(ownedTeams?.[0]?.id ?? "");
-  }, [ownedTeams, teamId]);
-
   const submit = useMutation({
     mutationFn: async () => {
-      if (!roster.ready) throw new Error("minimum_five_main_players");
-      if (!available || teams.isError || !ownedTeams?.some((team) => team.id === teamId))
+      if (!available || teams.isError || teams.isFetching || system.isFetching || !teamId || ownedTeams?.length !== 1)
         throw new Error("Изменения заявок пока недоступны.");
+      if (!roster.ready) throw new Error("minimum_five_main_players");
       const { data, error } = await supabase.rpc("submit_application", {
         p_tournament_id: tournamentId,
         p_team_id: teamId,
@@ -103,27 +98,21 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
             </Link>{" "}
             и вернитесь сюда.
           </p>
+        ) : ownedTeams.length > 1 ? (
+          <p role="alert" className="text-sm text-muted-foreground">
+            Найдено несколько ваших команд. Обратитесь к администратору для разрешения конфликта.
+            Заявка недоступна; существующие команды сохранены.
+          </p>
         ) : !regulation.data ? (
           <p className="text-sm text-muted-foreground">
             Регламент ещё не опубликован — подать заявку пока нельзя.
           </p>
         ) : (
           <div className="space-y-4">
-            <div className="min-w-0 text-sm">
-              <label htmlFor="application-team" className="mb-1 block font-semibold text-foreground">Команда</label>
-              <Select value={teamId} onValueChange={setTeamId}>
-                <SelectTrigger id="application-team" className="h-11 min-w-0 rounded-xl border-primary/20 bg-white/80 text-left shadow-sm backdrop-blur-md transition-colors hover:border-primary/40 focus:ring-2 focus:ring-primary/25">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-w-[calc(100vw-2rem)] rounded-xl border-primary/20 bg-white/95 p-1 shadow-xl backdrop-blur-xl">
-                {ownedTeams.map((t) => (
-                  <SelectItem key={t.id} value={t.id} className="min-h-10 rounded-lg focus:bg-primary/10 focus:text-primary">
-                    {t.name} · основных: {applicationRoster(t.team_members).count}/5
-                  </SelectItem>
-                ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <section aria-label="Ваша команда" className="min-w-0 rounded-xl border border-primary/20 bg-white/80 p-3 text-sm">
+              <p className="mb-1 font-semibold text-foreground">Ваша команда</p>
+              <p className="break-words">{selectedTeam?.name}{selectedTeam?.tag && ` [${selectedTeam.tag}]`}</p>
+            </section>
             <p role="status" className="text-sm text-muted-foreground">
               Основной состав: {roster.count}/5. Для заявки нужны пять разных зарегистрированных
               игроков в основных слотах. Приглашения без принятия и запасные не учитываются.
@@ -150,7 +139,7 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
               </span>
             </label>
             <button
-              disabled={!agreed || !teamId || submit.isPending || !available || !roster.ready}
+              disabled={!agreed || !teamId || submit.isPending || !available || teams.isFetching || system.isFetching || !roster.ready}
               onClick={() => submit.mutate()}
               className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm disabled:opacity-50"
             >
