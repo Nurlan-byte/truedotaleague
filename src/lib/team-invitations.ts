@@ -15,6 +15,8 @@ export type Invitation = {
 };
 export type Player = { id: string; nickname: string; mmr: number | null };
 const errors: Record<string, string> = {
+  legacy_data_requires_review: "В составе есть старые записи. Их изменение требует отдельной проверки администратором.",
+  "40001": "Данные изменились одновременно с вашим запросом. Обновите страницу и повторите действие.",
   already_in_team: "Пользователь уже состоит в команде или владеет ею.",
   owner_required: "Это действие доступно только капитану — создателю команды.",
   not_team_owner: "Это действие доступно только капитану — создателю команды.",

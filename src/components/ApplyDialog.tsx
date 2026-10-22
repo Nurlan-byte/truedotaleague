@@ -36,12 +36,10 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
     enabled: !!user && system.data === false,
   });
   const teams = system.data === true ? modernTeams : legacyTeams;
+  const available = system.data === true && system.isSuccess && !system.isError;
   const ownedTeams = useMemo(
-    () =>
-      system.data === true
-        ? modernTeams.data?.filter((team) => team.owner_id === user?.id)
-        : legacyTeams.data,
-    [system.data, modernTeams.data, legacyTeams.data, user?.id],
+    () => teams.data?.filter((team) => team.owner_id === user?.id),
+    [teams.data, user?.id],
   );
   const regulation = useQuery(regulationQuery());
   const [teamId, setTeamId] = useState("");
@@ -55,7 +53,7 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
 
   const submit = useMutation({
     mutationFn: async () => {
-      if (!system.isSuccess || !ownedTeams?.some((team) => team.id === teamId))
+      if (!available || teams.isError || !ownedTeams?.some((team) => team.id === teamId))
         throw new Error("Изменения заявок пока недоступны.");
       const { data, error } = await supabase.rpc("submit_application", {
         p_tournament_id: tournamentId,
@@ -88,11 +86,13 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
           <p className="text-sm text-muted-foreground">
             Не удалось проверить доступ к заявкам. Обновите страницу.
           </p>
+        ) : !available ? (
+          <p role="status" className="text-sm text-muted-foreground">
+            Подача заявок пока недоступна: требуется обновление сервера. Команды сохранены.
+          </p>
         ) : !ownedTeams?.length ? (
           <p className="text-sm text-muted-foreground">
-            {system.data
-              ? "У вас нет собственной команды. Заявку подаёт только её создатель."
-              : "У вас нет команды, где вы владелец или капитан."}{" "}
+            У вас нет собственной команды. Заявку подаёт только её создатель.{" "}
             <Link to="/my-team" className="font-semibold text-primary hover:underline">
               Создайте команду
             </Link>{" "}
@@ -139,7 +139,7 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
               </span>
             </label>
             <button
-              disabled={!agreed || !teamId || submit.isPending || !system.isSuccess}
+              disabled={!agreed || !teamId || submit.isPending || !available}
               onClick={() => submit.mutate()}
               className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm disabled:opacity-50"
             >

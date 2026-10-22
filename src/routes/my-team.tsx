@@ -55,7 +55,7 @@ export function ModernMyTeamPage() {
   const { user, loading } = useAuth();
   const qc = useQueryClient();
   const system = useQuery(teamSystemQuery(user?.id));
-  const available = system.data === true;
+  const available = system.data === true && !system.isPending && !system.isError;
   const teams = useQuery(myTeamsQuery(user?.id));
   const apps = useQuery(
     myApplicationsQuery(

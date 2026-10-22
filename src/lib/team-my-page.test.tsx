@@ -54,12 +54,14 @@ function render(teams: unknown[], user = "owner", available = true) {
   return renderToStaticMarkup(<ModernMyTeamPage />);
 }
 describe("deployed schema compatibility", () => {
-  it("keeps the deployed create, roster and captain operations when v2 is absent", () => {
+  it("keeps existing rosters read-only when invitations API is absent", () => {
     render([team], "owner", false);
     const html = renderToStaticMarkup(<MyTeamPage />);
-    expect(html).toContain("Создать команду");
-    expect(html).toContain("MMR игрока команды");
-    expect(html).toContain("Назначить");
+    expect(html).not.toContain("Создать команду");
+    expect(html).not.toContain("MMR игрока команды");
+    expect(html).not.toContain("Назначить");
+    expect(html).toContain("Приглашения игроков пока недоступны");
+    expect(html).toContain("4200");
     expect(html).not.toContain("Пригласить игрока");
     expect(html).not.toContain("требуется завершить обновление базы");
   });
@@ -77,6 +79,13 @@ describe("deployed schema compatibility", () => {
     fixture.systemError = false;
     fixture.systemPending = true;
     expect(renderToStaticMarkup(<MyTeamPage />)).not.toContain("Назначить");
+  });
+  it("does not use a cached successful version when its refresh failed", () => {
+    render([team], "owner", true);
+    fixture.systemError = true;
+    const html = renderToStaticMarkup(<MyTeamPage />);
+    expect(html).not.toContain("Пригласить игрока");
+    expect(html).not.toContain("Создать команду");
   });
 });
 describe("team ownership UI", () => {

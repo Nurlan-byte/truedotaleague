@@ -8,6 +8,12 @@ export type Database = {
   };
   public: {
     Tables: {
+      profile_verifications: {
+        Row: { profile_id: string; status: "unverified" | "pending" | "verified"; submitted_at: string | null; reviewed_at: string | null; reviewed_by: string | null };
+        Insert: { profile_id: string; status?: "unverified" | "pending" | "verified"; submitted_at?: string | null; reviewed_at?: string | null; reviewed_by?: string | null };
+        Update: { status?: "unverified" | "pending" | "verified"; submitted_at?: string | null; reviewed_at?: string | null; reviewed_by?: string | null };
+        Relationships: [];
+      };
       draft_publications: {
         Row: {
           id: number;
@@ -847,6 +853,13 @@ export type Database = {
       };
     };
     Functions: {
+      save_profile_for_review: {
+        Args: { p_nickname: string; p_mmr: number; p_profile_url: string; p_role_position?: string; p_bio?: string; p_looking_for_team?: boolean };
+        Returns: Json;
+      };
+      get_my_profile_verification: { Args: Record<PropertyKey, never>; Returns: Json };
+      list_profile_reviews: { Args: Record<PropertyKey, never>; Returns: Json };
+      decide_profile_review: { Args: { p_profile_id: string; p_submitted_at: string; p_approve: boolean }; Returns: undefined };
       create_team: { Args: { p_name: string; p_tag: string }; Returns: string };
       invite_player: { Args: { p_team_id: string; p_user_id: string }; Returns: string };
       accept_invite: { Args: { p_invite_id: string }; Returns: undefined };

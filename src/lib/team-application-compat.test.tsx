@@ -72,12 +72,13 @@ beforeEach(() => {
   fixture.selects = [];
 });
 describe("application schema compatibility", () => {
-  it("keeps existing captain application available on v1", () => {
+  it("blocks applications without the invitations backend", () => {
     const html = renderToStaticMarkup(
       <ApplyDialog tournamentId="tournament" title="Cup" open onOpenChange={() => {}} />,
     );
-    expect(html).toContain("Legacy team");
-    expect(html).toContain("Отправить заявку");
+    expect(html).toContain("Подача заявок пока недоступна");
+    expect(html).not.toContain("Отправить заявку");
+    expect(html).not.toContain("владелец или капитан");
   });
   it("does not let a legacy captain apply on v2", () => {
     fixture.modern = true;
@@ -95,6 +96,23 @@ describe("application schema compatibility", () => {
     );
     expect(html).toContain("Legacy team");
     expect(html).toContain("Отправить заявку");
+  });
+  it("does not grant application rights to a linked roster member", () => {
+    fixture.modern = true;
+    fixture.rows = [{ ...team, team_captains: [], team_members: [{ profile_id: "captain" }] }];
+    const html = renderToStaticMarkup(
+      <ApplyDialog tournamentId="tournament" title="Cup" open onOpenChange={() => {}} />,
+    );
+    expect(html).not.toContain("Отправить заявку");
+    expect(html).toContain("Заявку подаёт только её создатель");
+  });
+  it("blocks even an owner while the backend is absent", () => {
+    fixture.rows = [{ ...team, owner_id: "captain" }];
+    const html = renderToStaticMarkup(
+      <ApplyDialog tournamentId="tournament" title="Cup" open onOpenChange={() => {}} />,
+    );
+    expect(html).toContain("Подача заявок пока недоступна");
+    expect(html).not.toContain("Отправить заявку");
   });
   it("fails closed when version detection errors", () => {
     fixture.error = true;

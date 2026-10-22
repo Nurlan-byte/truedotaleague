@@ -1,5 +1,11 @@
+import {
+  decideProfileReview,
+  ownRoleQuery,
+  profileReviewsQuery,
+  type ProfileReview,
+} from "@/lib/profile-api";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Download, Lock, Search, UserCog } from "lucide-react";
 import { toast } from "sonner";
@@ -42,6 +48,8 @@ const ROLE_LABEL: Record<AppRole, string> = {
 function AdminPage() {
   const { isAdmin, checking, user } = useAdmin();
   const qc = useQueryClient();
+  const role = useQuery(ownRoleQuery(user?.id));
+  const canReview = isAdmin || role.data === "moderator";
   const users = useQuery({ ...usersWithRolesQuery(), enabled: isAdmin });
   const assignments = useQuery({ ...moderatorAssignmentsQuery(), enabled: isAdmin });
   const [query, setQuery] = useState("");
@@ -56,10 +64,17 @@ function AdminPage() {
     qc.invalidateQueries({ queryKey: ["league"] });
   };
 
-  if (checking)
+  if (checking || (!!user && role.isPending))
     return (
       <div className="mx-auto max-w-3xl px-4 py-10">
         <LoadingPanel text="Проверяем доступ…" />
+      </div>
+    );
+  if (canReview && !isAdmin)
+    return (
+      <div className="mx-auto max-w-4xl space-y-5 px-4 py-8">
+        <h1 className="text-3xl">Проверка профилей</h1>
+        <ProfileReviewPanel userId={user!.id} />
       </div>
     );
   if (!isAdmin)
@@ -104,6 +119,8 @@ function AdminPage() {
         У каждого аккаунта одна роль. Модератор ведёт только назначенные ему турниры; назначение — в
         форме турнира.
       </p>
+
+      <ProfileReviewPanel userId={user!.id} />
 
       <div className="panel p-4">
         <label className="flex items-center gap-2 rounded-lg border border-border bg-white/70 px-3 py-2">
@@ -184,5 +201,98 @@ function AdminPage() {
         )}
       </section>
     </div>
+  );
+}
+
+function ProfileReviewPanel({ userId }: { userId: string }) {
+  const qc = useQueryClient();
+  const reviews = useQuery(profileReviewsQuery(true, userId));
+  const decision = useMutation({
+    mutationFn: ({ review, approve }: { review: ProfileReview; approve: boolean }) =>
+      decideProfileReview(review, approve),
+    onSuccess: async (_, { approve }) => {
+      toast.success(approve ? "Профиль верифицирован" : "Профиль возвращён на заполнение");
+      await qc.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      void reviews.refetch();
+    },
+  });
+  return (
+    <section className="panel space-y-3 p-4" aria-labelledby="profile-reviews-heading">
+      <h2 id="profile-reviews-heading" className="text-xl">
+        Профили на проверке
+      </h2>
+      {reviews.isPending ? (
+        <p>Загрузка заявок…</p>
+      ) : reviews.isError ? (
+        <>
+          <p role="alert" className="text-sm text-destructive">
+            {reviews.error.message}
+          </p>
+          <button className={btnGhost} onClick={() => void reviews.refetch()}>
+            Повторить
+          </button>
+        </>
+      ) : !reviews.data.length ? (
+        <p className="text-sm text-muted-foreground">Нет профилей, ожидающих проверки.</p>
+      ) : (
+        <ul className="space-y-3">
+          {reviews.data.map((review) => (
+            <li
+              key={review.profile_id}
+              className="space-y-2 rounded-lg border border-border bg-white/60 p-3"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  to="/players/$playerId"
+                  params={{ playerId: review.profile_id }}
+                  className="min-w-0 break-words font-semibold text-primary"
+                >
+                  {review.nickname}
+                </Link>
+                <span className="text-sm">{review.mmr} MMR</span>
+              </div>
+              <a
+                href={review.profile_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block break-all text-sm text-primary underline"
+              >
+                {review.profile_url}
+              </a>
+              {review.role_position && <p className="text-sm">Позиция: {review.role_position}</p>}
+              {review.bio && <p className="break-words text-sm">{review.bio}</p>}
+              <p className="text-xs text-muted-foreground">
+                Отправлен {formatLeagueDate(review.submitted_at)}
+              </p>
+              {review.profile_id === userId ? (
+                <p className="text-sm text-muted-foreground">
+                  Ваш профиль должен проверить другой модератор или администратор.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                    disabled={decision.isPending}
+                    onClick={() => decision.mutate({ review, approve: true })}
+                  >
+                    Подтвердить профиль
+                  </button>
+                  <button
+                    className={btnGhost}
+                    disabled={decision.isPending}
+                    onClick={() => decision.mutate({ review, approve: false })}
+                  >
+                    Вернуть на заполнение
+                  </button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

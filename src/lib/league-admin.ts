@@ -1,3 +1,4 @@
+import { fetchProfileTeams, teamsForProfile } from "@/lib/profile-api";
 import { projectTeamMembers } from "@/lib/league-api";
 import { legacySupabase } from "@/lib/legacy-team-api";
 import { queryOptions } from "@tanstack/react-query";
@@ -308,14 +309,21 @@ export const usersWithRolesQuery = () =>
   queryOptions({
     queryKey: ["league", "users-roles"],
     queryFn: async () => {
-      const [p, r] = await Promise.all([
-        supabase.from("profiles").select("id, nickname, avatar_url, team_name").order("nickname"),
+      const [p, r, teams] = await Promise.all([
+        supabase.from("profiles").select("id, nickname, avatar_url").order("nickname"),
         supabase.from("user_roles").select("user_id, role"),
+        fetchProfileTeams(),
       ]);
       if (p.error) throw p.error;
       if (r.error) throw r.error;
       const role = new Map((r.data ?? []).map((x) => [x.user_id, x.role]));
-      return (p.data ?? []).map((u) => ({ ...u, role: role.get(u.id) ?? ("user" as const) }));
+      return (p.data ?? []).map((u) => ({
+        ...u,
+        team_name: teamsForProfile(teams, u.id)
+          .map((team) => team.name)
+          .join(", "),
+        role: role.get(u.id) ?? ("user" as const),
+      }));
     },
   });
 

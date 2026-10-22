@@ -1,5 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { myTeamsQuery } from "@/lib/league-api";
+import {
+  ownRoleQuery,
+  saveProfileForReview,
+  verificationQuery,
+  VERIFICATION_LABEL,
+} from "@/lib/profile-api";
 import { ArrowLeft, ImagePlus, Save, Trophy, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +40,11 @@ const POSITIONS = ["Керри (1)", "Мид (2)", "Хардлайн (3)", "Ро
 function ProfilePage() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const teams = useQuery(myTeamsQuery(user?.id));
+  const verification = useQuery(verificationQuery(user?.id));
+  const ownRole = useQuery(ownRoleQuery(user?.id));
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [discord, setDiscord] = useState<{ id: string; username: string; name: string } | null>(
     null,
   );
@@ -40,8 +53,6 @@ function ProfilePage() {
   const [mmr, setMmr] = useState("");
   const [position, setPosition] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
-  const [teamName, setTeamName] = useState("");
-  const [teamRole, setTeamRole] = useState("");
   const [lookingForTeam, setLookingForTeam] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -49,25 +60,27 @@ function ProfilePage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    setProfileLoaded(false);
     if (!user) return;
     let active = true;
     supabase
       .from("profiles")
-      .select(
-        "nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team",
-      )
+      .select("nickname, bio, mmr, role_position, profile_url, avatar_url, looking_for_team")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
-        if (!active || !data) return;
+      .then(({ data, error: loadError }) => {
+        if (!active) return;
+        if (loadError || !data) {
+          setError("Не удалось загрузить профиль. Обновите страницу.");
+          return;
+        }
+        setProfileLoaded(true);
         setNickname(data.nickname ?? "");
         setBio(data.bio ?? "");
         setMmr(data.mmr === null || data.mmr === undefined ? "" : String(data.mmr));
         setPosition(data.role_position ?? "");
         setProfileUrl(data.profile_url ?? "");
         setAvatarUrl(data.avatar_url ?? null);
-        setTeamName(data.team_name ?? "");
-        setTeamRole(data.team_role ?? "");
         setLookingForTeam(Boolean(data.looking_for_team));
       });
     supabase.rpc("get_my_discord_identity").then(({ data, error: identityError }) => {
@@ -129,52 +142,31 @@ function ProfilePage() {
   };
 
   const save = async () => {
-    if (!user) return;
+    if (!user || !profileLoaded || !verification.data) return;
     setError(null);
     setStatus(null);
-
-    const nick = nickname.trim();
-    if (nick.length < 2 || nick.length > 32) {
-      setError("Никнейм должен быть от 2 до 32 символов.");
-      return;
-    }
-    if (bio.trim().length > 500) {
-      setError("Описание не может быть длиннее 500 символов.");
-      return;
-    }
-    let mmrValue: number | null = null;
-    if (mmr.trim() !== "") {
-      const n = Number(mmr.trim());
-      if (!Number.isInteger(n) || n < 0 || n > 15000) {
-        setError("MMR должен быть целым числом от 0 до 15000.");
-        return;
-      }
-      mmrValue = n;
-    }
-    const url = profileUrl.trim();
-    if (url && !/^https?:\/\/\S+$/i.test(url)) {
-      setError("Ссылка должна начинаться с http:// или https://");
-      return;
-    }
-
     setSaving(true);
-    const { error: dbError } = await supabase
-      .from("profiles")
-      .update({
-        nickname: nick,
-        bio: bio.trim(),
-        mmr: mmrValue,
-        role_position: position,
-        profile_url: url,
-        team_name: teamName.trim(),
-        team_role: teamRole.trim(),
-        looking_for_team: lookingForTeam,
-      })
-      .eq("id", user.id);
-    setSaving(false);
-
-    if (dbError) setError("Не удалось сохранить профиль. Попробуйте ещё раз.");
-    else setStatus("Профиль сохранён.");
+    try {
+      const result = await saveProfileForReview({
+        nickname,
+        bio,
+        mmr,
+        position,
+        profileUrl,
+        lookingForTeam,
+      });
+      qc.setQueryData(verificationQuery(user.id).queryKey, result);
+      await qc.invalidateQueries({ queryKey: ["league"] });
+      setStatus(
+        result.status === "verified"
+          ? "Профиль сохранён. Верификация сохранена."
+          : "Профиль сохранён и отправлен на проверку модератору.",
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось сохранить профиль.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const field =
@@ -208,13 +200,51 @@ function ProfilePage() {
         </div>
       ) : (
         <div className="panel mt-6 space-y-4 p-5">
-          <div className="flex items-center gap-3">
+          <section
+            className="rounded-lg border border-border bg-white/50 p-3"
+            aria-label="Верификация профиля"
+          >
+            {verification.isPending ? (
+              <p>Загрузка статуса…</p>
+            ) : verification.isError ? (
+              <>
+                <p role="alert" className="text-sm text-destructive">
+                  {verification.error.message}
+                </p>
+                <button
+                  className="mt-2 text-sm text-primary"
+                  onClick={() => void verification.refetch()}
+                >
+                  Повторить
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="font-semibold text-primary">
+                  {VERIFICATION_LABEL[verification.data.status]}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {verification.data.status === "verified"
+                    ? "Изменение никнейма, MMR или ссылки потребует повторной проверки."
+                    : verification.data.status === "pending"
+                      ? "Профиль ожидает решения модератора или администратора."
+                      : "Заполните никнейм, MMR и ссылку на игровой профиль, затем сохраните. Верификацию подтверждает модератор или администратор."}
+                </p>
+              </>
+            )}
+            {(ownRole.data === "admin" || ownRole.data === "moderator") && (
+              <Link to="/admin" className="mt-2 inline-block text-sm text-primary underline">
+                Проверка профилей участников
+              </Link>
+            )}
+          </section>
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
             <TeamLogo
               name={nickname || user.email || "?"}
               logo={avatarUrl ?? undefined}
               size="lg"
             />
-            <div>
+            <div className="min-w-0 flex-1 break-words">
               <p className="text-sm font-bold text-foreground">{nickname || "Без ника"}</p>
               {discord ? (
                 <p className="text-xs text-muted-foreground">
@@ -233,7 +263,7 @@ function ProfilePage() {
               >
                 Выйти
               </button>
-              <div className="mt-2 flex items-center gap-3">
+              <div className="mt-2 flex flex-wrap items-center gap-3">
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary hover:text-primary">
                   <ImagePlus className="size-4" />{" "}
                   {avatarUrl ? "Заменить аватар" : "Загрузить аватар"}
@@ -266,6 +296,7 @@ function ProfilePage() {
             </label>
             <input
               id="nick"
+              required
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               maxLength={32}
@@ -281,6 +312,7 @@ function ProfilePage() {
               </label>
               <input
                 id="mmr"
+                required
                 inputMode="numeric"
                 value={mmr}
                 onChange={(e) => setMmr(e.target.value.replace(/\D/g, ""))}
@@ -314,6 +346,8 @@ function ProfilePage() {
             </label>
             <input
               id="url"
+              type="url"
+              required
               value={profileUrl}
               onChange={(e) => setProfileUrl(e.target.value)}
               placeholder="https://www.dotabuff.com/players/..."
@@ -321,37 +355,43 @@ function ProfilePage() {
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="team">
-                Команда
-              </label>
-              <input
-                id="team"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                maxLength={40}
-                placeholder="Например: Natus Vincere"
-                className={field}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Оставьте пустым, если вы без команды.
+          <section
+            aria-labelledby="profile-team-label"
+            className="rounded-lg border border-border bg-white/50 p-3"
+          >
+            <h2 id="profile-team-label" className="text-sm font-semibold">
+              Команда
+            </h2>
+            {teams.isPending ? (
+              <p className="mt-1 text-sm">Загрузка команды…</p>
+            ) : teams.isError ? (
+              <button className="mt-1 text-sm text-primary" onClick={() => void teams.refetch()}>
+                Не удалось загрузить команду. Повторить
+              </button>
+            ) : !teams.data.length ? (
+              <p className="mt-1 text-sm text-muted-foreground">Вы пока не состоите в команде.</p>
+            ) : (
+              <ul className="mt-2 space-y-1 text-sm">
+                {teams.data.map((team) => (
+                  <li key={team.id} className="break-words">
+                    {team.name} [{team.tag}]{team.owner_id === user.id ? " · Капитан" : ""}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {(teams.data?.length ?? 0) > 1 && (
+              <p className="mt-2 text-sm text-destructive">
+                В данных найдено несколько команд. Обратитесь к администратору для уточнения
+                состава.
               </p>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="trole">
-                Роль в команде
-              </label>
-              <input
-                id="trole"
-                value={teamRole}
-                onChange={(e) => setTeamRole(e.target.value)}
-                maxLength={40}
-                placeholder="Капитан / игрок / запасной"
-                className={field}
-              />
-            </div>
-          </div>
+            )}
+            <p className="mt-2 text-xs text-muted-foreground">
+              Команда определяется автоматически по владению и принятому приглашению.{" "}
+              <Link to="/my-team" className="text-primary underline">
+                Моя команда
+              </Link>
+            </p>
+          </section>
 
           <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground">
             <input
@@ -379,15 +419,24 @@ function ProfilePage() {
             <p className="mt-1 text-xs text-muted-foreground">{bio.length}/500</p>
           </div>
 
-          {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
-          {status && <p className="text-sm font-semibold text-primary">{status}</p>}
+          {error && (
+            <p role="alert" className="text-sm font-semibold text-destructive">
+              {error}
+            </p>
+          )}
+          {status && (
+            <p role="status" className="text-sm font-semibold text-primary">
+              {status}
+            </p>
+          )}
 
           <button
             onClick={save}
-            disabled={saving}
+            disabled={saving || !profileLoaded || verification.isPending || verification.isError}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
           >
-            <Save className="size-4" /> {saving ? "Сохраняем…" : "Сохранить профиль"}
+            <Save className="size-4" />{" "}
+            {saving ? "Сохраняем…" : "Сохранить и отправить на проверку"}
           </button>
 
           <p className="flex items-center gap-2 border-t border-border pt-4 text-xs text-muted-foreground">

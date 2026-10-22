@@ -1,3 +1,4 @@
+import { fetchProfileTeams, teamsForProfile } from "@/lib/profile-api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink, Shield, Swords, TrendingUp, UserSearch } from "lucide-react";
@@ -34,7 +35,6 @@ type Row = {
   bio: string;
   profile_url: string;
   team_name: string;
-  team_role: string;
   looking_for_team: boolean;
   created_at: string;
 };
@@ -45,7 +45,7 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
       <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
         {icon} {label}
       </p>
-      <p className="mt-1 truncate text-sm font-bold text-foreground">{value}</p>
+      <p className="mt-1 break-words text-sm font-bold text-foreground">{value}</p>
     </div>
   );
 }
@@ -55,48 +55,55 @@ function PlayerPage() {
   const [row, setRow] = useState<Row | null>(null);
   const [teammates, setTeammates] = useState<Row[]>([]);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [teamCount, setTeamCount] = useState(0);
 
   useEffect(() => {
     let active = true;
-    supabase
-      .from("profiles")
-      .select(
-        "id, nickname, avatar_url, mmr, role_position, bio, profile_url, team_name, team_role, looking_for_team, created_at",
-      )
-      .eq("id", playerId)
-      .maybeSingle()
-      .then(({ data }) => {
+    setRow(null);
+    setNotFound(false);
+    setLoadError(false);
+    setTeammates([]);
+    setTeamCount(0);
+    Promise.all([
+      supabase
+        .from("profiles")
+        .select(
+          "id, nickname, avatar_url, mmr, role_position, bio, profile_url, looking_for_team, created_at",
+        ),
+      fetchProfileTeams(),
+    ])
+      .then(([result, teams]) => {
         if (!active) return;
-        if (data) setRow(data as Row);
-        else setNotFound(true);
+        if (result.error) throw result.error;
+        const profiles = result.data ?? [];
+        const profile = profiles.find((item) => item.id === playerId);
+        if (!profile) {
+          setNotFound(true);
+          return;
+        }
+        const ownTeams = teamsForProfile(teams, playerId);
+        setTeamCount(ownTeams.length);
+        const project = (item: typeof profile) => ({
+          ...item,
+          team_name: teamsForProfile(teams, item.id)
+            .map((team) => team.name)
+            .join(", "),
+        });
+        setRow(project(profile));
+        setTeammates(
+          profiles
+            .filter((item) => item.id !== playerId && teamsForProfile(ownTeams, item.id).length > 0)
+            .map(project),
+        );
+      })
+      .catch(() => {
+        if (active) setLoadError(true);
       });
     return () => {
       active = false;
     };
   }, [playerId]);
-
-  useEffect(() => {
-    const team = row?.team_name?.trim();
-    if (!team) {
-      setTeammates([]);
-      return;
-    }
-    let active = true;
-    supabase
-      .from("profiles")
-      .select(
-        "id, nickname, avatar_url, mmr, role_position, bio, profile_url, team_name, team_role, looking_for_team, created_at",
-      )
-      .eq("team_name", row!.team_name)
-      .neq("id", playerId)
-      .order("mmr", { ascending: false, nullsFirst: false })
-      .then(({ data }) => {
-        if (active) setTeammates((data as Row[]) ?? []);
-      });
-    return () => {
-      active = false;
-    };
-  }, [row, playerId]);
 
   const inTeam = (row?.team_name ?? "").trim() !== "";
 
@@ -109,7 +116,11 @@ function PlayerPage() {
         <ArrowLeft className="size-4" /> Все участники
       </Link>
 
-      {notFound ? (
+      {loadError ? (
+        <p role="alert" className="panel p-5 text-sm text-destructive">
+          Не удалось загрузить профиль и состав. Обновите страницу.
+        </p>
+      ) : notFound ? (
         <p className="panel p-5 text-sm text-muted-foreground">Игрок не найден.</p>
       ) : !row ? (
         <p className="panel p-5 text-sm text-muted-foreground">Загрузка…</p>
@@ -148,6 +159,12 @@ function PlayerPage() {
               />
             </div>
 
+            {teamCount > 1 && (
+              <p className="text-sm text-destructive">
+                В данных несколько команд этого игрока. Показаны все; состав требует уточнения
+                администратором.
+              </p>
+            )}
             {row.bio && <p className="whitespace-pre-line text-sm text-foreground">{row.bio}</p>}
 
             {row.profile_url && (
@@ -180,10 +197,7 @@ function PlayerPage() {
               </p>
             ) : (
               <>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {row.team_name}
-                  {row.team_role ? ` · роль игрока: ${row.team_role}` : ""}
-                </p>
+                <p className="mt-2 text-sm text-muted-foreground">{row.team_name}</p>
                 {teammates.length === 0 ? (
                   <p className="mt-3 text-sm text-muted-foreground">
                     Пока это единственный участник лиги из этой команды.
@@ -207,7 +221,7 @@ function PlayerPage() {
                               {t.nickname || "Без ника"}
                             </p>
                             <p className="truncate text-xs text-muted-foreground">
-                              {t.team_role || t.role_position || "игрок"}
+                              {t.role_position || "игрок"}
                               {t.mmr !== null ? ` · ${t.mmr} MMR` : ""}
                             </p>
                           </div>
