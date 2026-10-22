@@ -16,6 +16,7 @@ import { formatLeagueDate, rpcErrorText } from "@/lib/league";
 import { teamSystemQuery } from "@/lib/team-invitations";
 import { legacyMyTeamsQuery } from "@/lib/legacy-team-api";
 import { applicationRoster } from "@/lib/application-roster";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Props = {
   tournamentId: string;
@@ -108,20 +109,21 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
           </p>
         ) : (
           <div className="space-y-4">
-            <label className="block text-sm">
-              <span className="mb-1 block font-semibold text-foreground">Команда</span>
-              <select
-                value={teamId}
-                onChange={(e) => setTeamId(e.target.value)}
-                className="w-full rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground"
-              >
+            <div className="min-w-0 text-sm">
+              <label htmlFor="application-team" className="mb-1 block font-semibold text-foreground">Команда</label>
+              <Select value={teamId} onValueChange={setTeamId}>
+                <SelectTrigger id="application-team" className="h-11 min-w-0 rounded-xl border-primary/20 bg-white/80 text-left shadow-sm backdrop-blur-md transition-colors hover:border-primary/40 focus:ring-2 focus:ring-primary/25">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-w-[calc(100vw-2rem)] rounded-xl border-primary/20 bg-white/95 p-1 shadow-xl backdrop-blur-xl">
                 {ownedTeams.map((t) => (
-                  <option key={t.id} value={t.id}>
+                  <SelectItem key={t.id} value={t.id} className="min-h-10 rounded-lg focus:bg-primary/10 focus:text-primary">
                     {t.name} · основных: {applicationRoster(t.team_members).count}/5
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-            </label>
+                </SelectContent>
+              </Select>
+            </div>
             <p role="status" className="text-sm text-muted-foreground">
               Основной состав: {roster.count}/5. Для заявки нужны пять разных зарегистрированных
               игроков в основных слотах. Приглашения без принятия и запасные не учитываются.

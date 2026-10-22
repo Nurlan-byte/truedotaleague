@@ -94,7 +94,9 @@ describe("application schema compatibility", () => {
     const html = renderToStaticMarkup(
       <ApplyDialog tournamentId="tournament" title="Cup" open onOpenChange={() => {}} />,
     );
-    expect(html).toContain("Legacy team");
+    // Radix options mount in a portal after opening; SSR checks the accessible trigger.
+    expect(html).toContain('role="combobox"');
+    expect(html).toContain('id="application-team"');
     expect(html).toContain("Отправить заявку");
   });
   it("does not grant application rights to a linked roster member", () => {
