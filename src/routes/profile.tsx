@@ -2,12 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { myTeamsQuery } from "@/lib/league-api";
-import {
-  ownRoleQuery,
-  saveProfileForReview,
-  verificationQuery,
-  VERIFICATION_LABEL,
-} from "@/lib/profile-api";
+import { saveProfile } from "@/lib/profile-api";
 import { ArrowLeft, ImagePlus, Save, Trophy, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,13 +39,11 @@ export const Route = createFileRoute("/profile")({
 
 const POSITIONS = ["Керри (1)", "Мид (2)", "Хардлайн (3)", "Роумер (4)", "Саппорт (5)"];
 
-function ProfilePage() {
+export function ProfilePage() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const teams = useQuery(myTeamsQuery(user?.id));
-  const verification = useQuery(verificationQuery(user?.id));
-  const ownRole = useQuery(ownRoleQuery(user?.id));
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [discord, setDiscord] = useState<{ id: string; username: string; name: string } | null>(
     null,
@@ -149,12 +142,12 @@ function ProfilePage() {
   };
 
   const save = async () => {
-    if (!user || !profileLoaded || !verification.data) return;
+    if (!user || !profileLoaded) return;
     setError(null);
     setStatus(null);
     setSaving(true);
     try {
-      const result = await saveProfileForReview({
+      await saveProfile({
         nickname,
         bio,
         mmr,
@@ -162,13 +155,8 @@ function ProfilePage() {
         profileUrl,
         lookingForTeam,
       });
-      qc.setQueryData(verificationQuery(user.id).queryKey, result);
       await qc.invalidateQueries({ queryKey: ["league"] });
-      setStatus(
-        result.status === "verified"
-          ? "Профиль сохранён. Верификация сохранена."
-          : "Профиль сохранён и отправлен на проверку модератору.",
-      );
+      setStatus("Профиль сохранён.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось сохранить профиль.");
     } finally {
@@ -207,44 +195,6 @@ function ProfilePage() {
         </div>
       ) : (
         <div className="panel mt-6 space-y-4 p-5">
-          <section
-            className="rounded-lg border border-border bg-white/50 p-3"
-            aria-label="Верификация профиля"
-          >
-            {verification.isPending ? (
-              <p>Загрузка статуса…</p>
-            ) : verification.isError ? (
-              <>
-                <p role="alert" className="text-sm text-destructive">
-                  {verification.error.message}
-                </p>
-                <button
-                  className="mt-2 text-sm text-primary"
-                  onClick={() => void verification.refetch()}
-                >
-                  Повторить
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="font-semibold text-primary">
-                  {VERIFICATION_LABEL[verification.data.status]}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {verification.data.status === "verified"
-                    ? "Изменение никнейма, MMR или ссылки потребует повторной проверки."
-                    : verification.data.status === "pending"
-                      ? "Профиль ожидает решения модератора или администратора."
-                      : "Заполните никнейм, MMR и ссылку на игровой профиль, затем сохраните. Верификацию подтверждает модератор или администратор."}
-                </p>
-              </>
-            )}
-            {(ownRole.data === "admin" || ownRole.data === "moderator") && (
-              <Link to="/admin" className="mt-2 inline-block text-sm text-primary underline">
-                Проверка профилей участников
-              </Link>
-            )}
-          </section>
           <div className="flex min-w-0 flex-wrap items-center gap-3">
             <TeamLogo
               name={nickname || user.email || "?"}
@@ -319,7 +269,6 @@ function ProfilePage() {
               </label>
               <input
                 id="mmr"
-                required
                 inputMode="numeric"
                 value={mmr}
                 onChange={(e) => setMmr(e.target.value.replace(/\D/g, ""))}
@@ -369,7 +318,6 @@ function ProfilePage() {
             <input
               id="url"
               type="url"
-              required
               value={profileUrl}
               onChange={(e) => setProfileUrl(e.target.value)}
               placeholder="https://www.dotabuff.com/players/..."
@@ -454,11 +402,10 @@ function ProfilePage() {
 
           <button
             onClick={save}
-            disabled={saving || !profileLoaded || verification.isPending || verification.isError}
+            disabled={saving || !profileLoaded}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
           >
-            <Save className="size-4" />{" "}
-            {saving ? "Сохраняем…" : "Сохранить и отправить на проверку"}
+            <Save className="size-4" /> {saving ? "Сохраняем…" : "Сохранить профиль"}
           </button>
 
           <p className="flex items-center gap-2 border-t border-border pt-4 text-xs text-muted-foreground">

@@ -854,7 +854,7 @@ export type Database = {
     };
     Functions: {
       save_profile_for_review: {
-        Args: { p_nickname: string; p_mmr: number; p_profile_url: string; p_role_position?: string; p_bio?: string; p_looking_for_team?: boolean };
+        Args: { p_nickname: string; p_mmr: number | null; p_profile_url: string; p_role_position?: string; p_bio?: string; p_looking_for_team?: boolean };
         Returns: Json;
       };
       get_my_profile_verification: { Args: Record<PropertyKey, never>; Returns: Json };

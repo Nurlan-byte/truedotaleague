@@ -25,8 +25,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAdmin } from "@/hooks/use-admin";
-import { useQuery } from "@tanstack/react-query";
-import { ownRoleQuery } from "@/lib/profile-api";
 
 const items = [
   { title: "Главная", url: "/", icon: Home },
@@ -45,8 +43,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const { isAdmin, user } = useAdmin();
-  const role = useQuery(ownRoleQuery(user?.id));
+  const { isAdmin } = useAdmin();
 
   const visibleItems = items.filter((item) => item.url !== "/tournaments/new" || isAdmin);
 
@@ -100,23 +97,6 @@ export function AppSidebar() {
                     <Link to="/admin" className="flex items-center gap-2">
                       <UserCog className="size-4" />
                       {!collapsed && <span>Роли и доступы</span>}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-        {!isAdmin && role.data === "moderator" && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Модерация</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={currentPath === "/admin"}>
-                    <Link to="/admin" className="flex items-center gap-2">
-                      <UserCog className="size-4" />
-                      {!collapsed && <span>Проверка профилей</span>}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

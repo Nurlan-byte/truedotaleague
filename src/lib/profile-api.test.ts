@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { profilePayload, profileError, teamsForProfile, verificationResult } from "./profile-api";
+import { profilePayload, profileError, teamsForProfile } from "./profile-api";
 
 const valid = {
   nickname: " Игрок ",
@@ -9,8 +9,8 @@ const valid = {
   bio: "",
   lookingForTeam: false,
 };
-describe("profile review input", () => {
-  it("requires nickname, MMR and an external profile without accepting team or verification input", () => {
+describe("profile input without review", () => {
+  it("validates supplied fields without requiring MMR, external profile or verification", () => {
     expect(profilePayload(valid)).toEqual({
       p_nickname: "Игрок",
       p_mmr: 4200,
@@ -19,24 +19,20 @@ describe("profile review input", () => {
       p_bio: "",
       p_looking_for_team: false,
     });
-    expect(() => profilePayload({ ...valid, mmr: "" })).toThrow("Укажите MMR");
+    expect(profilePayload({ ...valid, mmr: "", profileUrl: "" })).toMatchObject({
+      p_mmr: null,
+      p_profile_url: "",
+    });
     expect(() => profilePayload({ ...valid, nickname: "x" })).toThrow("Никнейм");
-    expect(() => profilePayload({ ...valid, profileUrl: "" })).toThrow("ссылку");
     expect(() => profilePayload({ ...valid, profileUrl: "javascript:alert(1)" })).toThrow("ссылку");
     expect(() => profilePayload({ ...valid, mmr: "12.5" })).toThrow("целым");
     expect(() => profilePayload({ ...valid, mmr: "15001" })).toThrow("15000");
     expect(profilePayload({ ...valid, mmr: "0" }).p_mmr).toBe(0);
   });
-  it("does not invent successful verification when backend status is missing", () => {
-    expect(() => verificationResult(null)).toThrow();
-    expect(() => verificationResult({ status: "approved" })).toThrow();
-    expect(verificationResult({ status: "pending", submitted_at: "2026-10-22" }).status).toBe(
-      "pending",
-    );
-    expect(profileError({ code: "PGRST202" })).toContain("пока недоступна");
-    expect(profileError({ message: "self_review_forbidden" })).toContain("собственный");
-    expect(profileError({ message: "cannot_review_own_profile" })).toContain("собственный");
-    expect(profileError({ message: "stale_review" })).toContain("изменилась");
+  it("retains authentication errors and does not expose raw server errors", () => {
+    expect(profileError({ code: "PGRST202" })).toContain("пока недоступно");
+    expect(profileError({ message: "not_authenticated" })).toContain("Войдите");
+    expect(profileError({ message: "secret database error" })).not.toContain("secret");
   });
 });
 describe("derived profile teams", () => {
