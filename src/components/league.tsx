@@ -33,7 +33,7 @@ export function TournamentImage({
   className?: string;
 }) {
   if (src) {
-    return <img src={src} alt={title} loading="lazy" className={`object-cover ${className}`} />;
+    return <img src={src} alt={title} loading="lazy" className={`block bg-white object-contain object-center ${className}`} />;
   }
   return (
     <div
