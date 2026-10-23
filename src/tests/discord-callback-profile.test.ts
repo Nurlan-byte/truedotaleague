@@ -41,6 +41,7 @@ vi.mock("@/integrations/supabase/client.server", () => ({
   },
 }));
 import { Route } from "@/routes/api/public/auth/discord/callback";
+import { buildReturnCookie } from "@/lib/discord.server";
 const callback = (
   Route as unknown as {
     server: { handlers: { GET: (args: { request: Request }) => Promise<Response> } };
@@ -84,6 +85,18 @@ afterEach(() => {
 });
 
 describe("Discord e-mail linking preserves reviewed profile data", () => {
+  it("returns the invitation after successful mocked OAuth exchange", async () => {
+    const next = `/join?token=${"a".repeat(64)}`;
+    const cookie = buildReturnCookie(next, "s", 600, true).split(";")[0];
+    const response = await callback({ request: new Request("https://example.test/api/public/auth/discord/callback?code=code&state=s", {
+      headers: { cookie: `tdl_discord_state=s; ${cookie}` },
+    }) });
+    const target = new URL(response.headers.get("location")!);
+    expect(target.pathname).toBe("/auth-discord");
+    expect(target.searchParams.get("next")).toBe(next);
+    expect(target.searchParams.get("token_hash")).toBe("session");
+    expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+  });
   it.each(["Reviewed", ""])(
     "preserves existing nickname %j and avatar instead of OAuth defaults",
     async (nickname) => {

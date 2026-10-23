@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  buildStateCookie,
+  finishDiscordRedirect,
+  readAuthReturn,
   discordAvatarUrl,
   discordEmail,
   getDiscordConfig,
@@ -9,16 +10,10 @@ import {
   STATE_COOKIE,
   type DiscordUser,
 } from "@/lib/discord.server";
+import { authRetryUrl } from "@/lib/auth-return";
 
-function fail(origin: string, code: string, secure: boolean) {
-  return new Response(null, {
-    status: 302,
-    headers: {
-      location: `${origin}/auth?discord_error=${encodeURIComponent(code)}`,
-      "set-cookie": buildStateCookie("", 0, secure),
-      "cache-control": "no-store",
-    },
-  });
+function failure(origin: string, code: string, secure: boolean, next: string) {
+  return finishDiscordRedirect(`${origin}${authRetryUrl(next, code)}`, secure);
 }
 
 export const Route = createFileRoute("/api/public/auth/discord/callback")({
@@ -28,6 +23,8 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
         const url = new URL(request.url);
         const origin = url.origin;
         const secure = url.protocol === "https:";
+        const next = readAuthReturn(request);
+        const fail = (origin: string, code: string, secure: boolean) => failure(origin, code, secure, next);
 
         const oauthError = url.searchParams.get("error");
         if (oauthError) {
@@ -185,14 +182,10 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
             return fail(origin, "session_failed", secure);
           }
 
-          return new Response(null, {
-            status: 302,
-            headers: {
-              location: `${origin}/auth-discord?token_hash=${encodeURIComponent(tokenHash)}`,
-              "set-cookie": buildStateCookie("", 0, secure),
-              "cache-control": "no-store",
-            },
-          });
+          return finishDiscordRedirect(
+            `${origin}/auth-discord?token_hash=${encodeURIComponent(tokenHash)}&next=${encodeURIComponent(next)}`,
+            secure,
+          );
         } catch (e) {
           console.error("discord login error", e);
           return fail(origin, "user_failed", secure);

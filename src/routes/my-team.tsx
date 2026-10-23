@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Shield, Users } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { TeamInvitations, InvitePlayer } from "@/components/TeamInvitations";
+import { TeamInviteLinks } from "@/components/TeamInviteLinks";
 import { LoadingPanel } from "@/components/league";
 import { QueryFeedback } from "@/components/LeaguePageIntro";
 import { supabase } from "@/integrations/supabase/client";
@@ -275,6 +276,7 @@ export function ModernMyTeamPage() {
               <>
                 <InvitePlayer teamId={team.id} disabled={run.isPending || members.length >= 7} />
                 <TeamInvitations userId={user.id} teamId={team.id} />
+                <TeamInviteLinks teamId={team.id} />
               </>
             )}
             {available && (

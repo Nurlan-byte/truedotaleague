@@ -1,8 +1,30 @@
 // Server-only helpers for the Discord OAuth2 flow.
 // Never import this module from client/browser code.
+import { safeAuthReturn } from "./auth-return";
 
 export const DISCORD_CALLBACK_PATH = "/api/public/auth/discord/callback";
 export const STATE_COOKIE = "tdl_discord_state";
+export const RETURN_COOKIE = "tdl_discord_return";
+
+export function buildReturnCookie(next: string, state: string, maxAge: number, secure: boolean): string {
+  const value = maxAge ? encodeURIComponent(`${state}:${safeAuthReturn(next)}`) : "";
+  return `${RETURN_COOKIE}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure ? "; Secure" : ""}`;
+}
+
+export function readAuthReturn(request: Request): string {
+  const state = readCookie(request, STATE_COOKIE);
+  try {
+    const value = decodeURIComponent(readCookie(request, RETURN_COOKIE) ?? "");
+    return state && value.startsWith(`${state}:`) ? safeAuthReturn(value.slice(state.length + 1)) : "/";
+  } catch { return "/"; }
+}
+
+export function finishDiscordRedirect(location: string, secure: boolean): Response {
+  const headers = new Headers({ location, "cache-control": "no-store", "referrer-policy": "no-referrer" });
+  headers.append("set-cookie", buildStateCookie("", 0, secure));
+  headers.append("set-cookie", buildReturnCookie("/", "", 0, secure));
+  return new Response(null, { status: 302, headers });
+}
 
 export type DiscordConfig = {
   clientId: string;
