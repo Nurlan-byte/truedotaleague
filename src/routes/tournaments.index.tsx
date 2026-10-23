@@ -17,7 +17,6 @@ import { catalogQuery, type CatalogItem } from "@/lib/league-api";
 import type { ReactNode } from "react";
 import {
   APPLICATION_LABEL,
-  countdown,
   formatLeagueDate,
   formatPrize,
   freePlaces,
@@ -174,12 +173,7 @@ function TournamentCard({ t, application }: { t: CatalogItem; application?: Appl
     case "registration_open":
       details = (
         <>
-          {t.registration_closes_at && (
-            <span className="block">
-              Приём заявок до {formatLeagueDate(t.registration_closes_at)} · осталось{" "}
-              {countdown(t.registration_closes_at)}
-            </span>
-          )}
+          <span className="block">Регистрацию закрывает администратор вручную.</span>
           <span className="block">
             Принято команд: {accepted} · свободно мест: {freePlaces(t.team_limit, accepted)}
           </span>

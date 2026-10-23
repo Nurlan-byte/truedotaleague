@@ -38,7 +38,6 @@ export type TournamentForm = {
   starts_at: string; // datetime-local, UTC+5
   reg_manual: boolean;
   registration_opens_at: string;
-  registration_closes_at: string;
   mode: "online" | "offline";
   venue_name: string;
   venue_address: string;
@@ -56,7 +55,6 @@ export const emptyForm = (): TournamentForm => ({
   starts_at: "",
   reg_manual: true,
   registration_opens_at: "",
-  registration_closes_at: "",
   mode: "online",
   venue_name: "",
   venue_address: "",
@@ -75,7 +73,6 @@ export function formFromRow(t: TournamentRow): TournamentForm {
     starts_at: toLeagueInput(t.starts_at),
     reg_manual: !t.registration_opens_at,
     registration_opens_at: toLeagueInput(t.registration_opens_at),
-    registration_closes_at: toLeagueInput(t.registration_closes_at),
     mode: t.mode,
     venue_name: t.venue_name ?? "",
     venue_address: t.venue_address ?? "",
@@ -92,17 +89,11 @@ export function formFromRow(t: TournamentRow): TournamentForm {
 export function validateForm(f: TournamentForm, publish: boolean): Record<string, string> {
   const e: Record<string, string> = {};
   const start = fromLeagueInput(f.starts_at);
-  const close = fromLeagueInput(f.registration_closes_at);
   const open = f.reg_manual ? null : fromLeagueInput(f.registration_opens_at);
   if (publish && !f.title.trim()) e.title = "Укажите название";
   if (publish && !start) e.starts_at = "Укажите дату и время начала";
-  if (publish && !close) e.registration_closes_at = "Укажите закрытие регистрации";
   if (!f.reg_manual && !open && publish)
     e.registration_opens_at = "Укажите время открытия или выберите «вручную»";
-  if (start && close && close > start)
-    e.registration_closes_at = "Закрытие регистрации не может быть позже начала";
-  if (open && close && open >= close)
-    e.registration_opens_at = "Открытие должно быть раньше закрытия";
   if (f.mode === "offline" && (!f.venue_name.trim() || !f.venue_address.trim()))
     e.venue = "Для офлайн-турнира укажите площадку и адрес";
   if (!f.prize_tba) {
@@ -122,7 +113,6 @@ export function formToPayload(f: TournamentForm) {
     image_url: f.image_url || null,
     starts_at: fromLeagueInput(f.starts_at),
     registration_opens_at: f.reg_manual ? null : fromLeagueInput(f.registration_opens_at),
-    registration_closes_at: fromLeagueInput(f.registration_closes_at),
     mode: f.mode,
     venue_name: f.mode === "offline" ? f.venue_name.trim() : null,
     venue_address: f.mode === "offline" ? f.venue_address.trim() : null,
@@ -398,7 +388,6 @@ const TRACKED = [
   "title",
   "starts_at",
   "registration_opens_at",
-  "registration_closes_at",
   "mode",
   "venue_name",
   "venue_address",

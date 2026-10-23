@@ -13,7 +13,6 @@ import { tournamentQuery } from "@/lib/league-api";
 import {
   APPLICATION_LABEL,
   FORMAT_LABEL,
-  countdown,
   formatLeagueDate,
   formatPrize,
   freePlaces,
@@ -218,13 +217,7 @@ function TournamentPage() {
               ? formatLeagueDate(t.registration_opens_at)
               : "откроется администратором вручную"}
           </li>
-          {t.registration_closes_at && (
-            <li>
-              Окончание приёма заявок: {formatLeagueDate(t.registration_closes_at)}
-              {t.status === "registration_open" &&
-                ` · осталось ${countdown(t.registration_closes_at)}`}
-            </li>
-          )}
+          <li>Регистрацию закрывает администратор вручную.</li>
           <li>
             Лимит команд: {t.team_limit} · свободно мест: {freePlaces(t.team_limit, accepted)}
           </li>

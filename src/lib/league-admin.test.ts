@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bracketPayload,
   emptyForm,
+  formToPayload,
   fromLeagueInput,
   rosterChanged,
   toLeagueInput,
@@ -12,7 +13,6 @@ const base = () => ({
   ...emptyForm(),
   title: "Кубок",
   starts_at: "2026-11-01T18:00",
-  registration_closes_at: "2026-10-31T18:00",
 });
 
 describe("tournament form rules", () => {
@@ -20,11 +20,11 @@ describe("tournament form rules", () => {
     expect(fromLeagueInput("2026-09-03T18:00")).toBe("2026-09-03T13:00:00.000Z");
     expect(toLeagueInput("2026-09-03T13:00:00.000Z")).toBe("2026-09-03T18:00");
   });
-  it("registration close must not be after start", () => {
-    expect(
-      validateForm({ ...base(), registration_closes_at: "2026-11-02T10:00" }, true)
-        .registration_closes_at,
-    ).toBeDefined();
+  it("publishes without a closing date and never overwrites historical closing dates", () => {
+    expect(validateForm(base(), true)).toEqual({});
+    expect(formToPayload(base())).not.toHaveProperty("registration_closes_at");
+    expect(formToPayload({ ...base(), registration_closes_at: "old-value" } as ReturnType<typeof base>))
+      .not.toHaveProperty("registration_closes_at");
   });
   it("offline requires venue and address", () => {
     expect(validateForm({ ...base(), mode: "offline" }, true).venue).toBeDefined();

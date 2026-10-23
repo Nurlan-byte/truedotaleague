@@ -284,18 +284,9 @@ export function TournamentEditor({ tournament }: { tournament?: TournamentRow })
             onChange={(e) => set("starts_at", e.target.value)}
           />
         </Row>
-        <Row
-          label={`Закрытие регистрации ${LEAGUE_TZ_LABEL}`}
-          error={errors.registration_closes_at}
-          hint="Не позже начала турнира"
-        >
-          <input
-            type="datetime-local"
-            className={field}
-            value={form.registration_closes_at}
-            onChange={(e) => set("registration_closes_at", e.target.value)}
-          />
-        </Row>
+        <p className="self-center text-sm text-muted-foreground">
+          Регистрацию закрывает администратор вручную.
+        </p>
         <Row label={`Открытие регистрации ${LEAGUE_TZ_LABEL}`} error={errors.registration_opens_at}>
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm">
@@ -329,7 +320,7 @@ export function TournamentEditor({ tournament }: { tournament?: TournamentRow })
         {startChanged && (
           <p className="flex items-center gap-2 text-sm font-semibold text-accent sm:col-span-2">
             <AlertTriangle className="size-4" /> Дата начала изменена после публикации —
-            перепроверьте срок закрытия регистрации.
+            сообщите участникам новое время.
           </p>
         )}
       </div>
