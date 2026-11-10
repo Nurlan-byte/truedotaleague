@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ExternalLink, Shield, Swords, TrendingUp, Trophy, UserSearch } from "lucide-react";
+import { ArrowLeft, ExternalLink, History, Shield, Swords, TrendingUp, Trophy, UserSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogo } from "@/components/TeamLogo";
 
@@ -40,6 +40,27 @@ type Row = {
   titles: string[] | null;
 };
 
+type Membership = { team_id: string; name: string; tag: string };
+
+type Teammate = {
+  id: string;
+  nickname: string;
+  mmr: number | null;
+  position: number;
+  profile_id: string | null;
+  profiles: { nickname: string; avatar_url: string | null; mmr: number | null; competitive_rating: number | null } | null;
+};
+
+type HistoryItem = {
+  tournamentId: string;
+  title: string;
+  teamName: string;
+  teamTag: string;
+  place: number | null;
+  points: number | null;
+  createdAt: string;
+};
+
 function Stat({
   icon,
   label,
@@ -59,14 +80,24 @@ function Stat({
   );
 }
 
+const PLACE_LABEL: Record<number, string> = { 1: "🥇 1 место", 2: "🥈 2 место", 3: "🥉 3 место" };
+
 function PlayerPage() {
   const { playerId } = Route.useParams();
   const [row, setRow] = useState<Row | null>(null);
-  const [teammates, setTeammates] = useState<Row[]>([]);
+  const [membership, setMembership] = useState<Membership | null>(null);
+  const [teammates, setTeammates] = useState<Teammate[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     let active = true;
+    setRow(null);
+    setMembership(null);
+    setTeammates([]);
+    setHistory([]);
+    setNotFound(false);
+
     supabase
       .from("profiles")
       .select(
@@ -79,35 +110,78 @@ function PlayerPage() {
         if (data) setRow(data as Row);
         else setNotFound(true);
       });
+
+    // Real team membership (not the free-text field in the profile).
+    supabase
+      .from("team_members")
+      .select("team_id, created_at, teams(name, tag)")
+      .eq("profile_id", playerId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active || !data) return;
+        const t = data.teams as { name: string; tag: string } | null;
+        if (t) setMembership({ team_id: data.team_id, name: t.name, tag: t.tag });
+      });
+
+    // Team history: tournaments whose roster snapshot contains this player.
+    supabase
+      .from("tournament_participants")
+      .select("tournament_id, team_id, team_name, team_tag, created_at, tournaments(title)")
+      .contains("roster_snapshot", { members: [{ profile_id: playerId }] })
+      .order("created_at", { ascending: false })
+      .then(async ({ data }) => {
+        if (!active || !data || data.length === 0) return;
+        const { data: places } = await supabase
+          .from("placements")
+          .select("tournament_id, team_id, place, points");
+        if (!active) return;
+        const placeOf = (tid: string, teamId: string) =>
+          (places ?? []).find((p) => p.tournament_id === tid && p.team_id === teamId) ?? null;
+        setHistory(
+          data.map((p) => {
+            const pl = placeOf(p.tournament_id, p.team_id);
+            return {
+              tournamentId: p.tournament_id,
+              title: (p.tournaments as { title: string } | null)?.title ?? "Турнир",
+              teamName: p.team_name,
+              teamTag: p.team_tag,
+              place: pl?.place ?? null,
+              points: pl?.points ?? null,
+              createdAt: p.created_at,
+            };
+          }),
+        );
+      });
+
     return () => {
       active = false;
     };
   }, [playerId]);
 
   useEffect(() => {
-    const team = row?.team_name?.trim();
-    if (!team) {
+    if (!membership) {
       setTeammates([]);
       return;
     }
     let active = true;
     supabase
-      .from("profiles")
-      .select(
-        "id, nickname, avatar_url, mmr, role_position, bio, profile_url, team_name, team_role, looking_for_team, created_at",
-      )
-      .eq("team_name", row!.team_name)
-      .neq("id", playerId)
-      .order("mmr", { ascending: false, nullsFirst: false })
+      .from("team_members")
+      .select("id, nickname, mmr, position, profile_id, profiles(nickname, avatar_url, mmr, competitive_rating)")
+      .eq("team_id", membership.team_id)
+      .neq("profile_id", playerId)
+      .order("position")
       .then(({ data }) => {
-        if (active) setTeammates((data as Row[]) ?? []);
+        if (active) setTeammates((data as Teammate[]) ?? []);
       });
     return () => {
       active = false;
     };
-  }, [row, playerId]);
+  }, [membership, playerId]);
 
-  const inTeam = (row?.team_name ?? "").trim() !== "";
+  const teamName = membership?.name ?? (row?.team_name ?? "").trim();
+  const inTeam = teamName !== "";
 
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-8 lg:px-8">
@@ -151,7 +225,15 @@ function PlayerPage() {
               <Stat
                 icon={<Shield className="size-3" />}
                 label="Команда"
-                value={inTeam ? row.team_name : row.looking_for_team ? "Ищет команду" : "Без команды"}
+                value={
+                  inTeam
+                    ? membership
+                      ? `${teamName} [${membership.tag}]`
+                      : teamName
+                    : row.looking_for_team
+                      ? "Ищет команду"
+                      : "Без команды"
+                }
               />
             </div>
 
@@ -207,42 +289,97 @@ function PlayerPage() {
             ) : (
               <>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {row.team_name}
+                  {teamName}
+                  {membership ? ` [${membership.tag}]` : ""}
                   {row.team_role ? ` · роль игрока: ${row.team_role}` : ""}
                 </p>
-                {teammates.length === 0 ? (
+                {membership && teammates.length === 0 ? (
                   <p className="mt-3 text-sm text-muted-foreground">
                     Пока это единственный участник лиги из этой команды.
                   </p>
-                ) : (
+                ) : membership ? (
                   <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                    {teammates.map((t) => (
-                      <li key={t.id}>
-                        <Link
-                          to="/players/$playerId"
-                          params={{ playerId: t.id }}
-                          className="flex items-center gap-3 rounded-lg border border-border bg-white/60 p-3 transition-colors hover:border-primary"
-                        >
-                          <TeamLogo
-                            name={t.nickname || "?"}
-                            logo={t.avatar_url ?? undefined}
-                            size="md"
-                          />
+                    {teammates.map((t) => {
+                      const rating = t.profiles?.competitive_rating ?? t.profiles?.mmr ?? t.mmr;
+                      const name = t.profiles?.nickname || t.nickname || "Игрок";
+                      const inner = (
+                        <>
+                          <TeamLogo name={name} logo={t.profiles?.avatar_url ?? undefined} size="md" />
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-bold text-foreground">
-                              {t.nickname || "Без ника"}
-                            </p>
+                            <p className="truncate text-sm font-bold text-foreground">{name}</p>
                             <p className="truncate text-xs text-muted-foreground">
-                              {t.team_role || t.role_position || "игрок"}
-                              {t.mmr !== null ? ` · ${t.mmr} MMR` : ""}
+                              {rating !== null ? `${rating} MMR` : "рейтинг не указан"}
                             </p>
                           </div>
-                        </Link>
-                      </li>
-                    ))}
+                        </>
+                      );
+                      return (
+                        <li key={t.id}>
+                          {t.profile_id ? (
+                            <Link
+                              to="/players/$playerId"
+                              params={{ playerId: t.profile_id }}
+                              className="flex items-center gap-3 rounded-lg border border-border bg-white/60 p-3 transition-colors hover:border-primary"
+                            >
+                              {inner}
+                            </Link>
+                          ) : (
+                            <div className="flex items-center gap-3 rounded-lg border border-border bg-white/60 p-3">
+                              {inner}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
-                )}
+                ) : null}
               </>
+            )}
+          </div>
+
+          <div className="panel p-6">
+            <h2 className="flex items-center gap-2 text-2xl leading-none text-foreground">
+              <History className="size-5 text-primary" /> История команд
+            </h2>
+            {history.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Игрок ещё не участвовал в турнирах лиги — история появится после первого турнира.
+              </p>
+            ) : (
+              <ul className="mt-4 space-y-2">
+                {history.map((h) => (
+                  <li
+                    key={`${h.tournamentId}-${h.teamName}`}
+                    className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-2.5 text-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        to="/tournaments/$tournamentId"
+                        params={{ tournamentId: h.tournamentId }}
+                        className="block truncate font-bold text-foreground hover:text-primary hover:underline"
+                      >
+                        {h.title}
+                      </Link>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {h.teamName} [{h.teamTag}] · {new Date(h.createdAt).toLocaleDateString("ru-RU")}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
+                        h.place === 1
+                          ? "bg-accent/15 text-accent"
+                          : h.place !== null
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {h.place !== null
+                        ? `${PLACE_LABEL[h.place] ?? `${h.place} место`}${h.points ? ` · +${h.points} TDL` : ""}`
+                        : "без места"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>
