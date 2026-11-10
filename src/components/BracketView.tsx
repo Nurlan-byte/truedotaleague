@@ -3,13 +3,15 @@ import { TeamLogo } from "@/components/TeamLogo";
 import { Trophy } from "lucide-react";
 
 type Props = {
+  /** Команды пользователя — их матчи подсвечиваются. */
+  highlight?: string[];
   matches: Match[];
   teams: Team[];
   onScore?: (id: string, side: "A" | "B", value: string) => void;
   readOnly?: boolean;
 };
 
-export function BracketView({ matches, teams, onScore, readOnly = false }: Props) {
+export function BracketView({ matches, teams, onScore, readOnly = false, highlight = [] }: Props) {
   if (matches.length === 0) {
     return (
       <div className="panel p-5">
@@ -52,7 +54,7 @@ export function BracketView({ matches, teams, onScore, readOnly = false }: Props
                 {rms.map((m) => {
                   const winner = matchWinner(m);
                   return (
-                    <div key={m.id} className="panel overflow-hidden">
+                    <div key={m.id} className={`panel overflow-hidden ${highlight.some((h) => h === m.teamA || h === m.teamB) ? "ring-2 ring-primary" : ""}`}>
                       {(["A", "B"] as const).map((side) => {
                         const teamId = side === "A" ? m.teamA : m.teamB;
                         const score = side === "A" ? m.scoreA : m.scoreB;

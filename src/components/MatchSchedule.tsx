@@ -10,6 +10,8 @@ import { TeamLogo } from "@/components/TeamLogo";
 import { CalendarDays, Clock } from "lucide-react";
 
 type Props = {
+  /** Команды пользователя — их матчи подсвечиваются. */
+  highlight?: string[];
   teams: Team[];
   groupMatches: GroupMatch[];
   bracket: Match[];
@@ -28,7 +30,7 @@ type Row = {
   scheduledAt: string | null;
 };
 
-export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
+export function MatchSchedule({ teams, groupMatches, bracket, onTime, highlight = [] }: Props) {
   const teamOf = (id: string | null) => (id ? teams.find((t) => t.id === id) : undefined);
   const totalRounds = bracket.length ? Math.max(...bracket.map((m) => m.round)) : 0;
 
@@ -69,7 +71,7 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
       <div className="panel p-5">
         <p className="text-sm text-muted-foreground">
           Сейчас активного турнира нет. Расписание появится, когда организатор создаст группы или
-          сетку плей-офф. Результаты прошедших турниров — в разделе «Турниры лиги».
+          сетку плей-офф. Результаты прошедших турниров — в разделе «Турниры».
         </p>
       </div>
     );
@@ -90,7 +92,7 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
         {onTime
           ? "Укажите дату и время каждого матча — команды увидят их на публичной странице турнира."
           : scheduled > 0
-            ? `Время назначено для ${scheduled} из ${rows.length} матчей. Время указано в вашем часовом поясе.`
+            ? `Время назначено для ${scheduled} из ${rows.length} матчей. Время указано по UTC+5.`
             : "Организатор ещё не назначил время матчей."}
       </p>
 
@@ -101,7 +103,7 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime }: Props) {
           return (
             <li
               key={r.id}
-              className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-white/50 px-3 py-2"
+              className={`flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2 ${highlight.some((h) => h === r.teamA || h === r.teamB) ? "border-primary bg-primary/10" : "border-border bg-white/50"}`}
 
             >
               <span className="w-24 shrink-0 truncate text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
