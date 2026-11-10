@@ -3,7 +3,7 @@ import {
   buildStateCookie,
   discordAvatarUrl,
   discordEmail,
-  fetchCompetitiveRating,
+  fetchDiscordGuildProfile,
   getDiscordConfig,
   hasVerifiedDiscordEmail,
   readCookie,
@@ -150,8 +150,8 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
             if (existing.data?.user?.email) authEmail = existing.data.user.email.toLowerCase();
           }
 
-          // 4. Keep the profile in sync with Discord (incl. Competitive Rating role).
-          const rating = await fetchCompetitiveRating(discordUser.id);
+          // 4. Keep the profile in sync with Discord (incl. Competitive Rating role and titles).
+          const guildProfile = await fetchDiscordGuildProfile(discordUser.id);
           await supabaseAdmin
             .from("profiles")
             .upsert(
@@ -162,8 +162,13 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
                 discord_global_name: discordUser.global_name ?? "",
                 ...(linked?.nickname ? {} : { nickname: displayName }),
                 ...(linked?.avatar_url ? {} : { avatar_url: avatar }),
-                ...(rating === undefined ? {} : { competitive_rating: rating }),
-                ...(typeof rating === "number" ? { mmr: rating } : {}),
+                ...(guildProfile === undefined
+                  ? {}
+                  : {
+                      competitive_rating: guildProfile.rating,
+                      titles: guildProfile.titles,
+                      ...(typeof guildProfile.rating === "number" ? { mmr: guildProfile.rating } : {}),
+                    }),
               },
               { onConflict: "id" },
             );
