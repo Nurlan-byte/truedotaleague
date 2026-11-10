@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import tdlLogo from "@/assets/tdl-logo.png";
+import tdlLogo from "@/assets/tdl-logo.png.asset.json";
 import { LogIn, LogOut } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TeamLogo } from "@/components/TeamLogo";
@@ -12,7 +12,7 @@ export function AppHeader() {
     <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/70 px-3 backdrop-blur-xl backdrop-saturate-150">
       <SidebarTrigger />
       <img
-        src={tdlLogo}
+        src={tdlLogo.url}
         alt="TrueDotaLeague"
         width={26}
         height={26}
