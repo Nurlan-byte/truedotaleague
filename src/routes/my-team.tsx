@@ -2,12 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ImagePlus, Plus, Shield, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Check, ImagePlus, LogOut, Plus, Search, Shield, Trash2, UserPlus, Users, X } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { LoadingPanel } from "@/components/league";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { myApplicationsQuery, myTeamsQuery } from "@/lib/league-api";
+import { myApplicationsQuery } from "@/lib/league-api";
 import { APPLICATION_LABEL, formatLeagueDate, rpcErrorText } from "@/lib/league";
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 import { effectiveRegulationQuery } from "@/lib/league-admin";
@@ -33,16 +33,62 @@ export const Route = createFileRoute("/my-team")({
 const input =
   "min-w-0 rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:bg-white";
 
+type Invite = {
+  id: string;
+  team_id: string;
+  invited_user_id: string;
+  status: string;
+  team_name: string;
+  team_tag: string;
+  invited_user_name: string;
+  invited_by_name: string;
+};
+type Found = { id: string; nickname: string; mmr: number | null; already_in_team: boolean };
+
+const myTeamQuery = (userId: string | undefined) => ({
+  queryKey: ["league", "my-team", userId ?? "guest"],
+  enabled: !!userId,
+  queryFn: async () => {
+    if (!userId) return null;
+    const { data: mem } = await supabase.from("team_members").select("team_id").eq("profile_id", userId).limit(1);
+    let teamId = mem?.[0]?.team_id as string | undefined;
+    if (!teamId) {
+      const { data: own } = await supabase.from("teams").select("id").eq("owner_id", userId).limit(1);
+      teamId = own?.[0]?.id;
+    }
+    if (!teamId) return null;
+    const { data, error } = await supabase
+      .from("teams")
+      .select("*, team_members(id, profile_id, position, nickname, profiles(nickname, avatar_url, competitive_rating))")
+      .eq("id", teamId)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+});
+
+const invitesQuery = (userId: string | undefined) => ({
+  queryKey: ["league", "team-invites", userId ?? "guest"],
+  enabled: !!userId,
+  queryFn: async () => {
+    const { data, error } = await supabase.rpc("list_team_invites");
+    if (error) throw error;
+    return ((data as unknown as Invite[]) ?? []).filter((i) => i.status === "pending");
+  },
+});
+
 function MyTeamPage() {
   const { user, loading } = useAuth();
   const qc = useQueryClient();
-  const teams = useQuery(myTeamsQuery(user?.id));
-  const apps = useQuery(myApplicationsQuery((teams.data ?? []).map((t) => t.id)));
+  const teamQ = useQuery(myTeamQuery(user?.id));
+  const team = teamQ.data;
+  const invites = useQuery(invitesQuery(user?.id));
+  const apps = useQuery(myApplicationsQuery(team ? [team.id] : []));
   const effectiveReg = useQuery(effectiveRegulationQuery());
   const [name, setName] = useState("");
   const [tag, setTag] = useState("");
-  const [player, setPlayer] = useState<Record<string, { nickname: string; role: string; mmr: string }>>({});
-  const [captainNick, setCaptainNick] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
+  const [found, setFound] = useState<Found[] | null>(null);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["league"] });
   const run = useMutation({
@@ -50,10 +96,10 @@ function MyTeamPage() {
     onSuccess: refresh,
     onError: (e) => toast.error(e instanceof Error && e.message.startsWith("!") ? e.message.slice(1) : rpcErrorText(e as Error)),
   });
-  const check = (error: { message: string; code?: string } | null, text?: string) => {
-    if (!error) return;
-    if (error.code === "23503") throw new Error("!Команду нельзя удалить: она участвовала в турнирах");
-    throw new Error(text ? `!${text}` : error.message);
+  const rpc = async (fn: string, args: Record<string, unknown>) => {
+    const { data, error } = await supabase.rpc(fn as never, args as never);
+    if (error) throw new Error(`!${rpcErrorText(error)}`);
+    return data as unknown;
   };
 
   if (loading) return <div className="mx-auto max-w-4xl px-4 py-8"><LoadingPanel /></div>;
@@ -64,28 +110,34 @@ function MyTeamPage() {
           <Shield className="size-7 text-primary" /> Моя команда
         </h1>
         <div className="panel mt-5 p-5 text-sm text-muted-foreground">
-          Чтобы создать команду и подать заявку на турнир,{" "}
-          <Link to="/auth" className="font-semibold text-primary hover:underline">
-            войдите в аккаунт
-          </Link>
-          .
+          Чтобы создать команду или вступить в неё,{" "}
+          <Link to="/auth" className="font-semibold text-primary hover:underline">войдите через Discord</Link>.
         </div>
       </div>
     );
 
+  const isOwner = team?.owner_id === user.id;
+  const incoming = (invites.data ?? []).filter((i) => i.invited_user_id === user.id);
+  const outgoing = team ? (invites.data ?? []).filter((i) => i.team_id === team.id && i.invited_user_id !== user.id) : [];
+  const members = team ? [...team.team_members].sort((a, b) => a.position - b.position) : [];
+  const teamApps = apps.data ?? [];
+
   const create = () => {
     if (!name.trim()) return toast.error("Введите название команды");
+    if (!tag.trim()) return toast.error("Введите тег команды");
     run.mutate(async () => {
-      const { data: created, error } = await supabase
-        .from("teams")
-        .insert({ name: name.trim(), tag: tag.trim(), owner_id: user.id })
-        .select("id")
-        .single();
-      check(error);
-      if (created) notifyDiscord({ data: { kind: "team_created", teamId: created.id } }).catch(() => {});
+      const id = (await rpc("create_team", { p_name: name.trim(), p_tag: tag.trim() })) as string;
+      if (id) notifyDiscord({ data: { kind: "team_created", teamId: id } }).catch(() => {});
       toast.success("Команда создана");
       setName("");
       setTag("");
+    });
+  };
+
+  const doSearch = () => {
+    if (!team || search.trim().length < 2) return toast.error("Введите минимум 2 символа ника");
+    run.mutate(async () => {
+      setFound((await rpc("search_team_players", { p_team_id: team.id, p_query: search.trim() })) as Found[]);
     });
   };
 
@@ -95,56 +147,73 @@ function MyTeamPage() {
         <Shield className="size-7 text-primary" /> Моя команда
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Создайте команду и соберите состав. Заявку на турнир подаёт владелец или капитан на странице турнира в разделе{" "}
-        <Link to="/tournaments" className="font-semibold text-primary hover:underline">
-          «Турниры»
-        </Link>
-        .
+        Создайте команду, пригласите игроков с сайта, а затем подайте заявку на странице турнира в разделе{" "}
+        <Link to="/tournaments" className="font-semibold text-primary hover:underline">«Турниры»</Link>.
       </p>
 
-      <div className="panel mt-5 p-5">
-        <h2 className="text-lg font-semibold text-foreground">Создать команду</h2>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Название команды" className={`${input} flex-1`} />
-          <input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="Тег (напр. TDL)" maxLength={8} className={`${input} sm:w-40`} />
-          <button
-            onClick={create}
-            disabled={run.isPending}
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm disabled:opacity-50"
-          >
-            <Plus className="size-4" /> Создать
-          </button>
+      {incoming.length > 0 && (
+        <div className="panel mt-5 p-5">
+          <h2 className="text-lg font-semibold text-foreground">Вас приглашают</h2>
+          <ul className="mt-3 space-y-2">
+            {incoming.map((i) => (
+              <li key={i.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-white/50 px-3 py-2 text-sm">
+                <span className="min-w-0 flex-1 text-foreground">
+                  <b>{i.team_name}</b> [{i.team_tag}] · от {i.invited_by_name}
+                </span>
+                <button
+                  disabled={run.isPending}
+                  onClick={() => run.mutate(async () => { await rpc("accept_invite", { p_invite_id: i.id }); toast.success("Вы вступили в команду"); })}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                >
+                  <Check className="size-3.5" /> Принять
+                </button>
+                <button
+                  disabled={run.isPending}
+                  onClick={() => run.mutate(async () => { await rpc("decline_invite", { p_invite_id: i.id }); toast.success("Приглашение отклонено"); })}
+                  className="rounded-full border border-border bg-white/70 px-3 py-1.5 text-xs font-semibold text-foreground"
+                >
+                  Отклонить
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
+      )}
 
-      {teams.isLoading ? (
+      {teamQ.isLoading ? (
         <div className="mt-5"><LoadingPanel /></div>
-      ) : (teams.data ?? []).length === 0 ? (
-        <div className="panel mt-5 p-5 text-sm text-muted-foreground">У вас пока нет команды. Создайте её выше.</div>
-      ) : null}
-
-      <div className="mt-5 space-y-5">
-        {(teams.data ?? []).map((team) => {
-          const isOwner = team.owner_id === user.id;
-          const members = [...team.team_members].sort((a, b) => a.position - b.position);
-          const p = player[team.id] ?? { nickname: "", role: "", mmr: "" };
-          const teamApps = (apps.data ?? []).filter((a) => a.team_id === team.id);
-          return (
-            <div key={team.id} className="panel p-5">
-              <div className="flex min-w-0 items-center gap-3">
-                <TeamLogo name={team.name} logo={team.logo_url ?? undefined} size="md" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-lg font-semibold text-foreground">
-                    {team.name}
-                    {team.tag && <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-primary">[{team.tag}]</span>}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {isOwner ? "Вы владелец" : "Вы капитан"} · игроков: {members.length}
-                  </p>
-                </div>
+      ) : !team ? (
+        <div className="panel mt-5 p-5">
+          <h2 className="text-lg font-semibold text-foreground">Создать команду</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Вы станете владельцем и первым игроком состава. Один игрок — одна команда.</p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} placeholder="Название команды" className={`${input} flex-1`} />
+            <input value={tag} onChange={(e) => setTag(e.target.value)} placeholder="Тег (напр. TDL)" maxLength={8} className={`${input} sm:w-40`} />
+            <button
+              onClick={create}
+              disabled={run.isPending}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm disabled:opacity-50"
+            >
+              <Plus className="size-4" /> Создать
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="panel mt-5 p-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <TeamLogo name={team.name} logo={team.logo_url ?? undefined} size="md" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-lg font-semibold text-foreground">
+                {team.name}
+                <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-primary">[{team.tag}]</span>
+              </p>
+              <p className="text-xs text-muted-foreground">{isOwner ? "Вы владелец" : "Вы игрок команды"} · игроков: {members.length}/7</p>
+            </div>
+            {isOwner ? (
+              <>
                 <label className="cursor-pointer text-muted-foreground hover:text-primary" title="Загрузить логотип">
                   <ImagePlus className="size-5" />
-                  <span className="sr-only">Логотип команды {team.name}</span>
+                  <span className="sr-only">Логотип команды</span>
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
@@ -157,209 +226,181 @@ function MyTeamPage() {
                       if (err) return toast.error(err);
                       run.mutate(async () => {
                         const logo = await fileToLogoDataUrl(f);
-                        const { error } = await supabase.from("teams").update({ logo_url: logo }).eq("id", team.id);
-                        check(error);
+                        await rpc("manage_team", { p_team_id: team.id, p_action: "logo", p_value: logo });
                         toast.success("Логотип обновлён");
                       });
                     }}
                   />
                 </label>
-                {isOwner && (
-                  <button
-                    onClick={() => {
-                      if (!confirm(`Удалить команду «${team.name}»?`)) return;
-                      run.mutate(async () => {
-                        const { error } = await supabase.from("teams").delete().eq("id", team.id);
-                        check(error);
-                        toast.success("Команда удалена");
-                      });
-                    }}
-                    className="text-muted-foreground hover:text-destructive"
-                    aria-label={`Удалить команду ${team.name}`}
-                  >
-                    <Trash2 className="size-5" />
-                  </button>
-                )}
-              </div>
+                <button
+                  onClick={() => {
+                    if (!confirm(`Удалить команду «${team.name}»?`)) return;
+                    run.mutate(async () => { await rpc("manage_team", { p_team_id: team.id, p_action: "delete" }); toast.success("Команда удалена"); });
+                  }}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label="Удалить команду"
+                >
+                  <Trash2 className="size-5" />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  if (!confirm("Покинуть команду?")) return;
+                  run.mutate(async () => { await rpc("manage_team", { p_team_id: team.id, p_action: "leave" }); toast.success("Вы покинули команду"); });
+                }}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-destructive"
+              >
+                <LogOut className="size-4" /> Покинуть
+              </button>
+            )}
+          </div>
 
-              <h3 className="mt-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Users className="size-4 text-primary" /> Состав
-              </h3>
-              <ul className="mt-2 space-y-1.5">
-                {members.length === 0 && <li className="text-xs text-muted-foreground">Игроков нет — добавьте до 7 участников.</li>}
-                {members.map((m, i) => (
-                  <li key={m.id} className="flex min-w-0 items-center gap-3 rounded-lg bg-white/50 px-3 py-2 text-sm text-foreground">
-                    <span className="w-4 text-xs font-semibold text-muted-foreground">{i + 1}</span>
-                    <span className="min-w-0 flex-1 truncate font-medium">{m.nickname}</span>
-                    {m.role && <span className="shrink-0 text-xs text-muted-foreground">{m.role}</span>}
-                    {m.mmr !== null && <span className="shrink-0 text-xs text-muted-foreground">{m.mmr} MMR</span>}
+          <h3 className="mt-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Users className="size-4 text-primary" /> Состав
+          </h3>
+          <ul className="mt-2 space-y-1.5">
+            {members.map((m, i) => {
+              const prof = m.profiles as { nickname: string; competitive_rating: number | null } | null;
+              return (
+                <li key={m.id} className="flex min-w-0 items-center gap-3 rounded-lg bg-white/50 px-3 py-2 text-sm text-foreground">
+                  <span className="w-4 text-xs font-semibold text-muted-foreground">{i + 1}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {prof?.nickname || m.nickname || "Игрок"}
+                    {m.profile_id === team.owner_id && <span className="ml-1 text-xs text-primary">★ капитан</span>}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {prof?.competitive_rating != null ? `${prof.competitive_rating} CR` : "нет CR"}
+                  </span>
+                  {isOwner && m.profile_id && m.profile_id !== team.owner_id && (
                     <button
-                      onClick={() =>
-                        run.mutate(async () => {
-                          const { error } = await supabase.from("team_members").delete().eq("id", m.id);
-                          check(error);
-                        })
-                      }
+                      onClick={() => {
+                        if (!confirm("Убрать игрока из команды?")) return;
+                        run.mutate(async () => { await rpc("manage_team", { p_team_id: team.id, p_action: "remove", p_user_id: m.profile_id }); });
+                      }}
                       className="text-muted-foreground hover:text-destructive"
-                      aria-label={`Убрать ${m.nickname}`}
+                      aria-label="Убрать игрока"
                     >
                       <X className="size-4" />
                     </button>
-                  </li>
-                ))}
-              </ul>
-              {members.length < 7 && (
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                  <input
-                    value={p.nickname}
-                    onChange={(e) => setPlayer({ ...player, [team.id]: { ...p, nickname: e.target.value } })}
-                    placeholder="Ник игрока"
-                    className={`${input} flex-1`}
-                  />
-                  <input
-                    value={p.role}
-                    onChange={(e) => setPlayer({ ...player, [team.id]: { ...p, role: e.target.value } })}
-                    placeholder="Роль (Carry, Mid…)"
-                    className={`${input} sm:w-36`}
-                  />
-                  <input
-                    value={p.mmr}
-                    onChange={(e) => setPlayer({ ...player, [team.id]: { ...p, mmr: e.target.value } })}
-                    placeholder="MMR"
-                    inputMode="numeric"
-                    className={`${input} sm:w-24`}
-                  />
-                  <button
-                    onClick={() => {
-                      if (!p.nickname.trim()) return toast.error("Введите ник игрока");
-                      const mmr = p.mmr.trim() ? Number(p.mmr.replace(/\D/g, "")) : null;
-                      run.mutate(async () => {
-                        const { error } = await supabase.from("team_members").insert({
-                          team_id: team.id,
-                          nickname: p.nickname.trim(),
-                          role: p.role.trim(),
-                          mmr,
-                          position: members.length,
-                        });
-                        check(error);
-                        setPlayer({ ...player, [team.id]: { nickname: "", role: "", mmr: "" } });
-                      });
-                    }}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-white/70 px-3 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
-                  >
-                    <Plus className="size-4" /> Добавить
-                  </button>
-                </div>
-              )}
+                  )}
+                </li>
+              );
+            })}
+          </ul>
 
-              {isOwner && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-foreground">Капитаны</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Капитаны тоже могут подавать заявки от имени команды. Сейчас: {team.team_captains.length || "нет"}.
-                  </p>
-                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                    <input
-                      value={captainNick[team.id] ?? ""}
-                      onChange={(e) => setCaptainNick({ ...captainNick, [team.id]: e.target.value })}
-                      placeholder="Ник пользователя на сайте"
-                      className={`${input} flex-1`}
-                    />
-                    <button
-                      onClick={() => {
-                        const nick = (captainNick[team.id] ?? "").trim();
-                        if (!nick) return toast.error("Введите ник");
-                        run.mutate(async () => {
-                          const { data: prof } = await supabase.from("profiles").select("id").eq("nickname", nick).limit(2);
-                          if (!prof || prof.length !== 1) throw new Error("!Пользователь с таким ником не найден или ник не уникален");
-                          const { error } = await supabase.from("team_captains").insert({ team_id: team.id, user_id: prof[0].id });
-                          check(error, "Не удалось добавить капитана");
-                          toast.success("Капитан добавлен");
-                          setCaptainNick({ ...captainNick, [team.id]: "" });
-                        });
-                      }}
-                      className="inline-flex items-center justify-center gap-1 rounded-lg border border-border bg-white/70 px-3 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
-                    >
-                      <UserPlus className="size-4" /> Назначить
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {teamApps.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-foreground">Заявки на турниры</h3>
-                  <ul className="mt-2 space-y-1.5">
-                    {teamApps.map((a) => (
-                      <li key={a.id} className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-white/50 px-3 py-2 text-sm">
-                        <Link
-                          to="/tournaments/$tournamentId"
-                          params={{ tournamentId: a.tournament_id }}
-                          className="min-w-0 flex-1 truncate font-medium text-foreground hover:text-primary"
-                        >
-                          {a.tournaments?.title ?? "Турнир"}
-                        </Link>
-                        <span className="text-xs text-muted-foreground">
-                          {APPLICATION_LABEL[a.status]}
-                          {a.reject_reason ? ` — ${a.reject_reason}` : ""} · {formatLeagueDate(a.created_at)}
-                        </span>
-                        {a.status === "rejected" && a.tournaments?.status === "registration_open" && (
-                          <Link
-                            to="/tournaments/$tournamentId"
-                            params={{ tournamentId: a.tournament_id }}
-                            search={{ apply: true }}
-                            className="text-xs font-semibold text-primary hover:underline"
-                          >
-                            Подать повторно
-                          </Link>
-                        )}
-                        {(a.status === "pending" || a.status === "accepted") &&
-                          effectiveReg.data &&
-                          a.regulation_version_id !== effectiveReg.data.id && (
-                            <span className="w-full rounded-md bg-accent/15 px-2 py-1 text-xs text-foreground">
-                              Вступила в силу новая версия регламента.{" "}
-                              <Link to="/regulations" className="font-semibold text-primary hover:underline">Ознакомьтесь</Link> и{" "}
-                              <button
-                                className="font-semibold text-primary hover:underline"
-                                onClick={() =>
-                                  run.mutate(async () => {
-                                    const { error } = await supabase.rpc("reacknowledge_regulation", {
-                                      p_application_id: a.id,
-                                      p_version_id: effectiveReg.data!.id,
-                                    });
-                                    if (error) throw new Error(`!${rpcErrorText(error)}`);
-                                    toast.success("Ознакомление подтверждено");
-                                  })
-                                }
-                              >
-                                подтвердите ознакомление
-                              </button>
-                            </span>
-                          )}
-                        {(a.status === "pending" || a.status === "accepted") && (
+          {isOwner && members.length < 7 && (
+            <div className="mt-4">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <UserPlus className="size-4 text-primary" /> Пригласить игрока
+              </h3>
+              <p className="text-xs text-muted-foreground">Игрок должен один раз войти на сайт через Discord. Найдите его по нику.</p>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && doSearch()}
+                  placeholder="Ник игрока"
+                  className={`${input} flex-1`}
+                />
+                <button
+                  onClick={doSearch}
+                  disabled={run.isPending}
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-white/70 px-3 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
+                >
+                  <Search className="size-4" /> Найти
+                </button>
+              </div>
+              {found && (
+                <ul className="mt-2 space-y-1.5">
+                  {found.length === 0 && <li className="text-xs text-muted-foreground">Никого не нашли.</li>}
+                  {found.map((f) => {
+                    const invited = outgoing.some((o) => o.invited_user_id === f.id);
+                    return (
+                      <li key={f.id} className="flex items-center gap-2 rounded-lg bg-white/50 px-3 py-2 text-sm">
+                        <span className="min-w-0 flex-1 truncate text-foreground">{f.nickname}</span>
+                        {f.already_in_team ? (
+                          <span className="text-xs text-muted-foreground">уже в команде</span>
+                        ) : invited ? (
+                          <span className="text-xs text-muted-foreground">приглашён</span>
+                        ) : (
                           <button
-                            onClick={() => {
-                              if (!confirm("Отозвать заявку?")) return;
-                              run.mutate(async () => {
-                                const { error } = await supabase.rpc("withdraw_application", { p_id: a.id });
-                                if (error) throw new Error(`!${rpcErrorText(error)}`);
-                                toast.success("Заявка отозвана");
-                              });
-                            }}
-                            className="text-xs font-semibold text-destructive hover:underline"
+                            disabled={run.isPending}
+                            onClick={() => run.mutate(async () => { await rpc("invite_player", { p_team_id: team.id, p_user_id: f.id }); toast.success(`Приглашение отправлено: ${f.nickname}`); })}
+                            className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground"
                           >
-                            Отозвать
+                            Пригласить
                           </button>
                         )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {outgoing.length > 0 && (
+                <div className="mt-3">
+                  <p className="text-xs font-semibold text-muted-foreground">Ждут ответа:</p>
+                  <ul className="mt-1 space-y-1">
+                    {outgoing.map((o) => (
+                      <li key={o.id} className="flex items-center gap-2 text-sm text-foreground">
+                        <span className="min-w-0 flex-1 truncate">{o.invited_user_name}</span>
+                        <button
+                          onClick={() => run.mutate(async () => { await rpc("cancel_invite", { p_invite_id: o.id }); })}
+                          className="text-xs font-semibold text-destructive hover:underline"
+                        >
+                          Отменить
+                        </button>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
             </div>
-          );
-        })}
-      </div>
+          )}
+
+          {teamApps.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold text-foreground">Заявки на турниры</h3>
+              <ul className="mt-2 space-y-1.5">
+                {teamApps.map((a) => (
+                  <li key={a.id} className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg bg-white/50 px-3 py-2 text-sm">
+                    <Link
+                      to="/tournaments/$tournamentId"
+                      params={{ tournamentId: a.tournament_id }}
+                      className="min-w-0 flex-1 truncate font-medium text-foreground hover:text-primary"
+                    >
+                      {a.tournaments?.title ?? "Турнир"}
+                    </Link>
+                    <span className="text-xs text-muted-foreground">
+                      {APPLICATION_LABEL[a.status]}
+                      {a.reject_reason ? ` — ${a.reject_reason}` : ""} · {formatLeagueDate(a.created_at)}
+                    </span>
+                    {isOwner && (a.status === "pending" || a.status === "accepted") && effectiveReg.data && a.regulation_version_id !== effectiveReg.data.id && (
+                      <button
+                        className="w-full rounded-md bg-accent/15 px-2 py-1 text-left text-xs font-semibold text-primary"
+                        onClick={() => run.mutate(async () => { await rpc("reacknowledge_regulation", { p_application_id: a.id, p_version_id: effectiveReg.data!.id }); toast.success("Ознакомление подтверждено"); })}
+                      >
+                        Новая версия регламента — подтвердить ознакомление
+                      </button>
+                    )}
+                    {isOwner && (a.status === "pending" || a.status === "accepted") && (
+                      <button
+                        onClick={() => {
+                          if (!confirm("Отозвать заявку?")) return;
+                          run.mutate(async () => { await rpc("withdraw_application", { p_id: a.id }); toast.success("Заявка отозвана"); });
+                        }}
+                        className="text-xs font-semibold text-destructive hover:underline"
+                      >
+                        Отозвать
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
