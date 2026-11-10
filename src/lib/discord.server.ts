@@ -69,3 +69,38 @@ export function discordEmail(user: DiscordUser): string {
 export function hasVerifiedDiscordEmail(user: DiscordUser, email: string): boolean {
   return user.verified === true && !!user.email && !email.endsWith(FALLBACK_EMAIL_DOMAIN);
 }
+
+export const DISCORD_GUILD_ID = "1439794512762245233";
+
+/**
+ * Reads the player's "Competitive Rating N" role on the league Discord server.
+ * Returns the highest N, null when the player has no such role, or undefined
+ * when the lookup failed (so existing data is kept).
+ */
+export async function fetchCompetitiveRating(discordUserId: string): Promise<number | null | undefined> {
+  const token = process.env["DISCORD_BOT_TOKEN"];
+  if (!token) return undefined;
+  const headers = { authorization: `Bot ${token}` };
+  try {
+    const memberRes = await fetch(
+      `https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/members/${discordUserId}`,
+      { headers },
+    );
+    if (memberRes.status === 404) return null;
+    if (!memberRes.ok) return undefined;
+    const member = (await memberRes.json()) as { roles?: string[] };
+    const rolesRes = await fetch(`https://discord.com/api/v10/guilds/${DISCORD_GUILD_ID}/roles`, { headers });
+    if (!rolesRes.ok) return undefined;
+    const roles = (await rolesRes.json()) as { id: string; name: string }[];
+    const mine = new Set(member.roles ?? []);
+    let best: number | null = null;
+    for (const r of roles) {
+      if (!mine.has(r.id)) continue;
+      const m = /^competitive rating\s+(\d+)/i.exec(r.name.trim());
+      if (m) best = Math.max(best ?? 0, Number(m[1]));
+    }
+    return best;
+  } catch {
+    return undefined;
+  }
+}

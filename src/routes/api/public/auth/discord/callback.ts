@@ -3,6 +3,7 @@ import {
   buildStateCookie,
   discordAvatarUrl,
   discordEmail,
+  fetchCompetitiveRating,
   getDiscordConfig,
   hasVerifiedDiscordEmail,
   readCookie,
@@ -149,7 +150,8 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
             if (existing.data?.user?.email) authEmail = existing.data.user.email.toLowerCase();
           }
 
-          // 4. Keep the profile in sync with Discord.
+          // 4. Keep the profile in sync with Discord (incl. Competitive Rating role).
+          const rating = await fetchCompetitiveRating(discordUser.id);
           await supabaseAdmin
             .from("profiles")
             .upsert(
@@ -160,6 +162,8 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
                 discord_global_name: discordUser.global_name ?? "",
                 ...(linked?.nickname ? {} : { nickname: displayName }),
                 ...(linked?.avatar_url ? {} : { avatar_url: avatar }),
+                ...(rating === undefined ? {} : { competitive_rating: rating }),
+                ...(typeof rating === "number" ? { mmr: rating } : {}),
               },
               { onConflict: "id" },
             );

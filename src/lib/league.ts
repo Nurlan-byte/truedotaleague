@@ -171,6 +171,8 @@ const ERRORS: Record<string, string> = {
   not_team_captain: "Подать заявку может только владелец или капитан команды",
   regulation_not_acknowledged: "Нужно ознакомиться с опубликованным регламентом",
   tournament_full: "Свободных мест больше нет",
+  competitive_rating_required:
+    "У всех 5 основных игроков должна быть роль Competitive Rating в Discord. Получите роль и войдите на сайт через Discord заново.",
   deadline_passed: "Срок отзыва заявки истёк",
   application_not_active: "Заявка уже не активна",
   application_not_pending: "Заявка уже рассмотрена",
