@@ -123,6 +123,30 @@ export type Database = {
         }
         Relationships: []
       }
+      draft_publications: {
+        Row: {
+          id: number
+          result: Json
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        Insert: {
+          id?: number
+          result: Json
+          updated_at?: string
+          updated_by: string
+          version?: number
+        }
+        Update: {
+          id?: number
+          result?: Json
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Relationships: []
+      }
       groups: {
         Row: {
           created_at: string
@@ -367,6 +391,38 @@ export type Database = {
           },
         ]
       }
+      profile_verifications: {
+        Row: {
+          profile_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string | null
+        }
+        Insert: {
+          profile_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+        }
+        Update: {
+          profile_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_verifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -518,6 +574,45 @@ export type Database = {
           },
         ]
       }
+      team_invites: {
+        Row: {
+          created_at: string
+          id: string
+          invited_user_id: string
+          status: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_user_id: string
+          status?: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_user_id?: string
+          status?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invites_invited_user_id_fkey"
+            columns: ["invited_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invites_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           created_at: string
@@ -568,6 +663,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_membership_guard: {
+        Row: {
+          revision: number
+          user_id: string
+        }
+        Insert: {
+          revision?: number
+          user_id: string
+        }
+        Update: {
+          revision?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      team_tag_guard: {
+        Row: {
+          revision: number
+          tag: string
+        }
+        Insert: {
+          revision?: number
+          tag: string
+        }
+        Update: {
+          revision?: number
+          tag?: string
+        }
+        Relationships: []
+      }
+      team_write_guard: {
+        Row: {
+          revision: number
+          team_id: string
+        }
+        Insert: {
+          revision?: number
+          team_id: string
+        }
+        Update: {
+          revision?: number
+          team_id?: string
+        }
+        Relationships: []
       }
       teams: {
         Row: {
@@ -813,9 +953,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      team_roster: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          is_captain: boolean | null
+          mmr: number | null
+          nickname: string | null
+          position: number | null
+          profile_id: string | null
+          roster_slot: string | null
+          team_id: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      accept_invite: { Args: { p_invite_id: string }; Returns: undefined }
       assign_moderator: {
         Args: { p_tournament_id: string; p_user_id: string }
         Returns: {
@@ -833,6 +1003,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      cancel_invite: { Args: { p_invite_id: string }; Returns: undefined }
       change_tournament_status: {
         Args: {
           p_id: string
@@ -872,6 +1043,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_team: { Args: { p_name: string; p_tag: string }; Returns: string }
       decide_application: {
         Args: { p_accept: boolean; p_id: string; p_reason?: string }
         Returns: {
@@ -896,6 +1068,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      decide_profile_review: {
+        Args: {
+          p_approve: boolean
+          p_profile_id: string
+          p_submitted_at: string
+        }
+        Returns: undefined
+      }
+      decline_invite: { Args: { p_invite_id: string }; Returns: undefined }
       delete_draft_tournament: { Args: { p_id: string }; Returns: undefined }
       finish_tournament: {
         Args: { p_id: string; p_placements: Json; p_reason?: string }
@@ -941,6 +1122,8 @@ export type Database = {
         }
         Returns: number
       }
+      get_my_discord_identity: { Args: never; Returns: Json }
+      get_my_profile_verification: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -950,6 +1133,10 @@ export type Database = {
       }
       import_legacy_team: { Args: { p: Json }; Returns: string }
       import_legacy_tournament: { Args: { p: Json }; Returns: Json }
+      invite_player: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: string
+      }
       is_admin: { Args: { _uid: string }; Returns: boolean }
       is_staff_for: {
         Args: { _tournament_id: string; _uid: string }
@@ -959,10 +1146,43 @@ export type Database = {
         Args: { _team_id: string; _uid: string }
         Returns: boolean
       }
+      is_team_owner: {
+        Args: { _team_id: string; _uid: string }
+        Returns: boolean
+      }
+      list_profile_reviews: { Args: never; Returns: Json }
+      list_team_invites: { Args: never; Returns: Json }
+      lock_team_user: { Args: { p_user: string }; Returns: undefined }
+      lock_team_write: { Args: { p_team: string }; Returns: undefined }
+      manage_team: {
+        Args: {
+          p_action: string
+          p_team_id: string
+          p_user_id?: string
+          p_value?: string
+        }
+        Returns: undefined
+      }
       place_points: { Args: { _place: number }; Returns: number }
       propagate_match_winner: {
         Args: { p_match_id: string }
         Returns: undefined
+      }
+      publish_draft_result: {
+        Args: { p_expected_version: number; p_result: Json }
+        Returns: {
+          id: number
+          result: Json
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "draft_publications"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       publish_regulation: {
         Args: { p_effective_from?: string; p_version_id: string }
@@ -1012,6 +1232,21 @@ export type Database = {
       revoke_moderator: {
         Args: { p_reason?: string; p_tournament_id: string; p_user_id: string }
         Returns: undefined
+      }
+      save_profile_for_review: {
+        Args: {
+          p_bio?: string
+          p_looking_for_team?: boolean
+          p_mmr: number
+          p_nickname: string
+          p_profile_url: string
+          p_role_position?: string
+        }
+        Returns: Json
+      }
+      search_team_players: {
+        Args: { p_query: string; p_team_id: string }
+        Returns: Json
       }
       set_match_schedule: {
         Args: { p_match_id: string; p_reason?: string; p_scheduled_at: string }
@@ -1112,6 +1347,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      team_actor: { Args: never; Returns: string }
+      team_system_version: { Args: never; Returns: number }
       tournament_is_public: {
         Args: { _tournament_id: string }
         Returns: boolean
