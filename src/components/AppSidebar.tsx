@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import tdlLogo from "@/assets/tdl-logo.png";
+import tdlLogo from "@/assets/tdl-logo.png.asset.json";
 import { Archive, Home, Inbox, ListChecks, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
 import {
   Sidebar,
@@ -44,7 +44,7 @@ export function AppSidebar() {
       <SidebarContent className="bg-white/70 backdrop-blur-md">
         <div className="flex items-center gap-2 px-3 py-4">
           <img
-            src={tdlLogo}
+            src={tdlLogo.url}
             alt="TrueDotaLeague"
             width={30}
             height={30}
