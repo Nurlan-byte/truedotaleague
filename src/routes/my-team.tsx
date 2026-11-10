@@ -11,6 +11,7 @@ import { myApplicationsQuery, myTeamsQuery } from "@/lib/league-api";
 import { APPLICATION_LABEL, formatLeagueDate, rpcErrorText } from "@/lib/league";
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 import { effectiveRegulationQuery } from "@/lib/league-admin";
+import { notifyDiscord } from "@/lib/discord-notify.functions";
 
 export const Route = createFileRoute("/my-team")({
   head: () => ({
@@ -75,8 +76,13 @@ function MyTeamPage() {
   const create = () => {
     if (!name.trim()) return toast.error("Введите название команды");
     run.mutate(async () => {
-      const { error } = await supabase.from("teams").insert({ name: name.trim(), tag: tag.trim(), owner_id: user.id });
+      const { data: created, error } = await supabase
+        .from("teams")
+        .insert({ name: name.trim(), tag: tag.trim(), owner_id: user.id })
+        .select("id")
+        .single();
       check(error);
+      if (created) notifyDiscord({ data: { kind: "team_created", teamId: created.id } }).catch(() => {});
       toast.success("Команда создана");
       setName("");
       setTag("");
