@@ -122,6 +122,13 @@ function MyTeamPage() {
   const incoming = (invites.data ?? []).filter((i) => i.invited_user_id === user.id);
   const outgoing = team ? (invites.data ?? []).filter((i) => i.team_id === team.id && i.invited_user_id !== user.id) : [];
   const members = team ? [...team.team_members].sort((a, b) => a.position - b.position) : [];
+  const ratingOf = (m: (typeof members)[number]) => {
+    const p = m.profiles as { mmr: number | null; competitive_rating: number | null } | null;
+    return p?.competitive_rating ?? p?.mmr ?? m.mmr ?? null;
+  };
+  const mmr = rosterMmr(members.map((m) => ({ position: m.position, rating: ratingOf(m) })));
+  const captain = members.find((m) => m.profile_id === team?.owner_id);
+  const captainName = (captain?.profiles as { nickname: string } | null)?.nickname;
   const teamApps = apps.data ?? [];
 
   const create = () => {
@@ -130,6 +137,8 @@ function MyTeamPage() {
     run.mutate(async () => {
       const id = (await rpc("create_team", { p_name: name.trim(), p_tag: tag.trim() })) as string;
       if (id) notifyDiscord({ data: { kind: "team_created", teamId: id } }).catch(() => {});
+      // Keep the button locked until the new team is actually loaded.
+      await teamQ.refetch();
       toast.success("Команда создана");
       setName("");
       setTag("");
@@ -220,7 +229,11 @@ function MyTeamPage() {
                 {team.name}
                 <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-primary">[{team.tag}]</span>
               </p>
-              <p className="text-xs text-muted-foreground">{isOwner ? "Вы владелец" : "Вы игрок команды"} · игроков: {members.length}/7</p>
+              <p className="text-xs text-muted-foreground">{isOwner ? "Вы владелец" : "Вы игрок команды"} · капитан: {captainName ?? "—"} · игроков: {members.length}/7</p>
+              <p className="text-xs text-muted-foreground">
+                MMR основной пятёрки: <b className="text-foreground">{mmr.main}</b> · всего состава: <b className="text-foreground">{mmr.total}</b>
+                {mmr.unrated > 0 && ` · без рейтинга: ${mmr.unrated}`}
+              </p>
             </div>
             {isOwner ? (
               <>
@@ -283,7 +296,11 @@ function MyTeamPage() {
                     {m.profile_id === team.owner_id && <span className="ml-1 text-xs text-primary">★ капитан</span>}
                   </span>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {prof?.competitive_rating != null ? `${prof.competitive_rating} CR` : "нет CR"}
+                    {prof?.competitive_rating != null
+                      ? `${prof.competitive_rating} CR`
+                      : ratingOf(m) != null
+                        ? `${ratingOf(m)} MMR`
+                        : "нет рейтинга"}
                   </span>
                   {isOwner && m.profile_id && m.profile_id !== team.owner_id && (
                     <button
