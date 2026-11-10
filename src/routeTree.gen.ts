@@ -28,6 +28,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as AdminImportRouteImport } from './routes/admin_.import'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as PlayersIndexRouteImport } from './routes/players.index'
 import { Route as PlayersPlayerIdRouteImport } from './routes/players.$playerId'
 import { Route as TournamentsIndexRouteImport } from './routes/tournaments.index'
 import { Route as TournamentsTournamentIdRouteImport } from './routes/tournaments.$tournamentId'
@@ -131,6 +132,11 @@ const JoinTokenRoute = JoinTokenRouteImport.update({
   path: '/join/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayersIndexRoute = PlayersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PlayersRoute,
+} as any)
 const PlayersPlayerIdRoute = PlayersPlayerIdRouteImport.update({
   id: '/$playerId',
   path: '/$playerId',
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
+  '/players/': typeof PlayersIndexRoute
   '/tournaments/': typeof TournamentsIndexRoute
   '/tournaments/$tournamentId/edit': typeof TournamentsTournamentIdEditRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
@@ -209,7 +216,6 @@ export interface FileRoutesByTo {
   '/draft': typeof DraftRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
-  '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
   '/rating-teams': typeof RatingTeamsRoute
   '/regulations': typeof RegulationsRoute
@@ -221,6 +227,7 @@ export interface FileRoutesByTo {
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
+  '/players': typeof PlayersIndexRoute
   '/tournaments': typeof TournamentsIndexRoute
   '/tournaments/$tournamentId/edit': typeof TournamentsTournamentIdEditRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
@@ -250,6 +257,7 @@ export interface FileRoutesById {
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
+  '/players/': typeof PlayersIndexRoute
   '/tournaments/': typeof TournamentsIndexRoute
   '/tournaments/$tournamentId_/edit': typeof TournamentsTournamentIdEditRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
@@ -280,6 +288,7 @@ export interface FileRouteTypes {
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
+    | '/players/'
     | '/tournaments/'
     | '/tournaments/$tournamentId/edit'
     | '/api/public/auth/discord/callback'
@@ -296,7 +305,6 @@ export interface FileRouteTypes {
     | '/draft'
     | '/live'
     | '/my-team'
-    | '/players'
     | '/profile'
     | '/rating-teams'
     | '/regulations'
@@ -308,6 +316,7 @@ export interface FileRouteTypes {
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
+    | '/players'
     | '/tournaments'
     | '/tournaments/$tournamentId/edit'
     | '/api/public/auth/discord/callback'
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
+    | '/players/'
     | '/tournaments/'
     | '/tournaments/$tournamentId_/edit'
     | '/api/public/auth/discord/callback'
@@ -505,6 +515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JoinTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/players/': {
+      id: '/players/'
+      path: '/'
+      fullPath: '/players/'
+      preLoaderRoute: typeof PlayersIndexRouteImport
+      parentRoute: typeof PlayersRoute
+    }
     '/players/$playerId': {
       id: '/players/$playerId'
       path: '/$playerId'
@@ -559,10 +576,12 @@ declare module '@tanstack/react-router' {
 
 interface PlayersRouteChildren {
   PlayersPlayerIdRoute: typeof PlayersPlayerIdRoute
+  PlayersIndexRoute: typeof PlayersIndexRoute
 }
 
 const PlayersRouteChildren: PlayersRouteChildren = {
   PlayersPlayerIdRoute: PlayersPlayerIdRoute,
+  PlayersIndexRoute: PlayersIndexRoute,
 }
 
 const PlayersRouteWithChildren =
