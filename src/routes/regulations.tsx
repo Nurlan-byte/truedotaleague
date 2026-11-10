@@ -33,7 +33,7 @@ function RegulationsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 lg:px-8">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="flex flex-1 items-center gap-2 text-4xl text-foreground">
+        <h1 className="flex flex-1 items-center gap-2 text-3xl text-foreground sm:text-4xl">
           <BookOpen className="size-7 text-primary" /> Регламент
         </h1>
         {isAdmin && !editing && (

@@ -166,7 +166,7 @@ function ProfilePage() {
         <ArrowLeft className="size-4" /> К турниру
       </Link>
 
-      <h1 className="text-4xl leading-none text-foreground sm:text-5xl">Профиль игрока</h1>
+      <h1 className="text-3xl leading-none text-foreground sm:text-5xl">Профиль игрока</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Расскажите о себе: никнейм, рейтинг MMR, позицию и пару слов для других участников лиги.
       </p>

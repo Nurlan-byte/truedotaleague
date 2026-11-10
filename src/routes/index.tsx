@@ -49,7 +49,7 @@ function HomePage() {
     <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8">
       <section className="panel p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-primary">TrueDotaLeague</p>
-        <h1 className="mt-2 text-4xl leading-none text-foreground sm:text-5xl">
+        <h1 className="mt-2 text-3xl leading-none text-foreground sm:text-5xl">
           Добро пожаловать в лигу по Dota 2
         </h1>
         <p className="mt-3 max-w-2xl text-sm text-muted-foreground">

@@ -30,7 +30,7 @@ function RatingTeamsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8">
-      <h1 className="mb-5 text-4xl text-foreground">Рейтинг команд</h1>
+      <h1 className="mb-5 text-3xl text-foreground sm:text-4xl">Рейтинг команд</h1>
       {isLoading ? <LoadingPanel /> : <RankingView rows={data ?? []} />}
     </div>
   );

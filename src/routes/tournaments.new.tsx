@@ -23,7 +23,7 @@ function NewTournamentPage() {
   const { isAdmin, checking } = useAdmin();
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 lg:px-8">
-      <h1 className="mb-5 flex items-center gap-2 text-4xl text-foreground">
+      <h1 className="mb-5 flex items-center gap-2 text-3xl text-foreground sm:text-4xl">
         <Plus className="size-7 text-primary" /> Новый турнир
       </h1>
       {checking ? (

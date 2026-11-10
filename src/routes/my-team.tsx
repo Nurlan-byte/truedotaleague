@@ -59,7 +59,7 @@ function MyTeamPage() {
   if (!user)
     return (
       <div className="mx-auto max-w-3xl px-4 py-10 lg:px-8">
-        <h1 className="flex items-center gap-2 text-4xl text-foreground">
+        <h1 className="flex items-center gap-2 text-3xl text-foreground sm:text-4xl">
           <Shield className="size-7 text-primary" /> Моя команда
         </h1>
         <div className="panel mt-5 p-5 text-sm text-muted-foreground">
@@ -85,7 +85,7 @@ function MyTeamPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8">
-      <h1 className="flex items-center gap-2 text-4xl text-foreground">
+      <h1 className="flex items-center gap-2 text-3xl text-foreground sm:text-4xl">
         <Shield className="size-7 text-primary" /> Моя команда
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
