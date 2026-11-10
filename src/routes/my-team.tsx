@@ -12,6 +12,7 @@ import { APPLICATION_LABEL, formatLeagueDate, rpcErrorText } from "@/lib/league"
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 import { effectiveRegulationQuery } from "@/lib/league-admin";
 import { notifyDiscord } from "@/lib/discord-notify.functions";
+import { loadErrorText, pickMyTeamId, rosterMmr } from "@/lib/my-team";
 
 export const Route = createFileRoute("/my-team")({
   head: () => ({
@@ -50,16 +51,17 @@ const myTeamQuery = (userId: string | undefined) => ({
   enabled: !!userId,
   queryFn: async () => {
     if (!userId) return null;
-    const { data: mem } = await supabase.from("team_members").select("team_id").eq("profile_id", userId).limit(1);
-    let teamId = mem?.[0]?.team_id as string | undefined;
-    if (!teamId) {
-      const { data: own } = await supabase.from("teams").select("id").eq("owner_id", userId).limit(1);
-      teamId = own?.[0]?.id;
-    }
+    const [mem, own] = await Promise.all([
+      supabase.from("team_members").select("team_id, created_at").eq("profile_id", userId),
+      supabase.from("teams").select("id, created_at").eq("owner_id", userId),
+    ]);
+    if (mem.error) throw mem.error;
+    if (own.error) throw own.error;
+    const teamId = pickMyTeamId(mem.data ?? [], own.data ?? []);
     if (!teamId) return null;
     const { data, error } = await supabase
       .from("teams")
-      .select("*, team_members(id, profile_id, position, nickname, profiles(nickname, avatar_url, competitive_rating))")
+      .select("*, team_members(id, profile_id, position, nickname, mmr, profiles(nickname, avatar_url, mmr, competitive_rating))")
       .eq("id", teamId)
       .single();
     if (error) throw error;
@@ -180,8 +182,19 @@ function MyTeamPage() {
         </div>
       )}
 
-      {teamQ.isLoading ? (
+      {teamQ.isPending ? (
         <div className="mt-5"><LoadingPanel /></div>
+      ) : teamQ.isError ? (
+        <div className="panel mt-5 p-5 text-sm">
+          <p className="font-semibold text-destructive">{loadErrorText(teamQ.error)}</p>
+          <button
+            onClick={() => teamQ.refetch()}
+            disabled={teamQ.isFetching}
+            className="mt-3 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {teamQ.isFetching ? "Загружаем…" : "Повторить"}
+          </button>
+        </div>
       ) : !team ? (
         <div className="panel mt-5 p-5">
           <h2 className="text-lg font-semibold text-foreground">Создать команду</h2>
