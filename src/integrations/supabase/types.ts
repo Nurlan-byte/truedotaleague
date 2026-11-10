@@ -440,6 +440,7 @@ export type Database = {
           role_position: string
           team_name: string
           team_role: string
+          titles: string[]
           updated_at: string
         }
         Insert: {
@@ -458,6 +459,7 @@ export type Database = {
           role_position?: string
           team_name?: string
           team_role?: string
+          titles?: string[]
           updated_at?: string
         }
         Update: {
@@ -476,6 +478,7 @@ export type Database = {
           role_position?: string
           team_name?: string
           team_role?: string
+          titles?: string[]
           updated_at?: string
         }
         Relationships: []

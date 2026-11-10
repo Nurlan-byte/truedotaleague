@@ -92,7 +92,7 @@ export const allTeamsQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("teams")
-        .select("*, team_members(id, nickname, role, mmr, position)")
+        .select("*, team_members(id, nickname, role, mmr, position, profile_id)")
         .order("name");
       if (error) throw error;
       return data ?? [];

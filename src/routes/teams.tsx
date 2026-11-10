@@ -70,9 +70,25 @@ function TeamsPage() {
                       {t.tag && <span className="ml-2 text-xs font-semibold uppercase text-primary">[{t.tag}]</span>}
                     </p>
                   </div>
-                  <p className="mt-2 break-words text-xs text-muted-foreground">
-                    {members.length ? members.map((m) => m.nickname).join(", ") : "Состав не указан"}
-                  </p>
+                  <div className="mt-2 flex flex-wrap gap-x-1 gap-y-1 text-xs text-muted-foreground">
+                    {members.length === 0 && "Состав не указан"}
+                    {members.map((m, i) => (
+                      <span key={m.id}>
+                        {i > 0 && <span className="mr-1">·</span>}
+                        {m.profile_id ? (
+                          <Link
+                            to="/players/$playerId"
+                            params={{ playerId: m.profile_id }}
+                            className="font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
+                          >
+                            {m.nickname}
+                          </Link>
+                        ) : (
+                          m.nickname
+                        )}
+                      </span>
+                    ))}
+                  </div>
                 </li>
               );
             })}

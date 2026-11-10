@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ExternalLink, Shield, Swords, TrendingUp, UserSearch } from "lucide-react";
+import { ArrowLeft, ExternalLink, Shield, Swords, TrendingUp, Trophy, UserSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogo } from "@/components/TeamLogo";
 
@@ -37,6 +37,7 @@ type Row = {
   team_role: string;
   looking_for_team: boolean;
   created_at: string;
+  titles: string[] | null;
 };
 
 function Stat({
@@ -69,7 +70,7 @@ function PlayerPage() {
     supabase
       .from("profiles")
       .select(
-        "id, nickname, avatar_url, mmr, role_position, bio, profile_url, team_name, team_role, looking_for_team, created_at",
+        "id, nickname, avatar_url, mmr, role_position, bio, profile_url, team_name, team_role, looking_for_team, created_at, titles",
       )
       .eq("id", playerId)
       .maybeSingle()
@@ -155,6 +156,29 @@ function PlayerPage() {
             </div>
 
             {row.bio && <p className="whitespace-pre-line text-sm text-foreground">{row.bio}</p>}
+
+            <div>
+              <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                <Trophy className="size-3" /> Титулы на сервере Discord
+                {row.titles && row.titles.length > 0 && ` · ${row.titles.length}`}
+              </p>
+              {row.titles && row.titles.length > 0 ? (
+                <ul className="mt-2 flex flex-wrap gap-1.5">
+                  {row.titles.map((t) => (
+                    <li
+                      key={t}
+                      className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                    >
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Пока нет титулов — они появляются из ролей на сервере Discord лиги.
+                </p>
+              )}
+            </div>
 
             {row.profile_url && (
               <a
