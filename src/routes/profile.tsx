@@ -250,16 +250,17 @@ function ProfilePage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="mmr">
-                Рейтинг (MMR)
+                Competitive Rating
               </label>
               <input
                 id="mmr"
-                inputMode="numeric"
-                value={mmr}
-                onChange={(e) => setMmr(e.target.value.replace(/\D/g, ""))}
-                placeholder="4200"
-                className={field}
+                readOnly
+                value={mmr || "Нет роли в Discord"}
+                className={`${field} cursor-not-allowed opacity-80`}
               />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Берётся из роли «Competitive Rating» на сервере Discord. Обновляется при входе.
+              </p>
             </div>
             <div>
               <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="pos">
