@@ -57,7 +57,7 @@ function TournamentPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const { data: t, isLoading, error } = useQuery({ ...tournamentQuery(tournamentId), refetchInterval: 15000 });
-  const { user, byTournament } = useMyApplications();
+  const { user, byTournament, teams: myTeams } = useMyApplications();
   const [applyOpen, setApplyOpen] = useState(false);
   const { isAdmin } = useAdmin();
   const staff = useQuery(isStaffQuery(tournamentId, user?.id));
@@ -89,6 +89,10 @@ function TournamentPage() {
   const vm = toViewModel(t.tournament_participants, t.matches, t.groups);
   const placements = [...t.placements].sort((a, b) => a.place - b.place);
   const application = byTournament.get(t.id);
+  const myIds = new Set(myTeams.map((x) => x.id));
+  const myPart = t.tournament_participants.find((p) => myIds.has(p.team_id));
+  const myId = myPart?.team_id ?? null;
+  const highlight = myId ? [myId] : [];
   const hasSchedule = vm.bracket.length > 0 || vm.groupMatches.length > 0;
 
   const applyClick = () => {
@@ -157,6 +161,8 @@ function TournamentPage() {
         </div>
       </header>
 
+      {myPart && myId && <MyTeamPanel teamId={myId} name={myPart.team_name} logo={myPart.logo_url} vm={vm} placement={placements.find((p) => p.team_id === myId)?.place} />}
+
       {user && isStaff && <StaffPanel t={t} isAdmin={isAdmin} isStaff={isStaff} userId={user.id} />}
 
       {t.description.trim() && (
@@ -219,7 +225,7 @@ function TournamentPage() {
 
       <Section title="Расписание матчей">
         {hasSchedule ? (
-          <MatchSchedule teams={vm.teams} groupMatches={vm.groupMatches} bracket={vm.bracket} />
+          <MatchSchedule teams={vm.teams} groupMatches={vm.groupMatches} bracket={vm.bracket} highlight={highlight} />
         ) : (
           <p className="text-sm text-muted-foreground">Расписание ещё не опубликовано.</p>
         )}
@@ -233,7 +239,7 @@ function TournamentPage() {
 
       {vm.bracket.length > 0 && (
         <Section title="Плей-офф">
-          <BracketView matches={vm.bracket} teams={vm.teams} readOnly />
+          <BracketView matches={vm.bracket} teams={vm.teams} readOnly highlight={highlight} />
         </Section>
       )}
 
@@ -258,5 +264,39 @@ function TournamentPage() {
 
       <ApplyDialog tournamentId={t.id} title={t.title} open={applyOpen} onOpenChange={setApplyOpen} />
     </div>
+  );
+}
+
+function MyTeamPanel({ teamId, name, logo, vm, placement }: { teamId: string; name: string; logo: string | null; vm: ReturnType<typeof toViewModel>; placement?: number }) {
+  const all = [...vm.groupMatches, ...vm.bracket].filter((m) => m.teamA === teamId || m.teamB === teamId);
+  const open = all.filter((m) => m.scoreA === null || m.scoreB === null);
+  const next = [...open].sort((a, b) => (a.scheduledAt ?? "9").localeCompare(b.scheduledAt ?? "9"))[0];
+  const lostPlayoff = vm.bracket.some((m) => (m.teamA === teamId || m.teamB === teamId) && m.scoreA !== null && m.scoreB !== null && m.scoreA !== m.scoreB && (m.scoreA > m.scoreB ? m.teamB : m.teamA) === teamId);
+  const opp = next ? (next.teamA === teamId ? next.teamB : next.teamA) : null;
+  const oppName = opp ? (vm.teams.find((x) => x.id === opp)?.name ?? "—") : "соперник определится позже";
+  return (
+    <section className="panel glow space-y-3 p-5">
+      <div className="flex min-w-0 items-center gap-3">
+        <TeamLogo name={name} logo={logo ?? undefined} size="lg" />
+        <div className="min-w-0">
+          <p className="label-xs">Ваша команда участвует</p>
+          <p className="truncate text-xl font-extrabold text-foreground">{name}</p>
+        </div>
+      </div>
+      {placement ? (
+        <p className="text-sm font-semibold text-foreground">Итог: {placement} место</p>
+      ) : next ? (
+        <div className="rounded-2xl bg-primary/10 p-3 text-sm">
+          <p className="font-bold text-primary">Следующий матч</p>
+          <p className="text-foreground">против <b>{oppName}</b></p>
+          <p className="text-muted-foreground">{next.scheduledAt ? formatLeagueDate(next.scheduledAt) : "Время матча ещё не назначено"}</p>
+        </div>
+      ) : lostPlayoff ? (
+        <p className="text-sm text-muted-foreground">Команда завершила выступление в плей-офф.</p>
+      ) : (
+        <p className="text-sm text-muted-foreground">Сетка ещё не создана — администрация турнира опубликует её, и здесь появится ваш первый матч.</p>
+      )}
+      {all.length > 0 && <p className="text-xs text-muted-foreground">Матчи вашей команды подсвечены в расписании и сетке.</p>}
+    </section>
   );
 }
