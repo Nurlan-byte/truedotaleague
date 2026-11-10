@@ -45,6 +45,11 @@ function DiscordCallbackPage() {
         setError("Сессия истекла или ссылка уже использована. Войдите через Discord ещё раз.");
         return;
       }
+      const pending = window.localStorage.getItem("tdl-pending-invite");
+      if (pending && /^[a-f0-9]{16,64}$/.test(pending)) {
+        navigate({ to: "/join/$token", params: { token: pending }, replace: true });
+        return;
+      }
       navigate({ to: "/", replace: true });
     })();
     return () => {
