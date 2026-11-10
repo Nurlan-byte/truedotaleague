@@ -41,6 +41,10 @@ function TeamsPage() {
           Моя команда
         </Link>
       </div>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Хотите вступить в команду? Попросите её капитана прислать вам ссылку-приглашение — он найдёт её в разделе{" "}
+        <Link to="/my-team" className="font-semibold text-primary hover:underline">«Моя команда»</Link>. Покинуть команду можно там же.
+      </p>
       <label className="relative mt-5 block">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <input
