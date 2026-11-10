@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdmin } from "@/hooks/use-admin";
 import { useMemo, useState } from "react";
-import { Search, Shield } from "lucide-react";
+import { Search, Shield, Trash2 } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { LoadingPanel } from "@/components/league";
 import { allTeamsQuery } from "@/lib/league-api";
@@ -23,6 +26,15 @@ export const Route = createFileRoute("/teams")({
 function TeamsPage() {
   const { data, isLoading, error } = useQuery(allTeamsQuery());
   const [q, setQ] = useState("");
+  const { isAdmin } = useAdmin();
+  const qc = useQueryClient();
+  const removeTeam = async (id: string, name: string) => {
+    if (!window.confirm(`Удалить команду «${name}»? Состав, приглашения и заявки команды тоже удалятся. Это нельзя отменить.`)) return;
+    const { error } = await supabase.rpc("admin_delete_team", { p_team_id: id });
+    if (error) return toast.error("Не удалось удалить команду");
+    toast.success("Команда удалена");
+    qc.invalidateQueries();
+  };
   const list = useMemo(() => {
     const n = q.trim().toLowerCase();
     return (data ?? []).filter((t) => !n || t.name.toLowerCase().includes(n) || t.tag.toLowerCase().includes(n));
@@ -73,6 +85,16 @@ function TeamsPage() {
                       {t.name}
                       {t.tag && <span className="ml-2 text-xs font-semibold uppercase text-primary">[{t.tag}]</span>}
                     </p>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => removeTeam(t.id, t.name)}
+                        aria-label={`Удалить команду ${t.name}`}
+                        className="shrink-0 rounded-full p-2 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    )}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-x-1 gap-y-1 text-xs text-muted-foreground">
                     {members.length === 0 && "Состав не указан"}
