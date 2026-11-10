@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Check, ImagePlus, LogOut, Plus, Search, Shield, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Check, Copy, ImagePlus, Link2, RefreshCw, LogOut, Plus, Search, Shield, Trash2, UserPlus, Users, X } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { LoadingPanel } from "@/components/league";
 import { supabase } from "@/integrations/supabase/client";
