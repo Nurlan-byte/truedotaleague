@@ -27,6 +27,7 @@ import { Route as RoadToTiRouteImport } from './routes/road-to-ti'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as AdminImportRouteImport } from './routes/admin_.import'
+import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as PlayersPlayerIdRouteImport } from './routes/players.$playerId'
 import { Route as TournamentsIndexRouteImport } from './routes/tournaments.index'
 import { Route as TournamentsTournamentIdRouteImport } from './routes/tournaments.$tournamentId'
@@ -125,6 +126,11 @@ const AdminImportRoute = AdminImportRouteImport.update({
   path: '/admin/import',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JoinTokenRoute = JoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayersPlayerIdRoute = PlayersPlayerIdRouteImport.update({
   id: '/$playerId',
   path: '/$playerId',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
   '/admin/import': typeof AdminImportRoute
+  '/join/$token': typeof JoinTokenRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
   '/admin/import': typeof AdminImportRoute
+  '/join/$token': typeof JoinTokenRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
@@ -238,6 +246,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/teams': typeof TeamsRoute
   '/admin_/import': typeof AdminImportRoute
+  '/join/$token': typeof JoinTokenRoute
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
@@ -267,6 +276,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/teams'
     | '/admin/import'
+    | '/join/$token'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/teams'
     | '/admin/import'
+    | '/join/$token'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
@@ -321,6 +332,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/teams'
     | '/admin_/import'
+    | '/join/$token'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
@@ -349,6 +361,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TeamsRoute: typeof TeamsRoute
   AdminImportRoute: typeof AdminImportRoute
+  JoinTokenRoute: typeof JoinTokenRoute
   TournamentsTournamentIdRoute: typeof TournamentsTournamentIdRoute
   TournamentsNewRoute: typeof TournamentsNewRoute
   TournamentsIndexRoute: typeof TournamentsIndexRoute
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminImportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/join/$token': {
+      id: '/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof JoinTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/players/$playerId': {
       id: '/players/$playerId'
       path: '/$playerId'
@@ -567,6 +587,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TeamsRoute: TeamsRoute,
   AdminImportRoute: AdminImportRoute,
+  JoinTokenRoute: JoinTokenRoute,
   TournamentsTournamentIdRoute: TournamentsTournamentIdRoute,
   TournamentsNewRoute: TournamentsNewRoute,
   TournamentsIndexRoute: TournamentsIndexRoute,
