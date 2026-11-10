@@ -12,6 +12,7 @@ import { APPLICATION_LABEL, formatLeagueDate, rpcErrorText } from "@/lib/league"
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 import { effectiveRegulationQuery } from "@/lib/league-admin";
 import { notifyDiscord } from "@/lib/discord-notify.functions";
+import { loadErrorText, pickMyTeamId, rosterMmr } from "@/lib/my-team";
 
 export const Route = createFileRoute("/my-team")({
   head: () => ({
@@ -50,16 +51,17 @@ const myTeamQuery = (userId: string | undefined) => ({
   enabled: !!userId,
   queryFn: async () => {
     if (!userId) return null;
-    const { data: mem } = await supabase.from("team_members").select("team_id").eq("profile_id", userId).limit(1);
-    let teamId = mem?.[0]?.team_id as string | undefined;
-    if (!teamId) {
-      const { data: own } = await supabase.from("teams").select("id").eq("owner_id", userId).limit(1);
-      teamId = own?.[0]?.id;
-    }
+    const [mem, own] = await Promise.all([
+      supabase.from("team_members").select("team_id, created_at").eq("profile_id", userId),
+      supabase.from("teams").select("id, created_at").eq("owner_id", userId),
+    ]);
+    if (mem.error) throw mem.error;
+    if (own.error) throw own.error;
+    const teamId = pickMyTeamId(mem.data ?? [], own.data ?? []);
     if (!teamId) return null;
     const { data, error } = await supabase
       .from("teams")
-      .select("*, team_members(id, profile_id, position, nickname, profiles(nickname, avatar_url, competitive_rating))")
+      .select("*, team_members(id, profile_id, position, nickname, mmr, profiles(nickname, avatar_url, mmr, competitive_rating))")
       .eq("id", teamId)
       .single();
     if (error) throw error;
@@ -120,6 +122,13 @@ function MyTeamPage() {
   const incoming = (invites.data ?? []).filter((i) => i.invited_user_id === user.id);
   const outgoing = team ? (invites.data ?? []).filter((i) => i.team_id === team.id && i.invited_user_id !== user.id) : [];
   const members = team ? [...team.team_members].sort((a, b) => a.position - b.position) : [];
+  const ratingOf = (m: (typeof members)[number]) => {
+    const p = m.profiles as { mmr: number | null; competitive_rating: number | null } | null;
+    return p?.competitive_rating ?? p?.mmr ?? m.mmr ?? null;
+  };
+  const mmr = rosterMmr(members.map((m) => ({ position: m.position, rating: ratingOf(m) })));
+  const captain = members.find((m) => m.profile_id === team?.owner_id);
+  const captainName = (captain?.profiles as { nickname: string } | null)?.nickname;
   const teamApps = apps.data ?? [];
 
   const create = () => {
@@ -128,6 +137,8 @@ function MyTeamPage() {
     run.mutate(async () => {
       const id = (await rpc("create_team", { p_name: name.trim(), p_tag: tag.trim() })) as string;
       if (id) notifyDiscord({ data: { kind: "team_created", teamId: id } }).catch(() => {});
+      // Keep the button locked until the new team is actually loaded.
+      await teamQ.refetch();
       toast.success("Команда создана");
       setName("");
       setTag("");
@@ -180,8 +191,19 @@ function MyTeamPage() {
         </div>
       )}
 
-      {teamQ.isLoading ? (
+      {teamQ.isPending ? (
         <div className="mt-5"><LoadingPanel /></div>
+      ) : teamQ.isError ? (
+        <div className="panel mt-5 p-5 text-sm">
+          <p className="font-semibold text-destructive">{loadErrorText(teamQ.error)}</p>
+          <button
+            onClick={() => teamQ.refetch()}
+            disabled={teamQ.isFetching}
+            className="mt-3 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {teamQ.isFetching ? "Загружаем…" : "Повторить"}
+          </button>
+        </div>
       ) : !team ? (
         <div className="panel mt-5 p-5">
           <h2 className="text-lg font-semibold text-foreground">Создать команду</h2>
@@ -207,7 +229,11 @@ function MyTeamPage() {
                 {team.name}
                 <span className="ml-2 text-xs font-semibold uppercase tracking-wider text-primary">[{team.tag}]</span>
               </p>
-              <p className="text-xs text-muted-foreground">{isOwner ? "Вы владелец" : "Вы игрок команды"} · игроков: {members.length}/7</p>
+              <p className="text-xs text-muted-foreground">{isOwner ? "Вы владелец" : "Вы игрок команды"} · капитан: {captainName ?? "—"} · игроков: {members.length}/7</p>
+              <p className="text-xs text-muted-foreground">
+                MMR основной пятёрки: <b className="text-foreground">{mmr.main}</b> · всего состава: <b className="text-foreground">{mmr.total}</b>
+                {mmr.unrated > 0 && ` · без рейтинга: ${mmr.unrated}`}
+              </p>
             </div>
             {isOwner ? (
               <>
@@ -270,7 +296,11 @@ function MyTeamPage() {
                     {m.profile_id === team.owner_id && <span className="ml-1 text-xs text-primary">★ капитан</span>}
                   </span>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {prof?.competitive_rating != null ? `${prof.competitive_rating} CR` : "нет CR"}
+                    {prof?.competitive_rating != null
+                      ? `${prof.competitive_rating} CR`
+                      : ratingOf(m) != null
+                        ? `${ratingOf(m)} MMR`
+                        : "нет рейтинга"}
                   </span>
                   {isOwner && m.profile_id && m.profile_id !== team.owner_id && (
                     <button

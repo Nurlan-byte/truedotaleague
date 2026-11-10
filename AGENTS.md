@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 - Official league writes (tournaments, roles, matches, applications, structure, import) go only through SECURITY DEFINER RPCs that check permissions and write audit_log; UI hiding is cosmetic. Why: one enforced, audited path.
 - Tournament images are stored as compressed data URLs in image_url because the workspace blocks public storage buckets. Why: public read without a bucket.
+- Profiles are readable only through column-level SELECT grants on public fields; Discord identity columns stay ungranted and are read via get_my_discord_identity. Why: public pages need nicknames/ratings without leaking Discord IDs; new profile columns must be granted explicitly.
