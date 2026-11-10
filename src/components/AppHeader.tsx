@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import tdlLogo from "@/assets/tdl-logo.png";
 import { LogIn, LogOut } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TeamLogo } from "@/components/TeamLogo";
@@ -10,6 +11,14 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/70 px-3 backdrop-blur-xl backdrop-saturate-150">
       <SidebarTrigger />
+      <img
+        src={tdlLogo}
+        alt="TrueDotaLeague"
+        width={26}
+        height={26}
+        loading="lazy"
+        className="size-[26px] shrink-0 rounded-[8px] shadow-sm"
+      />
       <p className="min-w-0 truncate text-sm font-extrabold tracking-tight text-foreground">Лига по Дота 2</p>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         {user ? (

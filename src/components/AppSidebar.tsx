@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import tdlLogo from "@/assets/tdl-logo.png";
 import { Archive, Home, Inbox, ListChecks, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
 import {
   Sidebar,
@@ -41,10 +42,20 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-white/70 backdrop-blur-md">
-        <div className="px-3 py-4">
-          <p className="truncate text-xs font-bold uppercase tracking-tight text-primary text-sm font-extrabold">
-            {collapsed ? "TDL" : "TrueDotaLeague"}
-          </p>
+        <div className="flex items-center gap-2 px-3 py-4">
+          <img
+            src={tdlLogo}
+            alt="TrueDotaLeague"
+            width={30}
+            height={30}
+            loading="lazy"
+            className="size-[30px] shrink-0 rounded-[9px] shadow-sm"
+          />
+          {!collapsed && (
+            <p className="truncate text-sm font-extrabold tracking-tight text-foreground">
+              TrueDota<span className="text-primary">League</span>
+            </p>
+          )}
         </div>
         <SidebarGroup>
           <SidebarGroupLabel>Лига</SidebarGroupLabel>
