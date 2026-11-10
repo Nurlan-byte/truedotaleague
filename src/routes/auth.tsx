@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, LogIn, UserPlus, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/auth")({
@@ -12,12 +11,12 @@ export const Route = createFileRoute("/auth")({
       {
         name: "description",
         content:
-          "Создайте аккаунт TrueDotaLeague по email или через Google, чтобы участвовать в турнирах и следить за рейтингом команд.",
+          "Создайте аккаунт TrueDotaLeague через Discord или по email, чтобы участвовать в турнирах и следить за рейтингом команд.",
       },
       { property: "og:title", content: "Вход и регистрация — TrueDotaLeague" },
       {
         property: "og:description",
-        content: "Регистрация в TrueDotaLeague: email или Google. Турниры, сетки и TDL points.",
+        content: "Регистрация в TrueDotaLeague: Discord или email. Турниры, сетки и TDL points.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
