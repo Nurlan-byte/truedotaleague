@@ -1353,6 +1353,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_my_avatar: { Args: { p_avatar_url: string }; Returns: undefined }
       set_user_role: {
         Args: {
           new_role: Database["public"]["Enums"]["app_role"]
@@ -1394,6 +1395,18 @@ export type Database = {
       tournament_is_public: {
         Args: { _tournament_id: string }
         Returns: boolean
+      }
+      update_my_profile: {
+        Args: {
+          p_bio: string
+          p_looking_for_team: boolean
+          p_nickname: string
+          p_profile_url: string
+          p_role_position: string
+          p_team_name: string
+          p_team_role: string
+        }
+        Returns: undefined
       }
       upsert_tournament: {
         Args: { expected_version?: number; payload: Json }

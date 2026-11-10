@@ -88,10 +88,7 @@ function ProfilePage() {
     if (!user) return;
     setError(null);
     setStatus(null);
-    const { error: dbError } = await supabase
-      .from("profiles")
-      .update({ avatar_url: value })
-      .eq("id", user.id);
+    const { error: dbError } = await supabase.rpc("set_my_avatar", { p_avatar_url: value as string });
     if (dbError) {
       setError("Не удалось сохранить аватар. Попробуйте ещё раз.");
       return;
@@ -129,15 +126,6 @@ function ProfilePage() {
       setError("Описание не может быть длиннее 500 символов.");
       return;
     }
-    let mmrValue: number | null = null;
-    if (mmr.trim() !== "") {
-      const n = Number(mmr.trim());
-      if (!Number.isInteger(n) || n < 0 || n > 15000) {
-        setError("MMR должен быть целым числом от 0 до 15000.");
-        return;
-      }
-      mmrValue = n;
-    }
     const url = profileUrl.trim();
     if (url && !/^https?:\/\/\S+$/i.test(url)) {
       setError("Ссылка должна начинаться с http:// или https://");
@@ -145,19 +133,15 @@ function ProfilePage() {
     }
 
     setSaving(true);
-    const { error: dbError } = await supabase
-      .from("profiles")
-      .update({
-        nickname: nick,
-        bio: bio.trim(),
-        mmr: mmrValue,
-        role_position: position,
-        profile_url: url,
-        team_name: teamName.trim(),
-        team_role: teamRole.trim(),
-        looking_for_team: lookingForTeam,
-      })
-      .eq("id", user.id);
+    const { error: dbError } = await supabase.rpc("update_my_profile", {
+      p_nickname: nick,
+      p_bio: bio.trim(),
+      p_role_position: position,
+      p_profile_url: url,
+      p_team_name: teamName.trim(),
+      p_team_role: teamRole.trim(),
+      p_looking_for_team: lookingForTeam,
+    });
     setSaving(false);
 
     if (dbError) setError("Не удалось сохранить профиль. Попробуйте ещё раз.");
