@@ -68,7 +68,8 @@ function PlayersPage() {
       .from("profiles")
       .select("id, nickname, avatar_url, mmr, role_position, team_name, team_role, looking_for_team")
       .order("mmr", { ascending: false, nullsFirst: false })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error("players load failed", error);
         if (active) setRows((data as Row[]) ?? []);
       });
     return () => {

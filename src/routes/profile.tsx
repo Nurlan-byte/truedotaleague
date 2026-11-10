@@ -49,15 +49,22 @@ function ProfilePage() {
   useEffect(() => {
     if (!user) return;
     let active = true;
+    // Discord identity is private: only readable for yourself via a server function.
+    supabase.rpc("get_my_discord_identity").then(({ data, error: rpcError }) => {
+      if (!active) return;
+      if (rpcError) return setError(`Не удалось загрузить данные Discord: ${rpcError.message}`);
+      const d = data as { discord_id: string | null; discord_username: string | null; discord_global_name: string | null } | null;
+      setDiscord(d?.discord_id ? { id: d.discord_id, username: d.discord_username ?? "", name: d.discord_global_name ?? "" } : null);
+    });
     supabase
       .from("profiles")
-      .select(
-        "nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team, discord_id, discord_username, discord_global_name",
-      )
+      .select("nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
-        if (!active || !data) return;
+      .then(({ data, error: readError }) => {
+        if (!active) return;
+        if (readError) return setError(`Не удалось загрузить профиль: ${readError.message}`);
+        if (!data) return;
         setNickname(data.nickname ?? "");
         setBio(data.bio ?? "");
         setMmr(data.mmr === null || data.mmr === undefined ? "" : String(data.mmr));
@@ -67,7 +74,6 @@ function ProfilePage() {
         setTeamName(data.team_name ?? "");
         setTeamRole(data.team_role ?? "");
         setLookingForTeam(Boolean(data.looking_for_team));
-        setDiscord(data.discord_id ? { id: data.discord_id, username: data.discord_username ?? "", name: data.discord_global_name ?? "" } : null);
       });
     return () => {
       active = false;
