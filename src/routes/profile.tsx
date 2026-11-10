@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogo } from "@/components/TeamLogo";
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
+import { refreshMyRating } from "@/lib/discord-rating.functions";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -45,6 +46,7 @@ function ProfilePage() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -58,7 +60,7 @@ function ProfilePage() {
     });
     supabase
       .from("profiles")
-      .select("nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team")
+      .select("nickname, bio, mmr, competitive_rating, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data, error: readError }) => {
@@ -67,7 +69,7 @@ function ProfilePage() {
         if (!data) return;
         setNickname(data.nickname ?? "");
         setBio(data.bio ?? "");
-        setMmr(data.mmr === null || data.mmr === undefined ? "" : String(data.mmr));
+        setMmr(data.competitive_rating == null ? "" : String(data.competitive_rating));
         setPosition(data.role_position ?? "");
         setProfileUrl(data.profile_url ?? "");
         setAvatarUrl(data.avatar_url ?? null);
@@ -265,8 +267,35 @@ function ProfilePage() {
                 className={`${field} cursor-not-allowed opacity-80`}
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Берётся из роли «Competitive Rating» на сервере Discord. Обновляется при входе.
+                Берётся из роли «Competitive Rating» на сервере Discord.
               </p>
+              <button
+                type="button"
+                disabled={refreshing}
+                onClick={async () => {
+                  setRefreshing(true);
+                  setError(null);
+                  setStatus(null);
+                  try {
+                    const r = await refreshMyRating();
+                    if (r.status === "ok") {
+                      setMmr(String(r.rating));
+                      setStatus(`Competitive Rating обновлён: ${r.rating}`);
+                    } else if (r.status === "no_role") {
+                      setMmr("");
+                      setError("На сервере Discord у вас нет роли «Competitive Rating».");
+                    } else if (r.status === "no_discord") setError("Аккаунт не привязан к Discord — войдите через Discord.");
+                    else setError("Discord сейчас недоступен. Попробуйте позже.");
+                  } catch (e) {
+                    setError(`Не удалось обновить рейтинг: ${e instanceof Error ? e.message : "ошибка"}`);
+                  } finally {
+                    setRefreshing(false);
+                  }
+                }}
+                className="mt-2 rounded-full border border-border bg-white/70 px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary hover:text-primary disabled:opacity-50"
+              >
+                {refreshing ? "Обновляем…" : "Обновить из Discord"}
+              </button>
             </div>
             <div>
               <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="pos">
