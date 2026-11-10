@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import tdlLogo from "@/assets/tdl-logo.png";
 import { Archive, Home, Inbox, ListChecks, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, Trophy, UserCog, Users } from "lucide-react";
 import {
   Sidebar,

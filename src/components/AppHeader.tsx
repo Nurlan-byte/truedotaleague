@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import tdlLogo from "@/assets/tdl-logo.png";
 import { LogIn, LogOut } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TeamLogo } from "@/components/TeamLogo";
