@@ -15,6 +15,13 @@
       "when": 1792182298477,
       "tag": "0001_stage3_admin_rpcs",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794314079264,
+      "tag": "0002_migration",
+      "breakpoints": true
     }
   ]
 }

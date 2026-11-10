@@ -427,6 +427,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string
+          competitive_rating: number | null
           created_at: string
           discord_global_name: string
           discord_id: string | null
@@ -444,6 +445,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string
+          competitive_rating?: number | null
           created_at?: string
           discord_global_name?: string
           discord_id?: string | null
@@ -461,6 +463,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string
+          competitive_rating?: number | null
           created_at?: string
           discord_global_name?: string
           discord_id?: string | null
