@@ -56,7 +56,7 @@ function AdminPage() {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">Управление ролями доступно администраторам лиги.</p>
           {!user && (
-            <Link to="/auth" className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+            <Link to="/auth" className="mt-4 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
               Войти
             </Link>
           )}

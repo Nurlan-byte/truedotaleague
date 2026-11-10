@@ -42,7 +42,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent className="bg-white/70 backdrop-blur-md">
         <div className="px-3 py-4">
-          <p className="truncate text-xs font-bold uppercase tracking-[0.3em] text-primary">
+          <p className="truncate text-xs font-bold uppercase tracking-tight text-primary text-sm font-extrabold">
             {collapsed ? "TDL" : "TrueDotaLeague"}
           </p>
         </div>

@@ -20,7 +20,7 @@ import {
 export const field =
   "w-full min-w-0 rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:bg-white";
 export const btnPrimary =
-  "inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50";
+  "inline-flex items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50";
 export const btnGhost =
   "inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-white/70 px-4 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary disabled:opacity-50";
 

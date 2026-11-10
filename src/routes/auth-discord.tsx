@@ -61,7 +61,7 @@ function DiscordCallbackPage() {
             <p className="mt-3 text-sm text-muted-foreground">{error}</p>
             <Link
               to="/auth"
-              className="mt-5 inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
+              className="mt-5 inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
             >
               Вернуться к входу
             </Link>
