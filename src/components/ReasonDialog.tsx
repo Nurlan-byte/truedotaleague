@@ -1,19 +1,7 @@
 import { useCallback, useRef, useState, type ReactNode } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-type Ask = {
-  title: string;
-  description?: ReactNode;
-  required?: boolean;
-  confirmLabel?: string;
-  withReason?: boolean;
-};
+type Ask = { title: string; description?: ReactNode; required?: boolean; confirmLabel?: string; withReason?: boolean };
 
 /** Диалог подтверждения с полем причины. ask() → строка (может быть пустой) или null при отмене. */
 export function useReasonDialog() {
@@ -40,11 +28,7 @@ export function useReasonDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{state?.title}</DialogTitle>
-          {state?.description && (
-            <DialogDescription asChild>
-              <div>{state.description}</div>
-            </DialogDescription>
-          )}
+          {state?.description && <DialogDescription asChild><div>{state.description}</div></DialogDescription>}
         </DialogHeader>
         {state?.withReason && (
           <textarea
@@ -56,10 +40,7 @@ export function useReasonDialog() {
           />
         )}
         <div className="flex justify-end gap-2">
-          <button
-            className="rounded-lg border border-border bg-white/70 px-4 py-2 text-sm font-semibold"
-            onClick={() => close(null)}
-          >
+          <button className="rounded-lg border border-border bg-white/70 px-4 py-2 text-sm font-semibold" onClick={() => close(null)}>
             Отмена
           </button>
           <button

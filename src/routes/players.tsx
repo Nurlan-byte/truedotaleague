@@ -1,4 +1,3 @@
-import { fetchProfileTeams, teamsForProfile } from "@/lib/profile-api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Search, Shield, Users } from "lucide-react";
@@ -33,6 +32,7 @@ type Row = {
   mmr: number | null;
   role_position: string;
   team_name: string;
+  team_role: string;
   looking_for_team: boolean;
 };
 
@@ -59,33 +59,17 @@ export function TeamBadge({ row }: { row: Pick<Row, "team_name" | "looking_for_t
 
 function PlayersPage() {
   const [rows, setRows] = useState<Row[] | null>(null);
-  const [loadError, setLoadError] = useState(false);
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, nickname, avatar_url, mmr, role_position, looking_for_team")
-        .order("mmr", { ascending: false, nullsFirst: false }),
-      fetchProfileTeams(),
-    ])
-      .then(([result, teams]) => {
-        if (!active) return;
-        if (result.error) throw result.error;
-        setRows(
-          (result.data ?? []).map((profile) => ({
-            ...profile,
-            team_name: teamsForProfile(teams, profile.id)
-              .map((team) => team.name)
-              .join(", "),
-          })),
-        );
-      })
-      .catch(() => {
-        if (active) setLoadError(true);
+    supabase
+      .from("profiles")
+      .select("id, nickname, avatar_url, mmr, role_position, team_name, team_role, looking_for_team")
+      .order("mmr", { ascending: false, nullsFirst: false })
+      .then(({ data }) => {
+        if (active) setRows((data as Row[]) ?? []);
       });
     return () => {
       active = false;
@@ -157,11 +141,7 @@ function PlayersPage() {
         </div>
       </div>
 
-      {loadError ? (
-        <p role="alert" className="panel mt-6 p-5 text-sm text-destructive">
-          Не удалось загрузить участников и составы. Обновите страницу.
-        </p>
-      ) : rows === null ? (
+      {rows === null ? (
         <p className="panel mt-6 p-5 text-sm text-muted-foreground">Загрузка…</p>
       ) : list.length === 0 ? (
         <p className="panel mt-6 p-5 text-sm text-muted-foreground">

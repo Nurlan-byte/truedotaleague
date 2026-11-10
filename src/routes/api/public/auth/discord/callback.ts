@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  finishDiscordRedirect,
-  readAuthReturn,
+  buildStateCookie,
   discordAvatarUrl,
   discordEmail,
   getDiscordConfig,
@@ -10,10 +9,16 @@ import {
   STATE_COOKIE,
   type DiscordUser,
 } from "@/lib/discord.server";
-import { authRetryUrl } from "@/lib/auth-return";
 
-function failure(origin: string, code: string, secure: boolean, next: string) {
-  return finishDiscordRedirect(`${origin}${authRetryUrl(next, code)}`, secure);
+function fail(origin: string, code: string, secure: boolean) {
+  return new Response(null, {
+    status: 302,
+    headers: {
+      location: `${origin}/auth?discord_error=${encodeURIComponent(code)}`,
+      "set-cookie": buildStateCookie("", 0, secure),
+      "cache-control": "no-store",
+    },
+  });
 }
 
 export const Route = createFileRoute("/api/public/auth/discord/callback")({
@@ -23,8 +28,6 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
         const url = new URL(request.url);
         const origin = url.origin;
         const secure = url.protocol === "https:";
-        const next = readAuthReturn(request);
-        const fail = (origin: string, code: string, secure: boolean) => failure(origin, code, secure, next);
 
         const oauthError = url.searchParams.get("error");
         if (oauthError) {
@@ -129,7 +132,9 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
               while (!userId && page <= 20) {
                 const list = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
                 if (list.error) break;
-                const match = list.data.users.find((u) => (u.email ?? "").toLowerCase() === email);
+                const match = list.data.users.find(
+                  (u) => (u.email ?? "").toLowerCase() === email,
+                );
                 if (match) userId = match.id;
                 if (list.data.users.length < 200) break;
                 page += 1;
@@ -144,32 +149,20 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
             if (existing.data?.user?.email) authEmail = existing.data.user.email.toLowerCase();
           }
 
-          // 4. OAuth links identity; it must not replace reviewed profile fields.
-          // The e-mail fallback can resolve an existing profile without `linked`.
-          const { data: profile, error: profileError } = await supabaseAdmin
+          // 4. Keep the profile in sync with Discord.
+          await supabaseAdmin
             .from("profiles")
-            .select("id, nickname, avatar_url")
-            .eq("id", userId)
-            .maybeSingle();
-          if (profileError) throw profileError;
-          if (!profile) {
-            const { error } = await supabaseAdmin
-              .from("profiles")
-              .upsert(
-                { id: userId, nickname: displayName, avatar_url: avatar },
-                { onConflict: "id", ignoreDuplicates: true },
-              );
-            if (error) throw error;
-          }
-          const { error: identityError } = await supabaseAdmin
-            .from("profiles")
-            .update({
-              discord_id: discordUser.id,
-              discord_username: discordUser.username,
-              discord_global_name: discordUser.global_name ?? "",
-            })
-            .eq("id", userId);
-          if (identityError) throw identityError;
+            .upsert(
+              {
+                id: userId,
+                discord_id: discordUser.id,
+                discord_username: discordUser.username,
+                discord_global_name: discordUser.global_name ?? "",
+                ...(linked?.nickname ? {} : { nickname: displayName }),
+                ...(linked?.avatar_url ? {} : { avatar_url: avatar }),
+              },
+              { onConflict: "id" },
+            );
 
           // 5. Mint a one-time link and let the browser turn it into a session.
           const link = await supabaseAdmin.auth.admin.generateLink({
@@ -182,10 +175,14 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
             return fail(origin, "session_failed", secure);
           }
 
-          return finishDiscordRedirect(
-            `${origin}/auth-discord?token_hash=${encodeURIComponent(tokenHash)}&next=${encodeURIComponent(next)}`,
-            secure,
-          );
+          return new Response(null, {
+            status: 302,
+            headers: {
+              location: `${origin}/auth-discord?token_hash=${encodeURIComponent(tokenHash)}`,
+              "set-cookie": buildStateCookie("", 0, secure),
+              "cache-control": "no-store",
+            },
+          });
         } catch (e) {
           console.error("discord login error", e);
           return fail(origin, "user_failed", secure);

@@ -1,19 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { myTeamsQuery } from "@/lib/league-api";
-import { saveProfile } from "@/lib/profile-api";
 import { ArrowLeft, ImagePlus, Save, Trophy, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogo } from "@/components/TeamLogo";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 
 export const Route = createFileRoute("/profile")({
@@ -39,20 +29,17 @@ export const Route = createFileRoute("/profile")({
 
 const POSITIONS = ["Керри (1)", "Мид (2)", "Хардлайн (3)", "Роумер (4)", "Саппорт (5)"];
 
-export function ProfilePage() {
+function ProfilePage() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const qc = useQueryClient();
-  const teams = useQuery(myTeamsQuery(user?.id));
-  const [profileLoaded, setProfileLoaded] = useState(false);
-  const [discord, setDiscord] = useState<{ id: string; username: string; name: string } | null>(
-    null,
-  );
+  const [discord, setDiscord] = useState<{ id: string; username: string; name: string } | null>(null);
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
   const [mmr, setMmr] = useState("");
   const [position, setPosition] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
+  const [teamName, setTeamName] = useState("");
+  const [teamRole, setTeamRole] = useState("");
   const [lookingForTeam, setLookingForTeam] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -60,51 +47,28 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setProfileLoaded(false);
     if (!user) return;
     let active = true;
     supabase
       .from("profiles")
-      .select("nickname, bio, mmr, role_position, profile_url, avatar_url, looking_for_team")
+      .select(
+        "nickname, bio, mmr, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team, discord_id, discord_username, discord_global_name",
+      )
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data, error: loadError }) => {
-        if (!active) return;
-        if (loadError || !data) {
-          setError("Не удалось загрузить профиль. Обновите страницу.");
-          return;
-        }
-        setProfileLoaded(true);
+      .then(({ data }) => {
+        if (!active || !data) return;
         setNickname(data.nickname ?? "");
         setBio(data.bio ?? "");
         setMmr(data.mmr === null || data.mmr === undefined ? "" : String(data.mmr));
         setPosition(data.role_position ?? "");
         setProfileUrl(data.profile_url ?? "");
         setAvatarUrl(data.avatar_url ?? null);
+        setTeamName(data.team_name ?? "");
+        setTeamRole(data.team_role ?? "");
         setLookingForTeam(Boolean(data.looking_for_team));
+        setDiscord(data.discord_id ? { id: data.discord_id, username: data.discord_username ?? "", name: data.discord_global_name ?? "" } : null);
       });
-    supabase.rpc("get_my_discord_identity").then(({ data, error: identityError }) => {
-      if (!active) return;
-      if (identityError) {
-        setError("Не удалось загрузить привязку Discord. Обновите страницу.");
-        return;
-      }
-      const identity = data && typeof data === "object" && !Array.isArray(data) ? data : null;
-      const id = identity?.discord_id;
-      setDiscord(
-        typeof id === "string" && id
-          ? {
-              id,
-              username:
-                typeof identity?.discord_username === "string" ? identity.discord_username : "",
-              name:
-                typeof identity?.discord_global_name === "string"
-                  ? identity.discord_global_name
-                  : "",
-            }
-          : null,
-      );
-    });
     return () => {
       active = false;
     };
@@ -142,26 +106,52 @@ export function ProfilePage() {
   };
 
   const save = async () => {
-    if (!user || !profileLoaded) return;
+    if (!user) return;
     setError(null);
     setStatus(null);
-    setSaving(true);
-    try {
-      await saveProfile({
-        nickname,
-        bio,
-        mmr,
-        position,
-        profileUrl,
-        lookingForTeam,
-      });
-      await qc.invalidateQueries({ queryKey: ["league"] });
-      setStatus("Профиль сохранён.");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось сохранить профиль.");
-    } finally {
-      setSaving(false);
+
+    const nick = nickname.trim();
+    if (nick.length < 2 || nick.length > 32) {
+      setError("Никнейм должен быть от 2 до 32 символов.");
+      return;
     }
+    if (bio.trim().length > 500) {
+      setError("Описание не может быть длиннее 500 символов.");
+      return;
+    }
+    let mmrValue: number | null = null;
+    if (mmr.trim() !== "") {
+      const n = Number(mmr.trim());
+      if (!Number.isInteger(n) || n < 0 || n > 15000) {
+        setError("MMR должен быть целым числом от 0 до 15000.");
+        return;
+      }
+      mmrValue = n;
+    }
+    const url = profileUrl.trim();
+    if (url && !/^https?:\/\/\S+$/i.test(url)) {
+      setError("Ссылка должна начинаться с http:// или https://");
+      return;
+    }
+
+    setSaving(true);
+    const { error: dbError } = await supabase
+      .from("profiles")
+      .update({
+        nickname: nick,
+        bio: bio.trim(),
+        mmr: mmrValue,
+        role_position: position,
+        profile_url: url,
+        team_name: teamName.trim(),
+        team_role: teamRole.trim(),
+        looking_for_team: lookingForTeam,
+      })
+      .eq("id", user.id);
+    setSaving(false);
+
+    if (dbError) setError("Не удалось сохранить профиль. Попробуйте ещё раз.");
+    else setStatus("Профиль сохранён.");
   };
 
   const field =
@@ -185,7 +175,9 @@ export function ProfilePage() {
         <p className="panel mt-6 p-5 text-sm text-muted-foreground">Загрузка…</p>
       ) : !user ? (
         <div className="panel mt-6 p-5">
-          <p className="text-sm text-foreground">Чтобы заполнить профиль, войдите в аккаунт.</p>
+          <p className="text-sm text-foreground">
+            Чтобы заполнить профиль, войдите в аккаунт.
+          </p>
           <Link
             to="/auth"
             className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-105 active:scale-95"
@@ -195,18 +187,13 @@ export function ProfilePage() {
         </div>
       ) : (
         <div className="panel mt-6 space-y-4 p-5">
-          <div className="flex min-w-0 flex-wrap items-center gap-3">
-            <TeamLogo
-              name={nickname || user.email || "?"}
-              logo={avatarUrl ?? undefined}
-              size="lg"
-            />
-            <div className="min-w-0 flex-1 break-words">
+          <div className="flex items-center gap-3">
+            <TeamLogo name={nickname || user.email || "?"} logo={avatarUrl ?? undefined} size="lg" />
+            <div>
               <p className="text-sm font-bold text-foreground">{nickname || "Без ника"}</p>
               {discord ? (
                 <p className="text-xs text-muted-foreground">
-                  Discord: {discord.name || discord.username} (@{discord.username}) · ID{" "}
-                  {discord.id}
+                  Discord: {discord.name || discord.username} (@{discord.username}) · ID {discord.id}
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">{user.email}</p>
@@ -220,10 +207,9 @@ export function ProfilePage() {
               >
                 Выйти
               </button>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
+              <div className="mt-2 flex items-center gap-3">
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-white/60 px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary hover:text-primary">
-                  <ImagePlus className="size-4" />{" "}
-                  {avatarUrl ? "Заменить аватар" : "Загрузить аватар"}
+                  <ImagePlus className="size-4" /> {avatarUrl ? "Заменить аватар" : "Загрузить аватар"}
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/webp"
@@ -253,7 +239,6 @@ export function ProfilePage() {
             </label>
             <input
               id="nick"
-              required
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               maxLength={32}
@@ -280,34 +265,19 @@ export function ProfilePage() {
               <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="pos">
                 Основная роль
               </label>
-              <Select
-                value={position || "none"}
-                onValueChange={(value) => setPosition(value === "none" ? "" : value)}
+              <select
+                id="pos"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                className={field}
               >
-                <SelectTrigger
-                  id="pos"
-                  className="h-11 min-w-0 rounded-xl border-primary/20 bg-white/80 text-left shadow-sm backdrop-blur-md transition-colors hover:border-primary/40 focus:ring-2 focus:ring-primary/25"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-w-[calc(100vw-2rem)] rounded-xl border-primary/20 bg-white/95 p-1 shadow-xl backdrop-blur-xl">
-                  <SelectItem
-                    value="none"
-                    className="min-h-10 rounded-lg focus:bg-primary/10 focus:text-primary"
-                  >
-                    Не выбрана
-                  </SelectItem>
-                  {POSITIONS.map((p) => (
-                    <SelectItem
-                      key={p}
-                      value={p}
-                      className="min-h-10 rounded-lg focus:bg-primary/10 focus:text-primary"
-                    >
-                      {p}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="">Не выбрана</option>
+                {POSITIONS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -317,7 +287,6 @@ export function ProfilePage() {
             </label>
             <input
               id="url"
-              type="url"
               value={profileUrl}
               onChange={(e) => setProfileUrl(e.target.value)}
               placeholder="https://www.dotabuff.com/players/..."
@@ -325,43 +294,37 @@ export function ProfilePage() {
             />
           </div>
 
-          <section
-            aria-labelledby="profile-team-label"
-            className="rounded-lg border border-border bg-white/50 p-3"
-          >
-            <h2 id="profile-team-label" className="text-sm font-semibold">
-              Команда
-            </h2>
-            {teams.isPending ? (
-              <p className="mt-1 text-sm">Загрузка команды…</p>
-            ) : teams.isError ? (
-              <button className="mt-1 text-sm text-primary" onClick={() => void teams.refetch()}>
-                Не удалось загрузить команду. Повторить
-              </button>
-            ) : !teams.data.length ? (
-              <p className="mt-1 text-sm text-muted-foreground">Вы пока не состоите в команде.</p>
-            ) : (
-              <ul className="mt-2 space-y-1 text-sm">
-                {teams.data.map((team) => (
-                  <li key={team.id} className="break-words">
-                    {team.name} [{team.tag}]{team.owner_id === user.id ? " · Капитан" : ""}
-                  </li>
-                ))}
-              </ul>
-            )}
-            {(teams.data?.length ?? 0) > 1 && (
-              <p className="mt-2 text-sm text-destructive">
-                В данных найдено несколько команд. Обратитесь к администратору для уточнения
-                состава.
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="team">
+                Команда
+              </label>
+              <input
+                id="team"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                maxLength={40}
+                placeholder="Например: Natus Vincere"
+                className={field}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Оставьте пустым, если вы без команды.
               </p>
-            )}
-            <p className="mt-2 text-xs text-muted-foreground">
-              Команда определяется автоматически по владению и принятому приглашению.{" "}
-              <Link to="/my-team" className="text-primary underline">
-                Моя команда
-              </Link>
-            </p>
-          </section>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="trole">
+                Роль в команде
+              </label>
+              <input
+                id="trole"
+                value={teamRole}
+                onChange={(e) => setTeamRole(e.target.value)}
+                maxLength={40}
+                placeholder="Капитан / игрок / запасной"
+                className={field}
+              />
+            </div>
+          </div>
 
           <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-foreground">
             <input
@@ -372,6 +335,7 @@ export function ProfilePage() {
             />
             Ищу команду
           </label>
+
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-foreground" htmlFor="bio">
@@ -389,20 +353,12 @@ export function ProfilePage() {
             <p className="mt-1 text-xs text-muted-foreground">{bio.length}/500</p>
           </div>
 
-          {error && (
-            <p role="alert" className="text-sm font-semibold text-destructive">
-              {error}
-            </p>
-          )}
-          {status && (
-            <p role="status" className="text-sm font-semibold text-primary">
-              {status}
-            </p>
-          )}
+          {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
+          {status && <p className="text-sm font-semibold text-primary">{status}</p>}
 
           <button
             onClick={save}
-            disabled={saving || !profileLoaded}
+            disabled={saving}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-105 active:scale-95 disabled:opacity-50"
           >
             <Save className="size-4" /> {saving ? "Сохраняем…" : "Сохранить профиль"}

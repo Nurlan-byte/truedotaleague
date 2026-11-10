@@ -17,7 +17,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthDiscordRouteImport } from './routes/auth-discord'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DraftRouteImport } from './routes/draft'
-import { Route as JoinRouteImport } from './routes/join'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as MyTeamRouteImport } from './routes/my-team'
 import { Route as PlayersRouteImport } from './routes/players'
@@ -74,11 +73,6 @@ const CreateRoute = CreateRouteImport.update({
 const DraftRoute = DraftRouteImport.update({
   id: '/draft',
   path: '/draft',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const JoinRoute = JoinRouteImport.update({
-  id: '/join',
-  path: '/join',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LiveRoute = LiveRouteImport.update({
@@ -179,7 +173,6 @@ export interface FileRoutesByFullPath {
   '/auth-discord': typeof AuthDiscordRoute
   '/create': typeof CreateRoute
   '/draft': typeof DraftRoute
-  '/join': typeof JoinRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
@@ -207,7 +200,6 @@ export interface FileRoutesByTo {
   '/auth-discord': typeof AuthDiscordRoute
   '/create': typeof CreateRoute
   '/draft': typeof DraftRoute
-  '/join': typeof JoinRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
@@ -236,7 +228,6 @@ export interface FileRoutesById {
   '/auth-discord': typeof AuthDiscordRoute
   '/create': typeof CreateRoute
   '/draft': typeof DraftRoute
-  '/join': typeof JoinRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
@@ -266,7 +257,6 @@ export interface FileRouteTypes {
     | '/auth-discord'
     | '/create'
     | '/draft'
-    | '/join'
     | '/live'
     | '/my-team'
     | '/players'
@@ -294,7 +284,6 @@ export interface FileRouteTypes {
     | '/auth-discord'
     | '/create'
     | '/draft'
-    | '/join'
     | '/live'
     | '/my-team'
     | '/players'
@@ -322,7 +311,6 @@ export interface FileRouteTypes {
     | '/auth-discord'
     | '/create'
     | '/draft'
-    | '/join'
     | '/live'
     | '/my-team'
     | '/players'
@@ -351,7 +339,6 @@ export interface RootRouteChildren {
   AuthDiscordRoute: typeof AuthDiscordRoute
   CreateRoute: typeof CreateRoute
   DraftRoute: typeof DraftRoute
-  JoinRoute: typeof JoinRoute
   LiveRoute: typeof LiveRoute
   MyTeamRoute: typeof MyTeamRoute
   PlayersRoute: typeof PlayersRouteWithChildren
@@ -426,13 +413,6 @@ declare module '@tanstack/react-router' {
       path: '/draft'
       fullPath: '/draft'
       preLoaderRoute: typeof DraftRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/join': {
-      id: '/join'
-      path: '/join'
-      fullPath: '/join'
-      preLoaderRoute: typeof JoinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/live': {
@@ -577,7 +557,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthDiscordRoute: AuthDiscordRoute,
   CreateRoute: CreateRoute,
   DraftRoute: DraftRoute,
-  JoinRoute: JoinRoute,
   LiveRoute: LiveRoute,
   MyTeamRoute: MyTeamRoute,
   PlayersRoute: PlayersRouteWithChildren,

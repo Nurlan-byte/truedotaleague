@@ -1,106 +1,84 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
-import { TeamList } from "@/components/TeamList";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { LeaguePageIntro, QueryFeedback } from "@/components/LeaguePageIntro";
+import { Search, Shield } from "lucide-react";
+import { TeamLogo } from "@/components/TeamLogo";
+import { LoadingPanel } from "@/components/league";
 import { allTeamsQuery } from "@/lib/league-api";
 
 export const Route = createFileRoute("/teams")({
   head: () => ({
     meta: [
-      { title: "Команды — TrueDotaLeague" },
-      { name: "description", content: "Команды лиги TrueDotaLeague, составы и участники." },
+      { title: "Команды лиги — TrueDotaLeague" },
+      { name: "description", content: "Все команды лиги TrueDotaLeague по Dota 2 и их составы." },
+      { property: "og:title", content: "Команды TrueDotaLeague" },
+      { property: "og:description", content: "Команды лиги по Dota 2: теги, логотипы и составы игроков." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: TeamsPage,
 });
 
 function TeamsPage() {
-  const teams = useQuery(allTeamsQuery());
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"name" | "members">("name");
+  const { data, isLoading, error } = useQuery(allTeamsQuery());
+  const [q, setQ] = useState("");
   const list = useMemo(() => {
-    const needle = search.trim().toLocaleLowerCase("ru");
-    const filtered = (teams.data ?? []).filter(
-      (team) =>
-        !needle ||
-        [team.name, team.tag, ...team.team_members.map((member) => member.nickname)].some((value) =>
-          value?.toLocaleLowerCase("ru").includes(needle),
-        ),
-    );
-    return [...filtered].sort((a, b) =>
-      sort === "members"
-        ? b.team_members.length - a.team_members.length || a.name.localeCompare(b.name, "ru")
-        : a.name.localeCompare(b.name, "ru"),
-    );
-  }, [teams.data, search, sort]);
+    const n = q.trim().toLowerCase();
+    return (data ?? []).filter((t) => !n || t.name.toLowerCase().includes(n) || t.tag.toLowerCase().includes(n));
+  }, [data, q]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-4 py-8 lg:px-8">
-      <LeaguePageIntro
-        eyebrow="Составы лиги"
-        title="Команды"
-        description="Найдите команду по названию, тегу или игроку и посмотрите её состав. Данные обновляются из лиги."
-        actions={
-          <Link
-            to="/my-team"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
-          >
-            Моя команда
-          </Link>
-        }
-      >
-        {teams.data && (
-          <p className="mt-5 border-t border-border pt-4 text-sm font-semibold text-foreground">
-            В лиге: {teams.data.length} команд
-          </p>
-        )}
-      </LeaguePageIntro>
-      <div className="panel grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <label className="relative min-w-0">
-          <span className="sr-only">Поиск команды</span>
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Название, тег или игрок"
-            className="w-full rounded-lg border border-input bg-white/80 py-2 pl-9 pr-3 text-sm"
-          />
-        </label>
-        <Select value={sort} onValueChange={(value) => setSort(value as "name" | "members")}>
-          <SelectTrigger aria-label="Сортировка команд" className="sort-trigger sm:w-52">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="sort-menu">
-            <SelectItem value="name">По названию</SelectItem>
-            <SelectItem value="members">По числу игроков</SelectItem>
-          </SelectContent>
-        </Select>
+    <div className="mx-auto max-w-5xl px-4 py-8 lg:px-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="flex items-center gap-2 text-4xl text-foreground">
+          <Shield className="size-7 text-primary" /> Команды ({data?.length ?? 0})
+        </h1>
+        <Link
+          to="/my-team"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
+        >
+          Моя команда
+        </Link>
       </div>
-      {teams.isPending ? (
-        <QueryFeedback text="Загружаем команды…" />
-      ) : teams.isError ? (
-        <QueryFeedback text="Не удалось загрузить команды." retry={() => void teams.refetch()} />
-      ) : list.length === 0 ? (
-        <QueryFeedback
-          text={
-            search
-              ? "По этому запросу команд не найдено."
-              : "Команд пока нет. Вы можете создать первую в разделе «Моя команда»."
-          }
+      <label className="relative mt-5 block">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Поиск по названию или тегу"
+          className="w-full rounded-lg border border-input bg-white/70 py-2 pl-9 pr-3 text-sm text-foreground outline-none focus:border-primary focus:bg-white"
         />
-      ) : (
-        <TeamList teams={list} />
-      )}
+      </label>
+      <div className="mt-5">
+        {isLoading ? (
+          <LoadingPanel />
+        ) : error ? (
+          <LoadingPanel text="Не удалось загрузить команды." />
+        ) : list.length === 0 ? (
+          <LoadingPanel text={q ? "Ничего не найдено." : "Команд пока нет — создайте первую в разделе «Моя команда»."} />
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {list.map((t) => {
+              const members = [...t.team_members].sort((a, b) => a.position - b.position);
+              return (
+                <li key={t.id} className="panel min-w-0 p-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <TeamLogo name={t.name} logo={t.logo_url ?? undefined} size="md" />
+                    <p className="min-w-0 flex-1 truncate font-semibold text-foreground">
+                      {t.name}
+                      {t.tag && <span className="ml-2 text-xs font-semibold uppercase text-primary">[{t.tag}]</span>}
+                    </p>
+                  </div>
+                  <p className="mt-2 break-words text-xs text-muted-foreground">
+                    {members.length ? members.map((m) => m.nickname).join(", ") : "Состав не указан"}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

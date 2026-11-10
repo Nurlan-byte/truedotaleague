@@ -1,16 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { buildReturnCookie, buildStateCookie, getDiscordConfig } from "@/lib/discord.server";
-import { authRetryUrl, safeAuthReturn } from "@/lib/auth-return";
+import { buildStateCookie, getDiscordConfig } from "@/lib/discord.server";
 
 export const Route = createFileRoute("/api/public/auth/discord/start")({
   server: {
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const next = safeAuthReturn(url.searchParams.get("next"));
         const config = getDiscordConfig(request);
         if (!config) {
-          return Response.redirect(`${url.origin}${authRetryUrl(next, "not_configured")}`, 302);
+          return Response.redirect(`${url.origin}/auth?discord_error=not_configured`, 302);
         }
 
         const random = crypto.getRandomValues(new Uint8Array(24));
@@ -24,10 +22,14 @@ export const Route = createFileRoute("/api/public/auth/discord/start")({
         authorize.searchParams.set("state", state);
         authorize.searchParams.set("prompt", "consent");
 
-        const headers = new Headers({ location: authorize.toString(), "cache-control": "no-store", "referrer-policy": "no-referrer" });
-        headers.append("set-cookie", buildStateCookie(state, 600, url.protocol === "https:"));
-        headers.append("set-cookie", buildReturnCookie(next, state, 600, url.protocol === "https:"));
-        return new Response(null, { status: 302, headers });
+        return new Response(null, {
+          status: 302,
+          headers: {
+            location: authorize.toString(),
+            "set-cookie": buildStateCookie(state, 600, url.protocol === "https:"),
+            "cache-control": "no-store",
+          },
+        });
       },
     },
   },
