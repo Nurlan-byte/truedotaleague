@@ -16,7 +16,6 @@ import { useAdmin } from "@/hooks/use-admin";
 
 const items = [
   { title: "Главная", url: "/", icon: Home },
-  { title: "Создать турнир", url: "/tournaments/new", icon: Plus },
   { title: "Турниры", url: "/tournaments", icon: Radio },
   { title: "Моя команда", url: "/my-team", icon: ShieldPlus },
   { title: "Команды", url: "/teams", icon: Shield },
@@ -24,6 +23,7 @@ const items = [
 ] as const;
 
 const adminItems = [
+  { title: "Создать турнир", url: "/tournaments/new", icon: Plus },
   { title: "Заявки на турнир", url: "/applications", icon: Inbox },
   { title: "Роли и доступы", url: "/admin", icon: UserCog },
   { title: "Драфт", url: "/draft", icon: ListChecks },
@@ -38,7 +38,7 @@ export function AppSidebar() {
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const { isAdmin } = useAdmin();
 
-  const visibleItems = items.filter((item) => item.url !== "/tournaments/new" || isAdmin);
+  const visibleItems = items;
 
   return (
     <Sidebar collapsible="icon">

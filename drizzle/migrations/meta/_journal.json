@@ -64,6 +64,13 @@
       "when": 1794318237752,
       "tag": "0008_profiles_titles",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794322810515,
+      "tag": "0009_admin_delete_team",
+      "breakpoints": true
     }
   ]
 }

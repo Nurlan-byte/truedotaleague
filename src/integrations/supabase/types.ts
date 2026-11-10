@@ -1021,6 +1021,7 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { p_invite_id: string }; Returns: undefined }
+      admin_delete_team: { Args: { p_team_id: string }; Returns: undefined }
       assign_moderator: {
         Args: { p_tournament_id: string; p_user_id: string }
         Returns: {
