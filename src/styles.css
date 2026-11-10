@@ -119,13 +119,26 @@
   body {
     min-height: 100vh;
     background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  /* Fixed background layer on its own GPU layer — smooth scrolling (no repaint) */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-image: var(--sky-overlay);
     background-size: cover;
     background-position: center top;
-    background-attachment: fixed;
     background-repeat: no-repeat;
-    color: var(--color-foreground);
-    font-family: var(--font-sans);
+    transform: translateZ(0);
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   h1,
@@ -142,7 +155,9 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-panel);
-  backdrop-filter: blur(20px) saturate(180%);
+  @media (min-width: 1024px) and (hover: hover) {
+    backdrop-filter: blur(12px) saturate(160%);
+  }
 }
 
 @utility glow {
