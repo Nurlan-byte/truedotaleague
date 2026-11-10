@@ -319,6 +319,8 @@ function MyTeamPage() {
             })}
           </ul>
 
+          {isOwner && members.length < 7 && <InviteLinkBlock teamId={team.id} />}
+
           {isOwner && members.length < 7 && (
             <div className="mt-4">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
