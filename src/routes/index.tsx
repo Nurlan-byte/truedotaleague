@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Crown, Medal, Plus, Radio, Shield, Trophy, Users } from "lucide-react";
+import { Crown, Medal, Plus, Radio, Shield, Trophy } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { useAdmin } from "@/hooks/use-admin";
 import { useQuery } from "@tanstack/react-query";
@@ -62,12 +62,6 @@ function HomePage() {
             className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
           >
             <Radio className="size-4" /> Турниры
-          </Link>
-          <Link
-            to="/rating-teams"
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-white/60 px-4 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
-          >
-            <Trophy className="size-4" /> Рейтинг команд
           </Link>
           {isAdmin && (
             <Link
@@ -165,12 +159,6 @@ function HomePage() {
               ))}
             </ul>
           )}
-          <Link
-            to="/players"
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
-          >
-            <Users className="size-4" /> Рейтинг игроков
-          </Link>
         </section>
       </div>
     </div>

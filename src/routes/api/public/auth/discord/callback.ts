@@ -160,8 +160,9 @@ export const Route = createFileRoute("/api/public/auth/discord/callback")({
                 discord_id: discordUser.id,
                 discord_username: discordUser.username,
                 discord_global_name: discordUser.global_name ?? "",
-                ...(linked?.nickname ? {} : { nickname: displayName }),
-                ...(linked?.avatar_url ? {} : { avatar_url: avatar }),
+                // Никнейм и аватарка всегда синхронизируются с Discord.
+                nickname: displayName,
+                avatar_url: avatar,
                 ...(guildProfile === undefined
                   ? {}
                   : {
