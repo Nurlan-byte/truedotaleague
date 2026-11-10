@@ -34,7 +34,7 @@ function ArchivePage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 lg:px-8">
-      <h1 className="flex items-center gap-2 text-4xl text-foreground">
+      <h1 className="flex items-center gap-2 text-3xl text-foreground sm:text-4xl">
         <Archive className="size-7 text-primary" /> Архив турниров
       </h1>
       <label className="relative mt-5 block">

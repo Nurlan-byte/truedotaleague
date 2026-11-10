@@ -27,7 +27,7 @@ function EditTournamentPage() {
   const { data, isLoading } = useQuery({ ...tournamentQuery(tournamentId), enabled: isAdmin });
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 lg:px-8">
-      <h1 className="mb-5 flex items-center gap-2 text-4xl text-foreground">
+      <h1 className="mb-5 flex items-center gap-2 text-3xl text-foreground sm:text-4xl">
         <Pencil className="size-7 text-primary" /> Редактирование турнира
       </h1>
       {checking || (isAdmin && isLoading) ? (

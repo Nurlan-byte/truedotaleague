@@ -54,7 +54,7 @@ function CatalogPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="flex items-center gap-2 text-4xl text-foreground">
+        <h1 className="flex items-center gap-2 text-3xl text-foreground sm:text-4xl">
           <Trophy className="size-7 text-accent" /> Турниры
         </h1>
         <div className="flex flex-wrap gap-2">

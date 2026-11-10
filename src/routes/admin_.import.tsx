@@ -133,7 +133,7 @@ function ImportPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5 px-4 py-8">
-      <h1 className="flex items-center gap-2 text-4xl text-foreground">
+      <h1 className="flex items-center gap-2 text-3xl text-foreground sm:text-4xl">
         <Download className="size-7 text-primary" /> Импорт старых данных
       </h1>
       <p className="text-sm text-muted-foreground">

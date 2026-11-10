@@ -106,7 +106,7 @@ function PlayersPage() {
         <ArrowLeft className="size-4" /> На главную
       </Link>
 
-      <h1 className="flex items-center gap-3 text-4xl leading-none text-foreground sm:text-5xl">
+      <h1 className="flex items-center gap-3 text-3xl leading-none text-foreground sm:text-5xl">
         <Users className="size-7 text-primary" /> Участники
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">

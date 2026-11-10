@@ -128,7 +128,7 @@ function TournamentPage() {
         <TournamentImage src={t.image_url} title={t.title} className="aspect-[16/6] w-full text-6xl" />
         <div className="space-y-3 p-5">
           <StatusBadge status={t.status} />
-          <h1 className="break-words text-4xl leading-none text-foreground sm:text-5xl">{t.title}</h1>
+          <h1 className="break-words text-3xl leading-none text-foreground sm:text-5xl">{t.title}</h1>
           {t.status === "cancelled" && (
             <p className="font-semibold text-destructive">Турнир отменён{t.cancel_reason ? `: ${t.cancel_reason}` : ""}</p>
           )}

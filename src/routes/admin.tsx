@@ -73,7 +73,7 @@ function AdminPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="flex flex-1 items-center gap-2 text-4xl text-foreground">
+        <h1 className="flex flex-1 items-center gap-2 text-3xl text-foreground sm:text-4xl">
           <UserCog className="size-7 text-primary" /> Роли и доступы
         </h1>
         <Link to="/admin/import" className={btnGhost}>
