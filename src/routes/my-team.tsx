@@ -436,3 +436,41 @@ function MyTeamPage() {
     </div>
   );
 }
+
+function InviteLinkBlock({ teamId }: { teamId: string }) {
+  const [link, setLink] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = async (regenerate: boolean) => {
+    setBusy(true);
+    const { data, error } = await supabase.rpc("get_team_invite_link", { p_team_id: teamId, p_regenerate: regenerate });
+    setBusy(false);
+    if (error) return toast.error(rpcErrorText(error));
+    const url = `${window.location.origin}/join/${data as string}`;
+    setLink(url);
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success(regenerate ? "Новая ссылка скопирована, старая больше не работает" : "Ссылка скопирована");
+    } catch {
+      toast.success("Ссылка готова — скопируйте её");
+    }
+  };
+  return (
+    <div className="mt-4">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <Link2 className="size-4 text-primary" /> Ссылка-приглашение
+      </h3>
+      <p className="text-xs text-muted-foreground">Отправьте ссылку игроку — после входа через Discord он сразу станет участником команды.</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {link && <input readOnly value={link} onFocus={(e) => e.currentTarget.select()} className={`${input} w-full flex-1`} />}
+        <button type="button" disabled={busy} onClick={() => load(false)} className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60">
+          <Copy className="size-4" /> Скопировать ссылку
+        </button>
+        {link && (
+          <button type="button" disabled={busy} onClick={() => load(true)} className="inline-flex items-center gap-1 rounded-full border border-input px-4 py-2 text-sm text-foreground disabled:opacity-60">
+            <RefreshCw className="size-4" /> Новая ссылка
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
