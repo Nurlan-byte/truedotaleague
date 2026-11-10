@@ -35,7 +35,7 @@ export function AppSidebar() {
   const { isAdmin } = useAdmin();
 
   const visibleItems = items.filter((item) =>
-    item.url !== "/tournaments/new" || isAdmin,
+    !["/tournaments/new", "/draft", "/road-to-ti"].includes(item.url) || isAdmin,
   );
 
   return (
