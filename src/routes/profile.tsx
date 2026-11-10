@@ -43,6 +43,7 @@ function ProfilePage() {
   const [teamRole, setTeamRole] = useState("");
   const [lookingForTeam, setLookingForTeam] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [titles, setTitles] = useState<string[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -60,7 +61,7 @@ function ProfilePage() {
     });
     supabase
       .from("profiles")
-      .select("nickname, bio, mmr, competitive_rating, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team")
+      .select("nickname, bio, mmr, competitive_rating, role_position, profile_url, avatar_url, team_name, team_role, looking_for_team, titles")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data, error: readError }) => {
@@ -76,6 +77,7 @@ function ProfilePage() {
         setTeamName(data.team_name ?? "");
         setTeamRole(data.team_role ?? "");
         setLookingForTeam(Boolean(data.looking_for_team));
+        setTitles(data.titles ?? []);
       });
     return () => {
       active = false;
@@ -280,9 +282,11 @@ function ProfilePage() {
                     const r = await refreshMyRating();
                     if (r.status === "ok") {
                       setMmr(String(r.rating));
+                      setTitles(r.titles);
                       setStatus(`Competitive Rating обновлён: ${r.rating}`);
                     } else if (r.status === "no_role") {
                       setMmr("");
+                      setTitles(r.titles);
                       setError("На сервере Discord у вас нет роли «Competitive Rating».");
                     } else if (r.status === "no_discord") setError("Аккаунт не привязан к Discord — войдите через Discord.");
                     else setError("Discord сейчас недоступен. Попробуйте позже.");
@@ -371,6 +375,29 @@ function ProfilePage() {
             />
             Ищу команду
           </label>
+
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <Trophy className="size-4 text-accent" /> Титулы на сервере Discord
+              {titles.length > 0 && <span className="text-xs text-muted-foreground">· {titles.length}</span>}
+            </p>
+            {titles.length > 0 ? (
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {titles.map((t) => (
+                  <li
+                    key={t}
+                    className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary"
+                  >
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Пока нет титулов — они берутся из ваших ролей на сервере Discord лиги. Нажмите «Обновить из Discord».
+              </p>
+            )}
+          </div>
 
 
           <div>
