@@ -21,14 +21,12 @@ import { Route as LiveRouteImport } from './routes/live'
 import { Route as MyTeamRouteImport } from './routes/my-team'
 import { Route as PlayersRouteImport } from './routes/players'
 import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as RatingTeamsRouteImport } from './routes/rating-teams'
 import { Route as RegulationsRouteImport } from './routes/regulations'
 import { Route as RoadToTiRouteImport } from './routes/road-to-ti'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TeamsRouteImport } from './routes/teams'
 import { Route as AdminImportRouteImport } from './routes/admin_.import'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
-import { Route as PlayersIndexRouteImport } from './routes/players.index'
 import { Route as PlayersPlayerIdRouteImport } from './routes/players.$playerId'
 import { Route as TournamentsIndexRouteImport } from './routes/tournaments.index'
 import { Route as TournamentsTournamentIdRouteImport } from './routes/tournaments.$tournamentId'
@@ -97,11 +95,6 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RatingTeamsRoute = RatingTeamsRouteImport.update({
-  id: '/rating-teams',
-  path: '/rating-teams',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RegulationsRoute = RegulationsRouteImport.update({
   id: '/regulations',
   path: '/regulations',
@@ -131,11 +124,6 @@ const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
   getParentRoute: () => rootRouteImport,
-} as any)
-const PlayersIndexRoute = PlayersIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => PlayersRoute,
 } as any)
 const PlayersPlayerIdRoute = PlayersPlayerIdRouteImport.update({
   id: '/$playerId',
@@ -189,7 +177,6 @@ export interface FileRoutesByFullPath {
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
-  '/rating-teams': typeof RatingTeamsRoute
   '/regulations': typeof RegulationsRoute
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -199,7 +186,6 @@ export interface FileRoutesByFullPath {
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
-  '/players/': typeof PlayersIndexRoute
   '/tournaments/': typeof TournamentsIndexRoute
   '/tournaments/$tournamentId/edit': typeof TournamentsTournamentIdEditRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
@@ -216,8 +202,8 @@ export interface FileRoutesByTo {
   '/draft': typeof DraftRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
+  '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
-  '/rating-teams': typeof RatingTeamsRoute
   '/regulations': typeof RegulationsRoute
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -227,7 +213,6 @@ export interface FileRoutesByTo {
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
-  '/players': typeof PlayersIndexRoute
   '/tournaments': typeof TournamentsIndexRoute
   '/tournaments/$tournamentId/edit': typeof TournamentsTournamentIdEditRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
@@ -247,7 +232,6 @@ export interface FileRoutesById {
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
-  '/rating-teams': typeof RatingTeamsRoute
   '/regulations': typeof RegulationsRoute
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -257,7 +241,6 @@ export interface FileRoutesById {
   '/players/$playerId': typeof PlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof TournamentsTournamentIdRoute
   '/tournaments/new': typeof TournamentsNewRoute
-  '/players/': typeof PlayersIndexRoute
   '/tournaments/': typeof TournamentsIndexRoute
   '/tournaments/$tournamentId_/edit': typeof TournamentsTournamentIdEditRoute
   '/api/public/auth/discord/callback': typeof ApiPublicAuthDiscordCallbackRoute
@@ -278,7 +261,6 @@ export interface FileRouteTypes {
     | '/my-team'
     | '/players'
     | '/profile'
-    | '/rating-teams'
     | '/regulations'
     | '/road-to-ti'
     | '/sitemap.xml'
@@ -288,7 +270,6 @@ export interface FileRouteTypes {
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
-    | '/players/'
     | '/tournaments/'
     | '/tournaments/$tournamentId/edit'
     | '/api/public/auth/discord/callback'
@@ -305,8 +286,8 @@ export interface FileRouteTypes {
     | '/draft'
     | '/live'
     | '/my-team'
+    | '/players'
     | '/profile'
-    | '/rating-teams'
     | '/regulations'
     | '/road-to-ti'
     | '/sitemap.xml'
@@ -316,7 +297,6 @@ export interface FileRouteTypes {
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
-    | '/players'
     | '/tournaments'
     | '/tournaments/$tournamentId/edit'
     | '/api/public/auth/discord/callback'
@@ -335,7 +315,6 @@ export interface FileRouteTypes {
     | '/my-team'
     | '/players'
     | '/profile'
-    | '/rating-teams'
     | '/regulations'
     | '/road-to-ti'
     | '/sitemap.xml'
@@ -345,7 +324,6 @@ export interface FileRouteTypes {
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/new'
-    | '/players/'
     | '/tournaments/'
     | '/tournaments/$tournamentId_/edit'
     | '/api/public/auth/discord/callback'
@@ -365,7 +343,6 @@ export interface RootRouteChildren {
   MyTeamRoute: typeof MyTeamRoute
   PlayersRoute: typeof PlayersRouteWithChildren
   ProfileRoute: typeof ProfileRoute
-  RatingTeamsRoute: typeof RatingTeamsRoute
   RegulationsRoute: typeof RegulationsRoute
   RoadToTiRoute: typeof RoadToTiRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -466,13 +443,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/rating-teams': {
-      id: '/rating-teams'
-      path: '/rating-teams'
-      fullPath: '/rating-teams'
-      preLoaderRoute: typeof RatingTeamsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/regulations': {
       id: '/regulations'
       path: '/regulations'
@@ -514,13 +484,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/join/$token'
       preLoaderRoute: typeof JoinTokenRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/players/': {
-      id: '/players/'
-      path: '/'
-      fullPath: '/players/'
-      preLoaderRoute: typeof PlayersIndexRouteImport
-      parentRoute: typeof PlayersRoute
     }
     '/players/$playerId': {
       id: '/players/$playerId'
@@ -576,12 +539,10 @@ declare module '@tanstack/react-router' {
 
 interface PlayersRouteChildren {
   PlayersPlayerIdRoute: typeof PlayersPlayerIdRoute
-  PlayersIndexRoute: typeof PlayersIndexRoute
 }
 
 const PlayersRouteChildren: PlayersRouteChildren = {
   PlayersPlayerIdRoute: PlayersPlayerIdRoute,
-  PlayersIndexRoute: PlayersIndexRoute,
 }
 
 const PlayersRouteWithChildren =
@@ -600,7 +561,6 @@ const rootRouteChildren: RootRouteChildren = {
   MyTeamRoute: MyTeamRoute,
   PlayersRoute: PlayersRouteWithChildren,
   ProfileRoute: ProfileRoute,
-  RatingTeamsRoute: RatingTeamsRoute,
   RegulationsRoute: RegulationsRoute,
   RoadToTiRoute: RoadToTiRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
