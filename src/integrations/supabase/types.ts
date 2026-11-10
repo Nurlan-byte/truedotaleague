@@ -577,6 +577,35 @@ export type Database = {
           },
         ]
       }
+      team_invite_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          team_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          team_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          team_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invite_links_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invites: {
         Row: {
           created_at: string
@@ -1127,6 +1156,10 @@ export type Database = {
       }
       get_my_discord_identity: { Args: never; Returns: Json }
       get_my_profile_verification: { Args: never; Returns: Json }
+      get_team_invite_link: {
+        Args: { p_regenerate?: boolean; p_team_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1153,6 +1186,7 @@ export type Database = {
         Args: { _team_id: string; _uid: string }
         Returns: boolean
       }
+      join_team_by_link: { Args: { p_token: string }; Returns: string }
       list_profile_reviews: { Args: never; Returns: Json }
       list_team_invites: { Args: never; Returns: Json }
       lock_team_user: { Args: { p_user: string }; Returns: undefined }
@@ -1167,6 +1201,7 @@ export type Database = {
         Returns: undefined
       }
       place_points: { Args: { _place: number }; Returns: number }
+      preview_team_invite_link: { Args: { p_token: string }; Returns: Json }
       propagate_match_winner: {
         Args: { p_match_id: string }
         Returns: undefined
