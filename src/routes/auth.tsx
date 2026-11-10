@@ -94,22 +94,6 @@ function AuthPage() {
     }
   };
 
-  const oauth = async (provider: "google" | "microsoft") => {
-    setError(null);
-    setNotice(null);
-    setBusy(true);
-    const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      setError(provider === "google" ? "Не удалось войти через Google" : "Не удалось войти через Microsoft");
-      setBusy(false);
-      return;
-    }
-    if (result.redirected) return;
-    navigate({ to: "/", replace: true });
-  };
-
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
@@ -270,7 +254,7 @@ function AuthPage() {
         </form>
 
         <p className="mt-4 text-xs text-muted-foreground">
-          Можно войти через Google или Microsoft — email и пароль вводить не нужно.
+          Можно войти через Discord — email и пароль вводить не нужно.
         </p>
       </div>
     </main>
