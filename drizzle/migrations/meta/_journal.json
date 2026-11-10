@@ -43,6 +43,13 @@
       "when": 1794316737252,
       "tag": "0005_drop_profile_verifications_public_read",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794316975182,
+      "tag": "0006_profiles_signed_in_read",
+      "breakpoints": true
     }
   ]
 }
