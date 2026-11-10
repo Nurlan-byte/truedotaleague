@@ -263,7 +263,7 @@ function AuthPage() {
           <button
             type="submit"
             disabled={busy}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-3 py-2.5 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
           >
             {busy && <Loader2 className="size-4 animate-spin" />}
             {mode === "signup" ? "Создать аккаунт" : "Войти"}

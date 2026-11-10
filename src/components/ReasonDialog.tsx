@@ -45,7 +45,7 @@ export function useReasonDialog() {
           </button>
           <button
             disabled={!!state?.required && !text.trim()}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
+            className="rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
             onClick={() => close(text.trim())}
           >
             {state?.confirmLabel ?? "Подтвердить"}

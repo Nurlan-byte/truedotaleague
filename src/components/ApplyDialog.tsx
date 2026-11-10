@@ -104,7 +104,7 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
             <button
               disabled={!agreed || !teamId || submit.isPending}
               onClick={() => submit.mutate()}
-              className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm disabled:opacity-50"
+              className="w-full rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm disabled:opacity-50"
             >
               {submit.isPending ? "Отправляем…" : "Отправить заявку"}
             </button>

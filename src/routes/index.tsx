@@ -59,7 +59,7 @@ function HomePage() {
         <div className="mt-5 flex flex-wrap gap-2">
           <Link
             to="/tournaments"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
           >
             <Radio className="size-4" /> Турниры
           </Link>

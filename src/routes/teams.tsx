@@ -36,7 +36,7 @@ function TeamsPage() {
         </h1>
         <Link
           to="/my-team"
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-sm"
         >
           Моя команда
         </Link>

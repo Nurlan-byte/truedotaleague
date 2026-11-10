@@ -104,7 +104,7 @@ function MyTeamPage() {
           <button
             onClick={create}
             disabled={run.isPending}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm disabled:opacity-50"
           >
             <Plus className="size-4" /> Создать
           </button>
