@@ -75,7 +75,7 @@ function JoinPage() {
       ) : (
         <div className="panel mt-5 p-5">
           <div className="flex items-center gap-3">
-            <TeamLogo name={preview.data.name} logo={preview.data.logo_url ?? undefined} size={56} />
+            <TeamLogo name={preview.data.name} logo={preview.data.logo_url ?? undefined} size="lg" />
             <div>
               <p className="text-lg font-semibold text-foreground">{preview.data.name} <span className="text-muted-foreground">[{preview.data.tag}]</span></p>
               <p className="flex items-center gap-1 text-xs text-muted-foreground"><Users className="size-3" /> игроков: {preview.data.members}/7</p>
