@@ -1,23 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, LogIn, UserPlus, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Вход и регистрация — TrueDotaLeague" },
+      { title: "Вход через Discord — TrueDotaLeague" },
       {
         name: "description",
-        content:
-          "Создайте аккаунт TrueDotaLeague через Discord или по email, чтобы участвовать в турнирах и следить за рейтингом команд.",
+        content: "Войдите в TrueDotaLeague через Discord, чтобы участвовать в турнирах и следить за рейтингом команд.",
       },
-      { property: "og:title", content: "Вход и регистрация — TrueDotaLeague" },
-      {
-        property: "og:description",
-        content: "Регистрация в TrueDotaLeague: Discord или email. Турниры, сетки и TDL points.",
-      },
+      { property: "og:title", content: "Вход через Discord — TrueDotaLeague" },
+      { property: "og:description", content: "Вход в TrueDotaLeague через Discord. Турниры, сетки и TDL points." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -40,13 +35,8 @@ const DISCORD_ERRORS: Record<string, string> = {
 function AuthPage() {
   const navigate = useNavigate();
   const { session, loading } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("signup");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [nickname, setNickname] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && session) navigate({ to: "/", replace: true });
@@ -59,41 +49,9 @@ function AuthPage() {
 
   const discordLogin = () => {
     setError(null);
-    setNotice(null);
     setBusy(true);
     window.location.href = "/api/public/auth/discord/start";
   };
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setNotice(null);
-    setBusy(true);
-    try {
-      if (mode === "signup") {
-        const { data, error: err } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { nickname: nickname.trim() || email.split("@")[0] },
-          },
-        });
-        if (err) throw err;
-        if (!data.session) {
-          setNotice("Мы отправили письмо для подтверждения. Проверьте почту и перейдите по ссылке.");
-        }
-      } else {
-        const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-        if (err) throw err;
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Что-то пошло не так");
-    } finally {
-      setBusy(false);
-    }
-  };
-
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
@@ -106,116 +64,28 @@ function AuthPage() {
 
       <div className="panel p-6">
         <p className="text-xs font-bold uppercase tracking-[0.35em] text-primary">TrueDotaLeague</p>
-        <h1 className="mt-2 text-3xl leading-none text-foreground">
-          {mode === "signup" ? "Регистрация аккаунта" : "Вход в аккаунт"}
-        </h1>
+        <h1 className="mt-2 text-3xl leading-none text-foreground">Вход и регистрация</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Аккаунт нужен, чтобы участвовать в турнирах и попасть в рейтинг TDL points.
+          Войдите через Discord — аккаунт создастся автоматически. Он нужен, чтобы участвовать в турнирах и попасть в рейтинг TDL points.
         </p>
-
-        <div className="mt-5 inline-flex w-full rounded-xl border border-border bg-white/70 p-1 backdrop-blur-sm">
-          {(
-            [
-              ["signup", "Регистрация", UserPlus],
-              ["login", "Вход", LogIn],
-            ] as const
-          ).map(([key, label, Icon]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => {
-                setMode(key);
-                setError(null);
-                setNotice(null);
-              }}
-              className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold transition-all ${
-                mode === key
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Icon className="size-4" /> {label}
-            </button>
-          ))}
-        </div>
 
         <button
           type="button"
           onClick={discordLogin}
           disabled={busy}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#5865F2] px-3 py-3 text-sm font-bold text-white shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#5865F2] px-3 py-3 text-sm font-bold text-white shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
         >
-          <svg className="size-5" viewBox="0 0 127.14 96.36" fill="currentColor" aria-hidden="true">
-            <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z" />
-          </svg>
+          {busy ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : (
+            <svg className="size-5" viewBox="0 0 127.14 96.36" fill="currentColor" aria-hidden="true">
+              <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.890 105.890 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.760 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.890 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z" />
+            </svg>
+          )}
           Войти через Discord
         </button>
 
-        <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-widest text-muted-foreground">
-          <span className="h-px flex-1 bg-border" /> или email <span className="h-px flex-1 bg-border" />
-        </div>
-
-        <form onSubmit={submit} className="space-y-3">
-          {mode === "signup" && (
-            <div>
-              <label htmlFor="nick" className="mb-1 block text-xs font-semibold text-muted-foreground">
-                Ник
-              </label>
-              <input
-                id="nick"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder="Например, Dendi"
-                className="w-full rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none backdrop-blur-sm transition-colors focus:border-primary focus:bg-white"
-              />
-            </div>
-          )}
-          <div>
-            <label htmlFor="email" className="mb-1 block text-xs font-semibold text-muted-foreground">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              className="w-full rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none backdrop-blur-sm transition-colors focus:border-primary focus:bg-white"
-            />
-          </div>
-          <div>
-            <label htmlFor="pass" className="mb-1 block text-xs font-semibold text-muted-foreground">
-              Пароль
-            </label>
-            <input
-              id="pass"
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              className="w-full rounded-lg border border-input bg-white/70 px-3 py-2 text-sm text-foreground outline-none backdrop-blur-sm transition-colors focus:border-primary focus:bg-white"
-            />
-          </div>
-
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-          {notice && <p className="text-sm font-medium text-primary">{notice}</p>}
-
-          <button
-            type="submit"
-            disabled={busy}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-3 py-2.5 text-sm font-bold text-primary-foreground shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-          >
-            {busy && <Loader2 className="size-4 animate-spin" />}
-            {mode === "signup" ? "Создать аккаунт" : "Войти"}
-          </button>
-        </form>
-
-        <p className="mt-4 text-xs text-muted-foreground">
-          Можно войти через Discord — email и пароль вводить не нужно.
-        </p>
+        {error && <p className="mt-3 text-sm font-medium text-destructive">{error}</p>}
       </div>
     </main>
   );
