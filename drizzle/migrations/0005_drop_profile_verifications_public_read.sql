@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "verification public status" ON public.profile_verifications;
