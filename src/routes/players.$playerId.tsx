@@ -186,10 +186,10 @@ function PlayerPage() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-8 lg:px-8">
       <Link
-        to="/players"
+        to="/teams"
         className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
       >
-        <ArrowLeft className="size-4" /> Все участники
+        <ArrowLeft className="size-4" /> Все команды
       </Link>
 
       {notFound ? (
