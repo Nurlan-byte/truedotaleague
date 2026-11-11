@@ -24,7 +24,7 @@ export const btnPrimary =
 export const btnGhost =
   "inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-white/70 px-4 py-2 text-sm font-semibold text-foreground hover:border-primary hover:text-primary disabled:opacity-50";
 
-const FORMATS: TournamentFormat[] = ["single_elim", "groups_playoff", "round_robin"];
+const FORMATS: TournamentFormat[] = ["single_elim", "double_elim", "groups_playoff", "round_robin"];
 const draftKey = (id: string | undefined) => `tdl-tournament-draft:${id ?? "new"}`;
 
 function Row({ label, error, children, hint }: { label: string; error?: string; hint?: string; children: ReactNode }) {

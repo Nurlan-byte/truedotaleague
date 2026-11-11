@@ -74,7 +74,11 @@ export type Match = {
   scoreB: number | null;
   /** Дата и время матча в формате datetime-local ("2026-09-03T18:00"). */
   scheduledAt?: string | null;
+  /** Часть сетки: верхняя, нижняя или гранд-финал (Double Elimination). */
+  bracket?: Bracket;
 };
+
+export type Bracket = "upper" | "lower" | "grand";
 
 export type GroupMatch = {
   id: string;
@@ -157,8 +161,10 @@ export function buildBracket(teams: Team[]): Match[] {
 }
 
 export function matchWinner(m: Match): string | null {
-  if (m.teamA && !m.teamB) return m.teamA;
-  if (m.teamB && !m.teamA) return m.teamB;
+  // Проход без соперника — только в первом раунде обычной сетки.
+  const byeAllowed = m.round === 1 && (m.bracket ?? "upper") === "upper";
+  if (byeAllowed && m.teamA && !m.teamB) return m.teamA;
+  if (byeAllowed && m.teamB && !m.teamA) return m.teamB;
   if (m.scoreA === null || m.scoreB === null || m.scoreA === m.scoreB) return null;
   return m.scoreA > m.scoreB ? m.teamA : m.teamB;
 }
@@ -282,6 +288,7 @@ export function standings(group: Team[], matches: GroupMatch[]): Standing[] {
 /** Итоговые места всех участников плей-офф: чем позже команда выбыла, тем выше место. */
 export function finalPlacements(matches: Match[], teams: Team[]): Placement[] {
   if (matches.length === 0) return [];
+  if (isDouble(matches)) return doublePlacements(matches, teams);
   const totalRounds = Math.max(...matches.map((m) => m.round));
   const final = matches.find((m) => m.round === totalRounds);
   if (!final) return [];
@@ -370,4 +377,115 @@ export function leaderboard(history: TournamentRecord[]): RankRow[] {
     }
   }
   return [...map.values()].sort((a, b) => b.points - a.points || b.titles - a.titles);
+}
+
+
+// ---------- Double Elimination ----------
+
+export const isDouble = (matches: Match[]) => matches.some((m) => m.bracket === "lower" || m.bracket === "grand");
+
+/** Подходит ли число команд для Double Elimination: 4, 8, 16, 32 или 64. */
+export const doubleSizeOk = (n: number) => n >= 4 && n <= 64 && (n & (n - 1)) === 0;
+
+export type DoubleMatchSpec = {
+  key: string;
+  bracket: Bracket;
+  round: number;
+  slot: number;
+  team_a_id: string | null;
+  team_b_id: string | null;
+  next_key?: string;
+  next_slot?: "a" | "b";
+  loser_key?: string;
+  loser_slot?: "a" | "b";
+};
+
+/**
+ * Сетка Double Elimination: верхняя сетка, нижняя сетка и гранд-финал (один матч).
+ * Проигравший в верхней сетке падает в нижнюю, проигравший в нижней — выбывает.
+ */
+export function buildDoubleBracket(teamIds: string[]): DoubleMatchSpec[] {
+  const n = teamIds.length;
+  if (!doubleSizeOk(n)) return [];
+  const k = Math.log2(n);
+  const key = (b: string, r: number, s: number) => `${b}${r}-${s}`;
+  const out = new Map<string, DoubleMatchSpec>();
+  const add = (b: Bracket, r: number, s: number, a: string | null = null, bb: string | null = null) =>
+    out.set(key(b[0], r, s), { key: key(b[0], r, s), bracket: b, round: r, slot: s, team_a_id: a, team_b_id: bb });
+
+  // Верхняя сетка
+  for (let r = 1; r <= k; r++) {
+    const count = n / 2 ** r;
+    for (let s = 0; s < count; s++) add("upper", r, s, r === 1 ? teamIds[s * 2] : null, r === 1 ? teamIds[s * 2 + 1] : null);
+  }
+  // Нижняя сетка: 2(k-1) раундов
+  const lowerRounds = 2 * (k - 1);
+  const lowerCount = (r: number) => n / 2 ** (Math.floor((r + 1) / 2) + 1);
+  for (let r = 1; r <= lowerRounds; r++) for (let s = 0; s < lowerCount(r); s++) add("lower", r, s);
+  add("grand", 1, 0);
+
+  const link = (from: string, field: "next" | "loser", to: string, slot: "a" | "b") => {
+    const m = out.get(from)!;
+    if (field === "next") Object.assign(m, { next_key: to, next_slot: slot });
+    else Object.assign(m, { loser_key: to, loser_slot: slot });
+  };
+
+  for (let r = 1; r <= k; r++) {
+    const count = n / 2 ** r;
+    for (let s = 0; s < count; s++) {
+      const from = key("u", r, s);
+      // победитель
+      if (r < k) link(from, "next", key("u", r + 1, Math.floor(s / 2)), s % 2 === 0 ? "a" : "b");
+      else link(from, "next", key("g", 1, 0), "a");
+      // проигравший
+      if (r === 1) link(from, "loser", key("l", 1, Math.floor(s / 2)), s % 2 === 0 ? "a" : "b");
+      else link(from, "loser", key("l", 2 * (r - 1), count - 1 - s), "b"); // обратный порядок — меньше повторных встреч
+    }
+  }
+  for (let r = 1; r <= lowerRounds; r++) {
+    const count = lowerCount(r);
+    for (let s = 0; s < count; s++) {
+      const from = key("l", r, s);
+      if (r === lowerRounds) link(from, "next", key("g", 1, 0), "b");
+      else if (r % 2 === 1) link(from, "next", key("l", r + 1, s), "a");
+      else link(from, "next", key("l", r + 1, Math.floor(s / 2)), s % 2 === 0 ? "a" : "b");
+    }
+  }
+  return [...out.values()];
+}
+
+/** Название раунда с учётом части сетки. */
+export function stageName(m: Match, all: Match[]): string {
+  const b = m.bracket ?? "upper";
+  if (!isDouble(all)) return roundName(m.round, Math.max(...all.map((x) => x.round)));
+  if (b === "grand") return "Гранд-финал";
+  const total = Math.max(...all.filter((x) => (x.bracket ?? "upper") === b).map((x) => x.round));
+  if (b === "upper") return m.round === total ? "Финал верхней сетки" : `Верхняя · ${roundName(m.round, total)}`;
+  return m.round === total ? "Финал нижней сетки" : `Нижняя · раунд ${m.round}`;
+}
+
+/** Места в Double Elimination: 1 и 2 — гранд-финал, дальше — по раунду вылета из нижней сетки. */
+function doublePlacements(matches: Match[], teams: Team[]): Placement[] {
+  const grand = matches.find((m) => m.bracket === "grand");
+  const champ = grand ? matchWinner(grand) : null;
+  if (!grand || !champ) return [];
+  const ordered: string[] = [champ];
+  const runnerUp = grand.teamA === champ ? grand.teamB : grand.teamA;
+  if (runnerUp) ordered.push(runnerUp);
+  const losers = matches
+    .filter((m) => m.bracket === "lower")
+    .map((m) => {
+      const w = matchWinner(m);
+      if (!w) return null;
+      const loser = m.teamA === w ? m.teamB : m.teamA;
+      const diff = m.teamA === loser ? (m.scoreA ?? 0) - (m.scoreB ?? 0) : (m.scoreB ?? 0) - (m.scoreA ?? 0);
+      return loser ? { id: loser, round: m.round, diff } : null;
+    })
+    .filter((x): x is { id: string; round: number; diff: number } => !!x)
+    .sort((a, b) => b.round - a.round || b.diff - a.diff);
+  for (const l of losers) if (!ordered.includes(l.id)) ordered.push(l.id);
+  return ordered.map((id, i) => {
+    const team = teams.find((t) => t.id === id);
+    return { place: i + 1, teamName: team?.name ?? "—", logo: team?.logo, points: PLACE_POINTS[i + 1] ?? 0 };
+  });
 }

@@ -1,7 +1,7 @@
 import {
   formatMatchTime,
   matchWinner,
-  roundName,
+  stageName,
   type GroupMatch,
   type Match,
   type Team,
@@ -32,7 +32,6 @@ type Row = {
 
 export function MatchSchedule({ teams, groupMatches, bracket, onTime, highlight = [] }: Props) {
   const teamOf = (id: string | null) => (id ? teams.find((t) => t.id === id) : undefined);
-  const totalRounds = bracket.length ? Math.max(...bracket.map((m) => m.round)) : 0;
 
 
   const rows: Row[] = [
@@ -52,10 +51,10 @@ export function MatchSchedule({ teams, groupMatches, bracket, onTime, highlight 
             : m.teamB,
     })),
     ...[...bracket]
-      .sort((a, b) => a.round - b.round || a.order - b.order)
+      .sort((a, b) => a.round - b.round || (a.bracket === "grand" ? 1 : 0) - (b.bracket === "grand" ? 1 : 0) || a.order - b.order)
       .map((m) => ({
         id: m.id,
-        stage: roundName(m.round, totalRounds),
+        stage: stageName(m, bracket),
         teamA: m.teamA,
         teamB: m.teamB,
         scoreA: m.scoreA,

@@ -27,6 +27,7 @@ export const STATUS_LABEL: Record<TournamentStatus, string> = {
 export const FORMAT_LABEL: Record<TournamentFormat, string> = {
   groups_playoff: "Групповой этап + плей-офф",
   single_elim: "Плей-офф (на выбывание)",
+  double_elim: "Double Elimination (с нижней сеткой)",
   round_robin: "Круговая система",
 };
 
@@ -149,6 +150,7 @@ export function toViewModel(participants: ParticipantRow[], matches: MatchRow[],
       scoreA: m.score_a,
       scoreB: m.score_b,
       scheduledAt: m.scheduled_at,
+      bracket: (m.bracket ?? "upper") as Match["bracket"],
     }));
   const groupMatches: GroupMatch[] = matches
     .filter((m) => m.stage === "group" && m.group_id && m.team_a_id && m.team_b_id)

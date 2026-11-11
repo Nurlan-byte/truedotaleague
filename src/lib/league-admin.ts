@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { buildBracket, buildGroups, type GroupMatch, type Match, type Team } from "@/lib/tournament";
+import { buildBracket, buildDoubleBracket, buildGroups, type GroupMatch, type Match, type Team } from "@/lib/tournament";
 import type { TournamentFormat, TournamentRow } from "@/lib/league";
 
 /** Лига живёт по Кызылорде: фиксированный UTC+5 без перехода на летнее время. */
@@ -141,6 +141,11 @@ export function bracketPayload(teams: Team[]) {
         team_b_id: m.round === 1 ? m.teamB : null,
       })),
   };
+}
+
+/** Double Elimination → payload для generate_structure. */
+export function doubleBracketPayload(teams: Team[]) {
+  return { double: true, matches: buildDoubleBracket(teams.map((t) => t.id)) };
 }
 
 export function groupsPayload(teams: Team[], groupCount: number) {
