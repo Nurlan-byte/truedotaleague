@@ -20,6 +20,7 @@ import {
   AUDIT_LABEL,
   auditQuery,
   bracketPayload,
+  doubleBracketPayload,
   changedFields,
   fromLeagueInput,
   groupsPayload,
@@ -28,7 +29,7 @@ import {
   tournamentApplicationsQuery,
   usersWithRolesQuery,
 } from "@/lib/league-admin";
-import { finalPlacements, groupPlacements, PLACE_POINTS, roundName } from "@/lib/tournament";
+import { doubleSizeOk, finalPlacements, groupPlacements, PLACE_POINTS, stageName } from "@/lib/tournament";
 
 type Props = { t: TournamentDetail; isAdmin: boolean; isStaff: boolean; userId: string };
 
@@ -73,6 +74,8 @@ export function StaffPanel({ t, isAdmin, isStaff, userId }: Props) {
 
   const generate = async (kind: "groups" | "bracket") => {
     if (vm.teams.length < 2) return toast.error("Нужно минимум 2 принятые команды");
+    if (kind === "bracket" && t.format === "double_elim" && !doubleSizeOk(vm.teams.length))
+      return toast.error(`Для Double Elimination нужно 4, 8, 16 или 32 команды (сейчас ${vm.teams.length})`);
     const hasScores = kind === "groups" ? hasGroupScores : hasPlayoffScores;
     const existing = t.matches.filter((m) => m.stage === (kind === "groups" ? "group" : "playoff")).length;
     if (existing > 0) {
@@ -93,7 +96,9 @@ export function StaffPanel({ t, isAdmin, isStaff, userId }: Props) {
     const payload =
       kind === "groups"
         ? groupsPayload(vm.teams, Math.max(1, Math.min(groupCount, Math.floor(vm.teams.length / 2))))
-        : bracketPayload(vm.teams);
+        : t.format === "double_elim"
+          ? doubleBracketPayload(vm.teams)
+          : bracketPayload(vm.teams);
     run.mutate(() =>
       supabase.rpc("generate_structure", {
         p_tournament_id: t.id,
@@ -194,9 +199,12 @@ function StaffMatches({ t, isAdmin }: { t: TournamentDetail; isAdmin: boolean })
   const { ask, dialog } = useReasonDialog();
   const name = new Map(t.tournament_participants.map((p) => [p.team_id, p.team_name]));
   const groupName = new Map(t.groups.map((g) => [g.id, g.name]));
-  const totalRounds = Math.max(0, ...t.matches.filter((m) => m.stage === "playoff").map((m) => m.round));
+  const vmBracket = toViewModel(t.tournament_participants, t.matches, t.groups).bracket;
+  const bOrder = { upper: 0, lower: 1, grand: 2 } as Record<string, number>;
   const list = [...t.matches].sort((a, b) =>
-    a.stage === b.stage ? a.round - b.round || a.slot - b.slot : a.stage === "group" ? -1 : 1,
+    a.stage === b.stage
+      ? bOrder[a.bracket ?? "upper"] - bOrder[b.bracket ?? "upper"] || a.round - b.round || a.slot - b.slot
+      : a.stage === "group" ? -1 : 1,
   );
   const [edit, setEdit] = useState<Record<string, { time?: string; a?: string; b?: string }>>({});
 
@@ -241,11 +249,11 @@ function StaffMatches({ t, isAdmin }: { t: TournamentDetail; isAdmin: boolean })
       <ul className="space-y-2">
         {list.map((m) => {
           const e = edit[m.id] ?? {};
-          const stage = m.stage === "group" ? (groupName.get(m.group_id ?? "") ?? "Группа") : roundName(m.round, totalRounds);
+          const stage = m.stage === "group" ? (groupName.get(m.group_id ?? "") ?? "Группа") : stageName(vmBracket.find((x) => x.id === m.id)!, vmBracket);
           const ready = m.team_a_id && m.team_b_id;
           return (
             <li key={m.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-white/50 px-3 py-2 text-sm">
-              <span className="w-24 shrink-0 text-xs font-semibold text-primary">{stage}</span>
+              <span className="w-32 shrink-0 text-xs font-semibold text-primary">{stage}</span>
               <span className="min-w-0 flex-1 truncate">
                 {name.get(m.team_a_id ?? "") ?? "—"} vs {name.get(m.team_b_id ?? "") ?? "—"}
               </span>
