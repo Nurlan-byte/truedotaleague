@@ -93,7 +93,7 @@ function MyTeamPage() {
     if (!team?.id || synced.current === team.id) return;
     synced.current = team.id;
     refreshTeamRatings({ data: { teamId: team.id } })
-      .then((r) => r.updated > 0 && qc.invalidateQueries({ queryKey: ["league", "my-team"] }))
+      .then((r) => { if (r.updated > 0) void qc.invalidateQueries({ queryKey: ["league", "my-team"] }); })
       .catch(() => {});
   }, [team?.id]);
   const effectiveReg = useQuery(effectiveRegulationQuery());
