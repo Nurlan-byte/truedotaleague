@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Check, Copy, ImagePlus, Link2, RefreshCw, LogOut, Plus, Search, Shield, Trash2, UserPlus, Users, X } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
@@ -12,6 +12,7 @@ import { APPLICATION_LABEL, formatLeagueDate, rpcErrorText } from "@/lib/league"
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 import { effectiveRegulationQuery } from "@/lib/league-admin";
 import { notifyDiscord } from "@/lib/discord-notify.functions";
+import { refreshTeamRatings } from "@/lib/discord-rating.functions";
 import { loadErrorText, pickMyTeamId, rosterMmr } from "@/lib/my-team";
 
 export const Route = createFileRoute("/my-team")({
@@ -86,6 +87,15 @@ function MyTeamPage() {
   const team = teamQ.data;
   const invites = useQuery(invitesQuery(user?.id));
   const apps = useQuery(myApplicationsQuery(team ? [team.id] : []));
+  // Рейтинг игроков подтягивается из ролей Discord при открытии страницы.
+  const synced = useRef<string | null>(null);
+  useEffect(() => {
+    if (!team?.id || synced.current === team.id) return;
+    synced.current = team.id;
+    refreshTeamRatings({ data: { teamId: team.id } })
+      .then((r) => r.updated > 0 && qc.invalidateQueries({ queryKey: ["league", "my-team"] }))
+      .catch(() => {});
+  }, [team?.id]);
   const effectiveReg = useQuery(effectiveRegulationQuery());
   const [name, setName] = useState("");
   const [tag, setTag] = useState("");
