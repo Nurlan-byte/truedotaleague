@@ -123,6 +123,33 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_posts: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          team_id: string
+          tournament_id: string | null
+          webhook: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          team_id: string
+          tournament_id?: string | null
+          webhook?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          team_id?: string
+          tournament_id?: string | null
+          webhook?: string
+        }
+        Relationships: []
+      }
       draft_publications: {
         Row: {
           id: number

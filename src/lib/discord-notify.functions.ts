@@ -87,7 +87,7 @@ export const notifyDiscord = createServerFn({ method: "POST" })
       title = `${t?.title ?? "Турнир"} — новая команда ✅`;
       link = `${SITE}/tournaments/${data.tournamentId}`;
     }
-    const res = await fetch(url, {
+    const res = await fetch(`${url}${url.includes("?") ? "&" : "?"}wait=true`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -106,5 +106,59 @@ export const notifyDiscord = createServerFn({ method: "POST" })
         ],
       }),
     });
+    if (res.ok) {
+      const msg = (await res.json().catch(() => null)) as { id?: string } | null;
+      if (msg?.id) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await supabaseAdmin.from("discord_posts").insert({
+          team_id: team.id,
+          tournament_id: data.kind === "application_submitted" ? data.tournamentId! : null,
+          message_id: msg.id,
+        });
+      }
+    }
     return { ok: res.ok };
+  });
+
+const removeInput = z.object({ teamId: z.string().uuid().optional(), applicationId: z.string().uuid().optional() });
+
+// Убирает из Discord карточки состава, которые больше не актуальны:
+// команда удалена — убираются все; заявка снята/отклонена — карточка этого турнира.
+// Решение принимается по состоянию базы, поэтому вызов безопасен для любого пользователя.
+export const removeDiscordPosts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => removeInput.parse(d))
+  .handler(async ({ data }) => {
+    const url = process.env["DISCORD_WEBHOOK_AMATEUR_URL"] || process.env["DISCORD_WEBHOOK_URL"];
+    if (!url) return { removed: 0 };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let teamId = data.teamId;
+    if (!teamId && data.applicationId) {
+      const { data: app } = await supabaseAdmin.from("applications").select("team_id").eq("id", data.applicationId).maybeSingle();
+      teamId = app?.team_id ?? undefined;
+    }
+    if (!teamId) return { removed: 0 };
+    const { data: posts } = await supabaseAdmin
+      .from("discord_posts")
+      .select("id, tournament_id, message_id")
+      .eq("team_id", teamId);
+    if (!posts?.length) return { removed: 0 };
+    const { data: team } = await supabaseAdmin.from("teams").select("id").eq("id", teamId).maybeSingle();
+    const { data: apps } = await supabaseAdmin
+      .from("applications")
+      .select("tournament_id, status")
+      .eq("team_id", teamId)
+      .in("status", ["pending", "accepted"]);
+    const active = new Set((apps ?? []).map((a) => a.tournament_id));
+    const stale = posts.filter((p) => !team || (p.tournament_id && !active.has(p.tournament_id)));
+    const base = url.split("?")[0];
+    let removed = 0;
+    for (const p of stale) {
+      const r = await fetch(`${base}/messages/${p.message_id}`, { method: "DELETE" });
+      if (r.ok || r.status === 404) {
+        await supabaseAdmin.from("discord_posts").delete().eq("id", p.id);
+        removed++;
+      }
+    }
+    return { removed };
   });

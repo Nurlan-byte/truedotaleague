@@ -1,3 +1,4 @@
+import { removeDiscordPosts } from "@/lib/discord-notify.functions";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ function TeamsPage() {
     if (!window.confirm(`Удалить команду «${name}»? Состав, приглашения и заявки команды тоже удалятся. Это нельзя отменить.`)) return;
     const { error } = await supabase.rpc("admin_delete_team", { p_team_id: id });
     if (error) return toast.error("Не удалось удалить команду");
+    removeDiscordPosts({ data: { teamId: id } }).catch(() => {});
     toast.success("Команда удалена");
     qc.invalidateQueries();
   };

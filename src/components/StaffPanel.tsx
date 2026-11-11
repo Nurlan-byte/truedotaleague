@@ -1,3 +1,4 @@
+import { removeDiscordPosts } from "@/lib/discord-notify.functions";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
@@ -315,6 +316,7 @@ function StaffApplications({ tournamentId, isAdmin, userId }: { tournamentId: st
     }
     const { error } = await supabase.rpc("decide_application", { p_id: id, p_accept: accept, p_reason: reason || undefined });
     if (error) return toast.error(rpcErrorText(error));
+    if (!accept) removeDiscordPosts({ data: { applicationId: id } }).catch(() => {});
     toast.success(accept ? "Заявка принята" : "Заявка отклонена");
     qc.invalidateQueries({ queryKey: ["league"] });
   };

@@ -11,7 +11,7 @@ import { myApplicationsQuery } from "@/lib/league-api";
 import { APPLICATION_LABEL, formatLeagueDate, rpcErrorText } from "@/lib/league";
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 import { effectiveRegulationQuery } from "@/lib/league-admin";
-import { notifyDiscord } from "@/lib/discord-notify.functions";
+import { notifyDiscord, removeDiscordPosts } from "@/lib/discord-notify.functions";
 import { refreshTeamRatings } from "@/lib/discord-rating.functions";
 import { loadErrorText, pickMyTeamId, rosterMmr } from "@/lib/my-team";
 
@@ -271,7 +271,7 @@ function MyTeamPage() {
                 <button
                   onClick={() => {
                     if (!confirm(`Удалить команду «${team.name}»?`)) return;
-                    run.mutate(async () => { await rpc("manage_team", { p_team_id: team.id, p_action: "delete" }); toast.success("Команда удалена"); });
+                    run.mutate(async () => { await rpc("manage_team", { p_team_id: team.id, p_action: "delete" }); removeDiscordPosts({ data: { teamId: team.id } }).catch(() => {}); toast.success("Команда удалена"); });
                   }}
                   className="text-muted-foreground hover:text-destructive"
                   aria-label="Удалить команду"
@@ -440,7 +440,7 @@ function MyTeamPage() {
                         onClick={() => {
                           const accepted = a.status === "accepted";
                           if (!confirm(accepted ? "Сняться с турнира? Команда освободит место." : "Отозвать заявку?")) return;
-                          run.mutate(async () => { await rpc("withdraw_application", { p_id: a.id }); toast.success(accepted ? "Команда снялась с турнира" : "Заявка отозвана"); });
+                          run.mutate(async () => { await rpc("withdraw_application", { p_id: a.id }); removeDiscordPosts({ data: { teamId: team.id } }).catch(() => {}); toast.success(accepted ? "Команда снялась с турнира" : "Заявка отозвана"); });
                         }}
                         className="text-xs font-semibold text-destructive hover:underline"
                       >
