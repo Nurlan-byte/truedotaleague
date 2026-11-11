@@ -438,12 +438,13 @@ function MyTeamPage() {
                     {isOwner && (a.status === "pending" || a.status === "accepted") && (
                       <button
                         onClick={() => {
-                          if (!confirm("Отозвать заявку?")) return;
-                          run.mutate(async () => { await rpc("withdraw_application", { p_id: a.id }); toast.success("Заявка отозвана"); });
+                          const accepted = a.status === "accepted";
+                          if (!confirm(accepted ? "Сняться с турнира? Команда освободит место." : "Отозвать заявку?")) return;
+                          run.mutate(async () => { await rpc("withdraw_application", { p_id: a.id }); toast.success(accepted ? "Команда снялась с турнира" : "Заявка отозвана"); });
                         }}
                         className="text-xs font-semibold text-destructive hover:underline"
                       >
-                        Отозвать
+                        {a.status === "accepted" ? "Сняться с турнира" : "Отозвать"}
                       </button>
                     )}
                   </li>
