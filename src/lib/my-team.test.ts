@@ -42,3 +42,28 @@ describe("loadErrorText", () => {
     );
   });
 });
+
+import { LEAGUE_RULES, leagueStatus } from "./my-team";
+describe("leagueStatus", () => {
+  const [amateur, challenger, freedom] = LEAGUE_RULES;
+  it("amateur allows 16500 total with players at most 4500", () => {
+    expect(leagueStatus(amateur, [4500, 4500, 4500, 2000, 1000])).toBe("ok");
+  });
+  it("amateur rejects a team over 16500", () => {
+    expect(leagueStatus(amateur, [4000, 4000, 4000, 4000, 1000])).toBe("team_limit");
+  });
+  it("amateur rejects a player over 4500", () => {
+    expect(leagueStatus(amateur, [4600, 1000, 1000, 1000, 1000])).toBe("player_limit");
+  });
+  it("challenger limit is 26500", () => {
+    expect(leagueStatus(challenger, [6000, 6000, 6000, 6000, 3000])).toBe("team_limit");
+    expect(leagueStatus(challenger, [6000, 6000, 6000, 6000, 2500])).toBe("ok");
+  });
+  it("freedom has no limit but needs five players", () => {
+    expect(leagueStatus(freedom, [12000, 12000, 12000, 12000, 12000])).toBe("ok");
+    expect(leagueStatus(freedom, [1000, 1000])).toBe("not_enough");
+  });
+  it("missing rating needs manual check", () => {
+    expect(leagueStatus(freedom, [1000, 1000, 1000, 1000, null])).toBe("needs_check");
+  });
+});

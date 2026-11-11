@@ -35,3 +35,23 @@ export function loadErrorText(err: unknown): string {
   const code = e?.code ? ` (код ${e.code})` : "";
   return `Не удалось загрузить команду${code}: ${e?.message || "неизвестная ошибка"}`;
 }
+
+export type LeagueStatus = "ok" | "team_limit" | "player_limit" | "not_enough" | "needs_check";
+export type LeagueRule = { id: string; name: string; teamMax: number | null; playerMax: number | null };
+
+/** League limits (Competitive Rating). Freedom has no limit. */
+export const LEAGUE_RULES: LeagueRule[] = [
+  { id: "amateur", name: "TDL Amateur League", teamMax: 16500, playerMax: 4500 },
+  { id: "challenger", name: "TDL Challenger League", teamMax: 26500, playerMax: null },
+  { id: "freedom", name: "TDL Freedom League", teamMax: null, playerMax: null },
+];
+
+/** Checks the main five against a league's limits. Not an admission decision. */
+export function leagueStatus(rule: LeagueRule, mainRatings: (number | null)[]): LeagueStatus {
+  if (mainRatings.length < 5) return "not_enough";
+  if (rule.playerMax != null && mainRatings.some((r) => r != null && r > rule.playerMax!)) return "player_limit";
+  const sum = mainRatings.reduce<number>((s, r) => s + (r ?? 0), 0);
+  if (rule.teamMax != null && sum > rule.teamMax) return "team_limit";
+  if (mainRatings.some((r) => r == null)) return "needs_check";
+  return "ok";
+}

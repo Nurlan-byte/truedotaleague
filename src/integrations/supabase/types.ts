@@ -1314,6 +1314,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      rename_team: {
+        Args: { p_name: string; p_tag: string; p_team_id: string }
+        Returns: undefined
+      }
       revoke_moderator: {
         Args: { p_reason?: string; p_tournament_id: string; p_user_id: string }
         Returns: undefined
@@ -1402,6 +1406,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_member_slot: {
+        Args: { p_position: number; p_team_id: string; p_user_id: string }
+        Returns: undefined
+      }
       set_my_avatar: { Args: { p_avatar_url: string }; Returns: undefined }
       set_user_role: {
         Args: {
@@ -1444,6 +1452,10 @@ export type Database = {
       tournament_is_public: {
         Args: { _tournament_id: string }
         Returns: boolean
+      }
+      transfer_team_owner: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: undefined
       }
       update_my_profile: {
         Args: {

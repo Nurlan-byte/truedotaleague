@@ -204,6 +204,8 @@ const ERRORS: Record<string, string> = {
   already_in_team: "Игрок уже состоит в команде",
   team_full: "В команде уже 7 игроков",
   owner_required: "Это может сделать только владелец команды",
+  roster_slots_full: "Нельзя больше 5 основных и 2 запасных игроков",
+  invalid_position: "Неверная позиция в составе",
   invitation_not_found: "Приглашение не найдено",
   invitation_not_pending: "Приглашение уже неактивно",
   not_invitation_recipient: "Это приглашение не для вас",
