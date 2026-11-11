@@ -15,10 +15,8 @@ export const notifyDiscord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
-    // Новые команды — в канал TDL Amateur, заявки на турниры — в основной канал.
-    const url =
-      (data.kind === "team_created" ? process.env["DISCORD_WEBHOOK_AMATEUR_URL"] : undefined) ||
-      process.env["DISCORD_WEBHOOK_URL"];
+    // Команды и заявки публикуются в канал TDL Amateur.
+    const url = process.env["DISCORD_WEBHOOK_AMATEUR_URL"] || process.env["DISCORD_WEBHOOK_URL"];
     if (!url) return { ok: false };
     const { supabase, userId } = context;
 
@@ -38,8 +36,9 @@ export const notifyDiscord = createServerFn({ method: "POST" })
     }
     const { data: members } = await supabase
       .from("team_members")
-      .select("nickname, role")
-      .eq("team_id", team.id);
+      .select("nickname, role, mmr, position, profiles(nickname, competitive_rating, mmr)")
+      .eq("team_id", team.id)
+      .order("position");
     const { data: profile } = await supabase
       .from("profiles")
       .select("nickname")
@@ -47,7 +46,16 @@ export const notifyDiscord = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const teamLabel = `${team.name}${team.tag ? ` [${team.tag}]` : ""}`;
-    const roster = (members ?? []).map((m) => `• ${m.nickname}${m.role ? ` — ${m.role}` : ""}`).join("\n");
+    const players = (members ?? []).map((m) => {
+      const p = m.profiles as { nickname: string | null; competitive_rating: number | null; mmr: number | null } | null;
+      const name = p?.nickname || m.nickname || "Игрок";
+      const rating = p?.competitive_rating ?? m.mmr ?? p?.mmr ?? null;
+      return { name, rating, role: m.role };
+    });
+    const total = players.reduce((s, p) => s + (p.rating ?? 0), 0);
+    const roster = players
+      .map((p, i) => `${i + 1}. **${p.name}** — ${p.rating ? `${p.rating} MMR` : "нет рейтинга"}${p.role ? ` · ${p.role}` : ""}`)
+      .join("\n");
     const fields: { name: string; value: string; inline?: boolean }[] = [
       { name: "Капитан", value: profile?.nickname || "—", inline: true },
     ];
@@ -73,7 +81,10 @@ export const notifyDiscord = createServerFn({ method: "POST" })
       fields.push({ name: "Турнир", value: t?.title ?? "—", inline: true });
       link = `${SITE}/tournaments/${data.tournamentId}`;
     }
-    if (roster) fields.push({ name: "Состав", value: roster.slice(0, 1000) });
+    if (roster) {
+      fields.push({ name: `Состав (${players.length})`, value: roster.slice(0, 1000) });
+      fields.push({ name: "Общий MMR", value: String(total), inline: true });
+    }
 
     const res = await fetch(url, {
       method: "POST",
