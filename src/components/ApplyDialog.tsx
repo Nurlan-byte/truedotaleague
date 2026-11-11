@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { myTeamsQuery, regulationQuery } from "@/lib/league-api";
 import { formatLeagueDate, rpcErrorText } from "@/lib/league";
-import { notifyDiscord } from "@/lib/discord-notify.functions";
 
 type Props = {
   tournamentId: string;
@@ -42,7 +41,6 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
       return data;
     },
     onSuccess: () => {
-      notifyDiscord({ data: { kind: "application_submitted", teamId, tournamentId } }).catch(() => {});
       toast.success("Заявка отправлена — ожидайте решения администраторов");
       qc.invalidateQueries({ queryKey: ["league"] });
       onOpenChange(false);

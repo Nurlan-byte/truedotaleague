@@ -5,8 +5,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const SITE = "https://truedotaleague.kz";
 
 const input = z.object({
-  kind: z.enum(["team_created", "application_submitted"]),
-  teamId: z.string().uuid(),
+  kind: z.enum(["team_created", "application_submitted", "application_accepted"]),
+  teamId: z.string().uuid().optional(),
+  applicationId: z.string().uuid().optional(),
   tournamentId: z.string().uuid().optional(),
 });
 
@@ -19,13 +20,30 @@ export const notifyDiscord = createServerFn({ method: "POST" })
     const url = process.env["DISCORD_WEBHOOK_AMATEUR_URL"] || process.env["DISCORD_WEBHOOK_URL"];
     if (!url) return { ok: false };
     const { supabase, userId } = context;
+    let staffAccepted = false;
+    if (data.kind === "application_accepted") {
+      if (!data.applicationId) return { ok: false };
+      const { data: acc } = await supabase
+        .from("applications")
+        .select("team_id, tournament_id, status")
+        .eq("id", data.applicationId)
+        .maybeSingle();
+      if (!acc || acc.status !== "accepted") return { ok: false };
+      const { data: staff } = await supabase.rpc("is_staff_for", { _tournament_id: acc.tournament_id, _uid: userId });
+      if (!staff) return { ok: false };
+      data.teamId = acc.team_id;
+      data.tournamentId = acc.tournament_id;
+      staffAccepted = true;
+    }
+    if (!data.teamId) return { ok: false };
 
     const { data: team } = await supabase
       .from("teams")
       .select("id, name, tag, owner_id, logo_url")
       .eq("id", data.teamId)
       .maybeSingle();
-    if (!team || team.owner_id !== userId) {
+    if (!team) return { ok: false };
+    if (!staffAccepted && team.owner_id !== userId) {
       const { data: cap } = await supabase
         .from("team_captains")
         .select("user_id")
@@ -69,14 +87,14 @@ export const notifyDiscord = createServerFn({ method: "POST" })
     let title = `🛡️ Новая команда: ${teamLabel}`;
     let link = `${SITE}/teams`;
 
-    if (data.kind === "application_submitted") {
+    if (data.kind === "application_submitted" || data.kind === "application_accepted") {
       if (!data.tournamentId) return { ok: false };
       const { data: app } = await supabase
         .from("applications")
         .select("id")
         .eq("team_id", team.id)
         .eq("tournament_id", data.tournamentId)
-        .eq("status", "pending")
+        .eq("status", data.kind === "application_accepted" ? "accepted" : "pending")
         .maybeSingle();
       if (!app) return { ok: false };
       const { data: t } = await supabase
@@ -112,7 +130,7 @@ export const notifyDiscord = createServerFn({ method: "POST" })
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         await supabaseAdmin.from("discord_posts").insert({
           team_id: team.id,
-          tournament_id: data.kind === "application_submitted" ? data.tournamentId! : null,
+          tournament_id: data.tournamentId ?? null,
           message_id: msg.id,
         });
       }

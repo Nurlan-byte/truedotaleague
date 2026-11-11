@@ -1,4 +1,4 @@
-import { removeDiscordPosts } from "@/lib/discord-notify.functions";
+import { notifyDiscord, removeDiscordPosts } from "@/lib/discord-notify.functions";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Inbox, X } from "lucide-react";
@@ -42,6 +42,7 @@ function ApplicationsPage() {
       if (error) throw error;
     },
     onSuccess: (_d, v) => {
+      if (v.accept) notifyDiscord({ data: { kind: "application_accepted", applicationId: v.id } }).catch(() => {});
       if (!v.accept) removeDiscordPosts({ data: { applicationId: v.id } }).catch(() => {});
       toast.success(v.accept ? "Заявка принята" : "Заявка отклонена");
       qc.invalidateQueries({ queryKey: ["league"] });

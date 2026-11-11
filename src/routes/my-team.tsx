@@ -25,7 +25,7 @@ import { myApplicationsQuery } from "@/lib/league-api";
 import { APPLICATION_LABEL, formatLeagueDate, rpcErrorText } from "@/lib/league";
 import { fileToLogoDataUrl, validateLogoFile } from "@/lib/image";
 import { effectiveRegulationQuery } from "@/lib/league-admin";
-import { notifyDiscord, removeDiscordPosts } from "@/lib/discord-notify.functions";
+import { removeDiscordPosts } from "@/lib/discord-notify.functions";
 import { refreshTeamRatings } from "@/lib/discord-rating.functions";
 import { loadErrorText, pickMyTeamId } from "@/lib/my-team";
 import { TeamDashboard, type DashTeam } from "@/components/team/TeamDashboard";
@@ -177,7 +177,6 @@ function MyTeamPage() {
     if (!tag.trim()) return toast.error("Введите тег команды");
     run.mutate(async () => {
       const id = (await rpc("create_team", { p_name: name.trim(), p_tag: tag.trim() })) as string;
-      if (id) notifyDiscord({ data: { kind: "team_created", teamId: id } }).catch(() => {});
       // Keep the button locked until the new team is actually loaded.
       await teamQ.refetch();
       toast.success("Команда создана");
