@@ -167,6 +167,7 @@ export function toViewModel(participants: ParticipantRow[], matches: MatchRow[],
 }
 
 const ERRORS: Record<string, string> = {
+  already_in_bracket: "Команда уже стоит в сетке — сняться можно только через администратора",
   not_authenticated: "Войдите в аккаунт",
   registration_not_open: "Регистрация ещё не открыта",
   registration_closed: "Регистрация уже закрыта",
