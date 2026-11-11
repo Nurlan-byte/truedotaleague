@@ -1,4 +1,4 @@
-import { matchWinner, roundName, type Match, type Team } from "@/lib/tournament";
+import { isDouble, matchWinner, stageName, type Match, type Team } from "@/lib/tournament";
 import { TeamLogo } from "@/components/TeamLogo";
 import { Trophy } from "lucide-react";
 
@@ -24,8 +24,18 @@ export function BracketView({ matches, teams, onScore, readOnly = false, highlig
 
   const teamOf = (id: string | null) => (id ? teams.find((t) => t.id === id) : undefined);
   const nameOf = (id: string | null) => (id ? (teamOf(id)?.name ?? "—") : null);
-  const totalRounds = Math.max(...matches.map((m) => m.round));
-  const championTeam = teamOf(matchWinner(matches.find((m) => m.round === totalRounds)!));
+  const double = isDouble(matches);
+  const final = double
+    ? matches.find((m) => m.bracket === "grand")
+    : matches.find((m) => m.round === Math.max(...matches.map((x) => x.round)));
+  const championTeam = final ? teamOf(matchWinner(final)) : undefined;
+  const sections = double
+    ? ([
+        ["Верхняя сетка", matches.filter((m) => (m.bracket ?? "upper") === "upper")],
+        ["Нижняя сетка", matches.filter((m) => m.bracket === "lower")],
+        ["Гранд-финал", matches.filter((m) => m.bracket === "grand")],
+      ] as const)
+    : ([["", matches]] as const);
 
   return (
     <div className="space-y-6">
@@ -40,16 +50,19 @@ export function BracketView({ matches, teams, onScore, readOnly = false, highlig
         </div>
       )}
 
+      {sections.map(([title, list]) => (
+        <div key={title} className="space-y-2">
+          {title && <h3 className="text-sm font-bold uppercase tracking-widest text-primary">{title}</h3>}
       <div className="overflow-x-auto pb-2">
         <div className="flex min-w-max gap-6">
-          {Array.from({ length: totalRounds }, (_, i) => i + 1).map((round) => {
-            const rms = matches
+          {[...new Set(list.map((m) => m.round))].sort((x, y) => x - y).map((round) => {
+            const rms = list
               .filter((m) => m.round === round)
               .sort((a, b) => a.order - b.order);
             return (
               <div key={round} className="flex w-64 flex-col justify-around gap-4">
                 <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                  {roundName(round, totalRounds)}
+                  {stageName(rms[0], matches)}
                 </p>
                 {rms.map((m) => {
                   const winner = matchWinner(m);
@@ -104,6 +117,8 @@ export function BracketView({ matches, teams, onScore, readOnly = false, highlig
           })}
         </div>
       </div>
+        </div>
+      ))}
     </div>
   );
 }
