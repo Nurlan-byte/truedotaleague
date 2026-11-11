@@ -125,3 +125,24 @@ export async function fetchCompetitiveRating(discordUserId: string): Promise<num
   const profile = await fetchDiscordGuildProfile(discordUserId);
   return profile?.rating;
 }
+
+/** Re-reads Competitive Rating and titles from Discord for the given profiles (server only). */
+export async function syncGuildProfiles(profileIds: string[]): Promise<number> {
+  if (profileIds.length === 0) return 0;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.from("profiles").select("id, discord_id").in("id", profileIds);
+  let updated = 0;
+  await Promise.all(
+    (data ?? []).map(async (p) => {
+      if (!p.discord_id) return;
+      const g = await fetchDiscordGuildProfile(p.discord_id);
+      if (g === undefined) return;
+      const { error } = await supabaseAdmin
+        .from("profiles")
+        .update({ competitive_rating: g.rating, titles: g.titles })
+        .eq("id", p.id);
+      if (!error) updated++;
+    }),
+  );
+  return updated;
+}

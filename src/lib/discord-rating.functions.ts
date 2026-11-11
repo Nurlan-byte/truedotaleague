@@ -29,3 +29,20 @@ export const refreshMyRating = createServerFn({ method: "POST" })
       titles: guildProfile.titles,
     };
   });
+
+// Re-reads Discord ratings for every player of a team. Any member or the captain may trigger it.
+export const refreshTeamRatings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { teamId: string }) => {
+    if (!/^[0-9a-f-]{36}$/i.test(d?.teamId ?? "")) throw new Error("invalid team");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: members } = await supabase.from("team_members").select("profile_id").eq("team_id", data.teamId);
+    const { data: team } = await supabase.from("teams").select("owner_id").eq("id", data.teamId).maybeSingle();
+    const ids = (members ?? []).map((m) => m.profile_id).filter((x): x is string => !!x);
+    if (!team || (team.owner_id !== userId && !ids.includes(userId))) return { updated: 0 };
+    const { syncGuildProfiles } = await import("@/lib/discord.server");
+    return { updated: await syncGuildProfiles(ids) };
+  });

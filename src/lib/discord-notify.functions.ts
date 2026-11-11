@@ -34,6 +34,12 @@ export const notifyDiscord = createServerFn({ method: "POST" })
         .maybeSingle();
       if (!team || !cap) return { ok: false };
     }
+    // Свежий рейтинг из Discord перед публикацией состава.
+    {
+      const { data: ids } = await supabase.from("team_members").select("profile_id").eq("team_id", team.id);
+      const { syncGuildProfiles } = await import("@/lib/discord.server");
+      await syncGuildProfiles((ids ?? []).map((m) => m.profile_id).filter((x): x is string => !!x));
+    }
     const { data: members } = await supabase
       .from("team_members")
       .select("nickname, role, mmr, position, profiles(nickname, competitive_rating, mmr)")
