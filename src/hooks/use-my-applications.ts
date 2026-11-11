@@ -10,9 +10,13 @@ export function useMyApplications() {
   const ids = (teams.data ?? []).map((t) => t.id);
   const apps = useQuery(myApplicationsQuery(ids));
   const byTournament = new Map<string, ApplicationStatus>();
+  const rejectReason = new Map<string, string>();
   for (const a of apps.data ?? []) {
     if (a.status === "withdrawn") continue;
-    if (!byTournament.has(a.tournament_id)) byTournament.set(a.tournament_id, a.status);
+    if (!byTournament.has(a.tournament_id)) {
+      byTournament.set(a.tournament_id, a.status);
+      if (a.status === "rejected") rejectReason.set(a.tournament_id, a.reject_reason ?? "");
+    }
   }
-  return { user, byTournament, teams: teams.data ?? [], applications: apps.data ?? [] };
+  return { user, byTournament, rejectReason, teams: teams.data ?? [], applications: apps.data ?? [] };
 }

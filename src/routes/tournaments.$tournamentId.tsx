@@ -57,7 +57,7 @@ function TournamentPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const { data: t, isLoading, error } = useQuery({ ...tournamentQuery(tournamentId), refetchInterval: 15000 });
-  const { user, byTournament, teams: myTeams } = useMyApplications();
+  const { user, byTournament, rejectReason, teams: myTeams } = useMyApplications();
   const [applyOpen, setApplyOpen] = useState(false);
   const { isAdmin } = useAdmin();
   const staff = useQuery(isStaffQuery(tournamentId, user?.id));
@@ -106,7 +106,19 @@ function TournamentPage() {
 
   let mainButton: ReactNode = null;
   const btn = "inline-flex items-center justify-center rounded-lg px-5 py-2.5 text-sm font-bold shadow-sm";
-  if (application && t.status !== "finished" && t.status !== "cancelled") {
+  if (application === "rejected" && t.status === "registration_open") {
+    const reason = rejectReason.get(t.id);
+    mainButton = (
+      <div className="flex flex-col gap-2">
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          Заявка отклонена{reason ? `: ${reason}` : ""}
+        </p>
+        <button onClick={applyClick} className={`${btn} bg-primary text-primary-foreground`}>
+          Подать заявку повторно
+        </button>
+      </div>
+    );
+  } else if (application && t.status !== "finished" && t.status !== "cancelled") {
     mainButton = <span className={`${btn} bg-secondary text-secondary-foreground`}>{APPLICATION_LABEL[application]}</span>;
   } else if (t.status === "registration_open") {
     mainButton = (
