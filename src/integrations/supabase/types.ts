@@ -187,10 +187,13 @@ export type Database = {
       }
       matches: {
         Row: {
+          bracket: string
           created_at: string
           group_id: string | null
           id: string
           legacy_id: string | null
+          loser_next_match_id: string | null
+          loser_next_match_slot: string | null
           next_match_id: string | null
           next_match_slot: string | null
           round: number
@@ -207,10 +210,13 @@ export type Database = {
           winner_id: string | null
         }
         Insert: {
+          bracket?: string
           created_at?: string
           group_id?: string | null
           id?: string
           legacy_id?: string | null
+          loser_next_match_id?: string | null
+          loser_next_match_slot?: string | null
           next_match_id?: string | null
           next_match_slot?: string | null
           round?: number
@@ -227,10 +233,13 @@ export type Database = {
           winner_id?: string | null
         }
         Update: {
+          bracket?: string
           created_at?: string
           group_id?: string | null
           id?: string
           legacy_id?: string | null
+          loser_next_match_id?: string | null
+          loser_next_match_slot?: string | null
           next_match_id?: string | null
           next_match_slot?: string | null
           round?: number
@@ -252,6 +261,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_loser_next_match_id_fkey"
+            columns: ["loser_next_match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
             referencedColumns: ["id"]
           },
           {
@@ -1293,10 +1309,13 @@ export type Database = {
       set_match_schedule: {
         Args: { p_match_id: string; p_reason?: string; p_scheduled_at: string }
         Returns: {
+          bracket: string
           created_at: string
           group_id: string | null
           id: string
           legacy_id: string | null
+          loser_next_match_id: string | null
+          loser_next_match_slot: string | null
           next_match_id: string | null
           next_match_slot: string | null
           round: number
@@ -1327,10 +1346,13 @@ export type Database = {
           p_score_b: number
         }
         Returns: {
+          bracket: string
           created_at: string
           group_id: string | null
           id: string
           legacy_id: string | null
+          loser_next_match_id: string | null
+          loser_next_match_slot: string | null
           next_match_id: string | null
           next_match_slot: string | null
           round: number
@@ -1485,7 +1507,11 @@ export type Database = {
       application_status: "pending" | "accepted" | "rejected" | "withdrawn"
       match_stage: "group" | "playoff"
       regulation_status: "draft" | "published"
-      tournament_format: "groups_playoff" | "single_elim" | "round_robin"
+      tournament_format:
+        | "groups_playoff"
+        | "single_elim"
+        | "round_robin"
+        | "double_elim"
       tournament_mode: "online" | "offline"
       tournament_status:
         | "draft"
@@ -1626,7 +1652,12 @@ export const Constants = {
       application_status: ["pending", "accepted", "rejected", "withdrawn"],
       match_stage: ["group", "playoff"],
       regulation_status: ["draft", "published"],
-      tournament_format: ["groups_playoff", "single_elim", "round_robin"],
+      tournament_format: [
+        "groups_playoff",
+        "single_elim",
+        "round_robin",
+        "double_elim",
+      ],
       tournament_mode: ["online", "offline"],
       tournament_status: [
         "draft",

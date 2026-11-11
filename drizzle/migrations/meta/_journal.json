@@ -78,6 +78,13 @@
       "when": 1794345925802,
       "tag": "0010_update_my_profile_rpc",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794412890212,
+      "tag": "0011_double_elimination",
+      "breakpoints": true
     }
   ]
 }
