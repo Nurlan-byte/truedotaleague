@@ -64,9 +64,8 @@ export const notifyDiscord = createServerFn({ method: "POST" })
       .map((p, i) => `${p.name} \`${p.rating ?? "—"}\`${p.captain ? " ⭐" : ""}${i >= 5 ? " (замена)" : ""}`)
       .join("\n");
     const block = `🏅 ***${team.name}*** \`${total} ммр\`\n${roster}`;
-    const fields: { name: string; value: string; inline?: boolean }[] = [
-      { name: "Капитан", value: profile?.nickname || "—", inline: true },
-    ];
+    void profile;
+    const fields: { name: string; value: string; inline?: boolean }[] = [];
     let title = `🛡️ Новая команда: ${teamLabel}`;
     let link = `${SITE}/teams`;
 
