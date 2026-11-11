@@ -176,7 +176,7 @@ const ERRORS: Record<string, string> = {
   tournament_full: "Свободных мест больше нет",
   competitive_rating_required:
     "У всех 5 основных игроков должна быть роль Competitive Rating в Discord. Получите роль и войдите на сайт через Discord заново.",
-  deadline_passed: "Срок отзыва заявки истёк",
+  deadline_passed: "Турнир уже начался — сняться нельзя",
   application_not_active: "Заявка уже не активна",
   application_not_pending: "Заявка уже рассмотрена",
   conflict_of_interest: "Нельзя рассматривать заявку своей команды",
