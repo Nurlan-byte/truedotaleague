@@ -29,7 +29,7 @@ import {
   tournamentApplicationsQuery,
   usersWithRolesQuery,
 } from "@/lib/league-admin";
-import { finalPlacements, groupPlacements, PLACE_POINTS, roundName } from "@/lib/tournament";
+import { doubleSizeOk, finalPlacements, groupPlacements, PLACE_POINTS, stageName } from "@/lib/tournament";
 
 type Props = { t: TournamentDetail; isAdmin: boolean; isStaff: boolean; userId: string };
 
