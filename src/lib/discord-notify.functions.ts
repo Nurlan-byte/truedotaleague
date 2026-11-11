@@ -42,7 +42,7 @@ export const notifyDiscord = createServerFn({ method: "POST" })
     }
     const { data: members } = await supabase
       .from("team_members")
-      .select("nickname, role, mmr, position, profiles(nickname, competitive_rating, mmr)")
+      .select("nickname, role, mmr, position, profile_id, profiles(nickname, competitive_rating, mmr)")
       .eq("team_id", team.id)
       .order("position");
     const { data: profile } = await supabase
@@ -56,15 +56,16 @@ export const notifyDiscord = createServerFn({ method: "POST" })
       const p = m.profiles as { nickname: string | null; competitive_rating: number | null; mmr: number | null } | null;
       const name = p?.nickname || m.nickname || "Игрок";
       const rating = p?.competitive_rating ?? m.mmr ?? p?.mmr ?? null;
-      return { name, rating, role: m.role };
+      return { name, rating, role: m.role, captain: !!m.profile_id && m.profile_id === team.owner_id };
     });
-    const total = players.reduce((s, p) => s + (p.rating ?? 0), 0);
+    // Общий MMR — по основной пятёрке, как в списке команд лиги.
+    const total = players.slice(0, 5).reduce((s, p) => s + (p.rating ?? 0), 0);
     const roster = players
-      .map((p, i) => `${i + 1}. **${p.name}** — ${p.rating ? `${p.rating} MMR` : "нет рейтинга"}${p.role ? ` · ${p.role}` : ""}`)
+      .map((p, i) => `${p.name} \`${p.rating ?? "—"}\`${p.captain ? " ⭐" : ""}${i >= 5 ? " (замена)" : ""}`)
       .join("\n");
-    const fields: { name: string; value: string; inline?: boolean }[] = [
-      { name: "Капитан", value: profile?.nickname || "—", inline: true },
-    ];
+    const block = `🏅 ***${team.name}*** \`${total} ммр\`\n${roster}`;
+    void profile;
+    const fields: { name: string; value: string; inline?: boolean }[] = [];
     let title = `🛡️ Новая команда: ${teamLabel}`;
     let link = `${SITE}/teams`;
 
@@ -83,26 +84,21 @@ export const notifyDiscord = createServerFn({ method: "POST" })
         .select("title")
         .eq("id", data.tournamentId)
         .maybeSingle();
-      title = `📝 Заявка на турнир: ${teamLabel}`;
-      fields.push({ name: "Турнир", value: t?.title ?? "—", inline: true });
+      title = `${t?.title ?? "Турнир"} — новая команда ✅`;
       link = `${SITE}/tournaments/${data.tournamentId}`;
     }
-    if (roster) {
-      fields.push({ name: `Состав (${players.length})`, value: roster.slice(0, 1000) });
-      fields.push({ name: "Общий MMR", value: String(total), inline: true });
-    }
-
     const res = await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        username: "TrueDotaLeague",
+        username: "TDL Amateur League",
         allowed_mentions: { parse: [] },
         embeds: [
           {
             title: title.slice(0, 250),
             url: link,
-            color: 0x2563eb,
+            color: 0x3b82f6,
+            description: block.slice(0, 3500),
             fields,
             timestamp: new Date().toISOString(),
             footer: { text: "TrueDotaLeague" },
