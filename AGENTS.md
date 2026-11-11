@@ -12,3 +12,4 @@
 - Tournament images are stored as compressed data URLs in image_url because the workspace blocks public storage buckets. Why: public read without a bucket.
 - Profiles are readable only through column-level SELECT grants on public fields; Discord identity columns stay ungranted and are read via get_my_discord_identity. Why: public pages need nicknames/ratings without leaking Discord IDs; new profile columns must be granted explicitly.
 - Double Elimination brackets are built client-side (buildDoubleBracket) and linked in the DB via next_match_id + loser_next_match_id; propagate_match_winner moves both winner and loser. Why: one propagation path for all playoff formats.
+- Home page sections live in src/routes/index.tsx + src/components/home/; division of a tournament is derived from its title via src/lib/divisions.ts. Why: no division column, avoid schema change.

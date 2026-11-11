@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import tdlLogo from "@/assets/tdl-logo.png.asset.json";
-import { Archive, Home, Inbox, ListChecks, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, UserCog } from "lucide-react";
+import { BookOpen, Crown, UserRound, BarChart3, Home, Inbox, ListChecks, Plus, Radio, Route as RouteIcon, Shield, ShieldPlus, UserCog } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,9 +17,12 @@ import { useAdmin } from "@/hooks/use-admin";
 const items = [
   { title: "Главная", url: "/", icon: Home },
   { title: "Турниры", url: "/tournaments", icon: Radio },
-  { title: "Моя команда", url: "/my-team", icon: ShieldPlus },
   { title: "Команды", url: "/teams", icon: Shield },
-  { title: "Архив турниров", url: "/archive", icon: Archive },
+  { title: "Рейтинг", url: "/rating", icon: BarChart3 },
+  { title: "Чемпионы", url: "/archive", icon: Crown },
+  { title: "Правила", url: "/regulations", icon: BookOpen },
+  { title: "Моя команда", url: "/my-team", icon: ShieldPlus },
+  { title: "Профиль", url: "/profile", icon: UserRound },
 ] as const;
 
 const adminItems = [
@@ -33,7 +36,7 @@ const adminItems = [
 
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
   const { isAdmin } = useAdmin();
@@ -42,7 +45,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-white/70 backdrop-blur-md">
+      <SidebarContent className="bg-sidebar backdrop-blur-md">
         <div className="flex items-center gap-2 px-3 py-4">
           <img
             src={tdlLogo.url}
@@ -65,7 +68,7 @@ export function AppSidebar() {
               {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild isActive={item.url === "/" ? currentPath === "/" : currentPath === item.url || currentPath.startsWith(item.url + "/")}>
-                    <Link to={item.url} className="flex items-center gap-2">
+                    <Link to={item.url} onClick={() => setOpenMobile(false)} className="flex items-center gap-2">
                       <item.icon className="size-4" />
                       {!collapsed && <span>{item.title}</span>}
                     </Link>
@@ -83,7 +86,7 @@ export function AppSidebar() {
                 {adminItems.map((item) => (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild isActive={currentPath === item.url || currentPath.startsWith(item.url + "/")}>
-                      <Link to={item.url} className="flex items-center gap-2">
+                      <Link to={item.url} onClick={() => setOpenMobile(false)} className="flex items-center gap-2">
                         <item.icon className="size-4" />
                         {!collapsed && <span>{item.title}</span>}
                       </Link>

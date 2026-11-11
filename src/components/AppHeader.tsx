@@ -1,12 +1,25 @@
 import { Link } from "@tanstack/react-router";
 import tdlLogo from "@/assets/tdl-logo.png.asset.json";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { TeamLogo } from "@/components/TeamLogo";
 import { useAuth } from "@/hooks/use-auth";
 
 export function AppHeader() {
   const { user, profile, signOut } = useAuth();
+  const [dark, setDark] = useState(false);
+  useEffect(() => setDark(document.documentElement.classList.contains("dark")), []);
+  const toggleTheme = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem("tdl-theme", next ? "dark" : "light");
+    } catch {
+      /* ignore */
+    }
+  };
 
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-border bg-background/70 px-3 backdrop-blur-xl backdrop-saturate-150">
@@ -21,6 +34,14 @@ export function AppHeader() {
       />
       <p className="min-w-0 truncate text-sm font-extrabold tracking-tight text-foreground">Лига по Дота 2</p>
       <div className="ml-auto flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={dark ? "Светлая тема" : "Тёмная тема"}
+          className="grid size-9 place-items-center rounded-full border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+        </button>
         {user ? (
           <>
             <Link

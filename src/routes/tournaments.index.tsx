@@ -20,6 +20,7 @@ import {
   type CatalogSort,
 } from "@/lib/league";
 import { setReturnTo } from "@/lib/return-to";
+import { DIVISIONS, divisionOf, isDivision, type Division } from "@/lib/divisions";
 
 export const Route = createFileRoute("/tournaments/")({
   head: () => ({
@@ -35,6 +36,8 @@ export const Route = createFileRoute("/tournaments/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { division?: Division } =>
+    isDivision(search.division) ? { division: search.division } : {},
   component: CatalogPage,
 });
 
@@ -44,12 +47,16 @@ function CatalogPage() {
   const { byTournament } = useMyApplications();
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<CatalogSort>("default");
+  const { division } = Route.useSearch();
+  const nav = useNavigate({ from: "/tournaments/" });
 
   const list = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    const items = (data ?? []).filter((t) => !needle || t.title.toLowerCase().includes(needle));
+    const items = (data ?? []).filter(
+      (t) => (!needle || t.title.toLowerCase().includes(needle)) && (!division || divisionOf(t.title) === division),
+    );
     return sortCatalog(items, sort);
-  }, [data, q, sort]);
+  }, [data, q, sort, division]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:px-8">
@@ -96,6 +103,20 @@ function CatalogPage() {
           <option value="start_desc">По дате старта ↓</option>
           <option value="title">По названию</option>
         </select>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Дивизион">
+        {[{ id: undefined, name: "Все" }, ...DIVISIONS].map((d) => (
+          <button
+            key={d.name}
+            type="button"
+            onClick={() => nav({ search: d.id ? { division: d.id } : {} })}
+            aria-pressed={division === d.id}
+            className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${division === d.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary"}`}
+          >
+            {d.name}
+          </button>
+        ))}
       </div>
 
       <div className="mt-5">

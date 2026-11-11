@@ -148,3 +148,29 @@ export const pendingApplicationsQuery = () =>
   });
 
 export type MyApplicationStatus = ApplicationStatus;
+
+/** Реальные счётчики платформы для главной. */
+export const platformStatsQuery = () =>
+  queryOptions({
+    queryKey: ["league", "platform-stats"],
+    queryFn: async () => {
+      const [t, teams, players, matches] = await Promise.all([
+        supabase.from("tournaments").select("id", { count: "exact", head: true }).eq("status", "finished"),
+        supabase.from("teams").select("id", { count: "exact", head: true }),
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase
+          .from("matches")
+          .select("id", { count: "exact", head: true })
+          .not("score_a", "is", null)
+          .not("score_b", "is", null)
+          .not("team_a_id", "is", null)
+          .not("team_b_id", "is", null),
+      ]);
+      return {
+        tournaments: t.count ?? 0,
+        teams: teams.count ?? 0,
+        players: players.count ?? 0,
+        matches: matches.count ?? 0,
+      };
+    },
+  });

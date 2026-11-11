@@ -21,6 +21,7 @@ import { Route as LiveRouteImport } from './routes/live'
 import { Route as MyTeamRouteImport } from './routes/my-team'
 import { Route as PlayersRouteImport } from './routes/players'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as RatingRouteImport } from './routes/rating'
 import { Route as RegulationsRouteImport } from './routes/regulations'
 import { Route as RoadToTiRouteImport } from './routes/road-to-ti'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -93,6 +94,11 @@ const PlayersRoute = PlayersRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatingRoute = RatingRouteImport.update({
+  id: '/rating',
+  path: '/rating',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegulationsRoute = RegulationsRouteImport.update({
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
+  '/rating': typeof RatingRoute
   '/regulations': typeof RegulationsRoute
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
+  '/rating': typeof RatingRoute
   '/regulations': typeof RegulationsRoute
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
   '/profile': typeof ProfileRoute
+  '/rating': typeof RatingRoute
   '/regulations': typeof RegulationsRoute
   '/road-to-ti': typeof RoadToTiRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -261,6 +270,7 @@ export interface FileRouteTypes {
     | '/my-team'
     | '/players'
     | '/profile'
+    | '/rating'
     | '/regulations'
     | '/road-to-ti'
     | '/sitemap.xml'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/my-team'
     | '/players'
     | '/profile'
+    | '/rating'
     | '/regulations'
     | '/road-to-ti'
     | '/sitemap.xml'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/my-team'
     | '/players'
     | '/profile'
+    | '/rating'
     | '/regulations'
     | '/road-to-ti'
     | '/sitemap.xml'
@@ -343,6 +355,7 @@ export interface RootRouteChildren {
   MyTeamRoute: typeof MyTeamRoute
   PlayersRoute: typeof PlayersRouteWithChildren
   ProfileRoute: typeof ProfileRoute
+  RatingRoute: typeof RatingRoute
   RegulationsRoute: typeof RegulationsRoute
   RoadToTiRoute: typeof RoadToTiRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -441,6 +454,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rating': {
+      id: '/rating'
+      path: '/rating'
+      fullPath: '/rating'
+      preLoaderRoute: typeof RatingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/regulations': {
@@ -561,6 +581,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyTeamRoute: MyTeamRoute,
   PlayersRoute: PlayersRouteWithChildren,
   ProfileRoute: ProfileRoute,
+  RatingRoute: RatingRoute,
   RegulationsRoute: RegulationsRoute,
   RoadToTiRoute: RoadToTiRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
