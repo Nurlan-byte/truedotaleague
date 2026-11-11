@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdmin } from "@/hooks/use-admin";
 import { useMemo, useState } from "react";
-import { Search, Shield, Trash2 } from "lucide-react";
+import { ChevronRight, Search, Shield, Trash2 } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { LoadingPanel } from "@/components/league";
 import { allTeamsQuery } from "@/lib/league-api";
@@ -80,43 +80,41 @@ function TeamsPage() {
             {list.map((t) => {
               const members = [...t.team_members].sort((a, b) => a.position - b.position);
               return (
-                <li key={t.id} className="panel min-w-0 p-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <TeamLogo name={t.name} logo={t.logo_url ?? undefined} size="md" />
-                    <p className="min-w-0 flex-1 truncate font-semibold text-foreground">
-                      {t.name}
-                      {t.tag && <span className="ml-2 text-xs font-semibold uppercase text-primary">[{t.tag}]</span>}
-                    </p>
-                    {isAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => removeTeam(t.id, t.name)}
-                        aria-label={`Удалить команду ${t.name}`}
-                        className="shrink-0 rounded-full p-2 text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                    )}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-x-1 gap-y-1 text-xs text-muted-foreground">
-                    {members.length === 0 && "Состав не указан"}
-                    {members.map((m, i) => (
-                      <span key={m.id}>
-                        {i > 0 && <span className="mr-1">·</span>}
-                        {m.profile_id ? (
-                          <Link
-                            to="/players/$playerId"
-                            params={{ playerId: m.profile_id }}
-                            className="font-semibold text-foreground underline-offset-2 hover:text-primary hover:underline"
-                          >
-                            {m.nickname}
-                          </Link>
-                        ) : (
-                          m.nickname
-                        )}
-                      </span>
-                    ))}
-                  </div>
+                <li key={t.id} className="panel relative min-w-0 p-4 transition-colors hover:border-primary">
+                  <Link
+                    to="/teams/$teamId"
+                    params={{ teamId: t.id }}
+                    className="block"
+                    aria-label={`Открыть команду ${t.name}`}
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <TeamLogo name={t.name} logo={t.logo_url ?? undefined} size="md" />
+                      <p className="min-w-0 flex-1 truncate font-semibold text-foreground">
+                        {t.name}
+                        {t.tag && <span className="ml-2 text-xs font-semibold uppercase text-primary">[{t.tag}]</span>}
+                      </p>
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-x-1 gap-y-1 text-xs text-muted-foreground">
+                      {members.length === 0 && "Состав не указан"}
+                      {members.map((m, i) => (
+                        <span key={m.id}>
+                          {i > 0 && <span className="mr-1">·</span>}
+                          <span className="font-semibold text-foreground">{m.nickname}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </Link>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => removeTeam(t.id, t.name)}
+                      aria-label={`Удалить команду ${t.name}`}
+                      className="absolute right-2 top-2 rounded-full p-2 text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  )}
                 </li>
               );
             })}
