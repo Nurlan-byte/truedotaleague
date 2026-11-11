@@ -15,7 +15,10 @@ export const notifyDiscord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
-    const url = process.env["DISCORD_WEBHOOK_URL"];
+    // Новые команды — в канал TDL Amateur, заявки на турниры — в основной канал.
+    const url =
+      (data.kind === "team_created" ? process.env["DISCORD_WEBHOOK_AMATEUR_URL"] : undefined) ||
+      process.env["DISCORD_WEBHOOK_URL"];
     if (!url) return { ok: false };
     const { supabase, userId } = context;
 
