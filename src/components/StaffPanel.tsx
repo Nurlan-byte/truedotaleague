@@ -7,6 +7,8 @@ import { AlertTriangle, ArrowDown, ArrowUp, Check, History, Pencil, Trash2, X } 
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TeamLogo } from "@/components/TeamLogo";
+import { Button } from "@/components/ui/button";
+import { deleteTournament } from "@/lib/tournament-delete";
 import { useReasonDialog } from "@/components/ReasonDialog";
 import { btnGhost, btnPrimary, field } from "@/components/TournamentEditor";
 import type { TournamentDetail } from "@/lib/league-api";
@@ -48,6 +50,7 @@ export function StaffPanel({ t, isAdmin, isStaff, userId }: Props) {
   const navigate = useNavigate();
   const { ask, dialog } = useReasonDialog();
   const [finishOpen, setFinishOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["league"] });
 
   const run = useMutation({
@@ -142,26 +145,30 @@ export function StaffPanel({ t, isAdmin, isStaff, userId }: Props) {
                 Отменить
               </button>
             )}
-            {s === "draft" && (
-              <button
-                className={btnGhost + " hover:border-destructive hover:text-destructive"}
+              <Button
+                variant="destructive"
+                disabled={deleting}
                 onClick={async () => {
-                  const ok = await ask({ title: "Удалить черновик навсегда?", withReason: false, confirmLabel: "Удалить" });
+                  const ok = await ask({ title: `Удалить «${t.title}» навсегда?`, withReason: false, confirmLabel: "Удалить навсегда", description: "Турнир исчезнет с сайта и из архива. Заявки, участники турнира, группы, матчи, результаты и начисленные за этот турнир TDL Points будут удалены. Карточки его составов в Discord тоже будут удалены. Команды и профили игроков сохранятся. Отменить удаление нельзя." });
                   if (ok === null) return;
-                  const { error } = await supabase.rpc("delete_draft_tournament", { p_id: t.id });
-                  if (error) return toast.error(rpcErrorText(error));
-                  toast.success("Черновик удалён");
-                  refresh();
-                  navigate({ to: "/tournaments" });
+                  setDeleting(true);
+                  try {
+                    const result = await deleteTournament(t.id, t.version, (request) => supabase.rpc("admin_delete_tournament", request), () => removeDiscordPosts({ data: { tournamentId: t.id } }));
+                    toast.success("Турнир удалён полностью");
+                    if (result.discordCleanupFailed) toast.warning("Турнир удалён, но не все карточки Discord удалось убрать.");
+                    await refresh();
+                    await navigate({ to: "/tournaments" });
+                  } catch (error) {
+                    const message = error && typeof error === "object" && "message" in error ? String(error.message) : "Не удалось удалить турнир";
+                    toast.error(rpcErrorText({ message }));
+                  } finally {
+                    setDeleting(false);
+                  }
                 }}
               >
-                <Trash2 className="size-4" /> Удалить черновик
-              </button>
-            )}
+                <Trash2 className="size-4" /> {deleting ? "Удаление…" : "Удалить турнир"}
+              </Button>
           </div>
-          {s !== "draft" && (
-            <p className="text-xs text-muted-foreground">Опубликованные турниры не удаляются — их можно только отменить.</p>
-          )}
         </Box>
       )}
 

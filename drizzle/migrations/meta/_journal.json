@@ -106,6 +106,13 @@
       "when": 1794418388148,
       "tag": "0014_team_dashboard_roster_rpcs",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794491122327,
+      "tag": "0015_admin_delete_tournament",
+      "breakpoints": true
     }
   ]
 }

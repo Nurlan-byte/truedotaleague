@@ -138,7 +138,7 @@ export const notifyDiscord = createServerFn({ method: "POST" })
     return { ok: res.ok };
   });
 
-const removeInput = z.object({ teamId: z.string().uuid().optional(), applicationId: z.string().uuid().optional() });
+const removeInput = z.object({ teamId: z.string().uuid().optional(), applicationId: z.string().uuid().optional(), tournamentId: z.string().uuid().optional() });
 
 // Убирает из Discord карточки состава, которые больше не актуальны:
 // команда удалена — убираются все; заявка снята/отклонена — карточка этого турнира.
@@ -146,7 +146,31 @@ const removeInput = z.object({ teamId: z.string().uuid().optional(), application
 export const removeDiscordPosts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => removeInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    if (data.tournamentId) {
+      const { data: admin, error } = await context.supabase.rpc("is_admin", { _uid: context.userId });
+      if (error || !admin) throw new Error("forbidden");
+      const { data: tournament, error: readError } = await context.supabase.from("tournaments").select("id").eq("id", data.tournamentId).maybeSingle();
+      if (readError) throw readError;
+      if (tournament) return { removed: 0, failed: false };
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: posts, error: postsError } = await supabaseAdmin.from("discord_posts").select("id, message_id").eq("tournament_id", data.tournamentId);
+      if (postsError) throw postsError;
+      const url = process.env["DISCORD_WEBHOOK_AMATEUR_URL"] || process.env["DISCORD_WEBHOOK_URL"];
+      if (!posts?.length) return { removed: 0, failed: false };
+      if (!url) return { removed: 0, failed: true };
+      let removed = 0;
+      for (const post of posts) {
+        try {
+          const response = await fetch(`${url.split("?")[0]}/messages/${post.message_id}`, { method: "DELETE", signal: AbortSignal.timeout(10000) });
+          if (response.ok || response.status === 404) {
+            const { error: deleteError } = await supabaseAdmin.from("discord_posts").delete().eq("id", post.id);
+            if (!deleteError) removed++;
+          }
+        } catch { /* Preserve failed records for a later cleanup retry. */ }
+      }
+      return { removed, failed: removed !== posts.length };
+    }
     const url = process.env["DISCORD_WEBHOOK_AMATEUR_URL"] || process.env["DISCORD_WEBHOOK_URL"];
     if (!url) return { removed: 0 };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
