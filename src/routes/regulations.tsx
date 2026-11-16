@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { seoUrl } from "@/lib/seo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,8 +20,10 @@ export const Route = createFileRoute("/regulations")({
       { property: "og:title", content: "Регламент TrueDotaLeague" },
       { property: "og:description", content: "Правила участия команд в турнирах лиги по Dota 2." },
       { property: "og:type", content: "article" },
+      ...seoUrl("/regulations").meta,
       { name: "twitter:card", content: "summary" },
     ],
+    links: seoUrl("/regulations").links,
   }),
   component: RegulationsPage,
 });

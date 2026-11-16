@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/auth-discord")({
         content: "Подтверждаем вход через Discord и открываем доступ к турнирам лиги.",
       },
       { property: "og:type", content: "website" },
+      NOINDEX,
       { name: "twitter:card", content: "summary" },
     ],
   }),

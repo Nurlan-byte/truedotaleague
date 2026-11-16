@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { seoUrl } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { BookOpen, CalendarClock, MapPin, Plus, Search, Trophy, Users, Wifi } from "lucide-react";
@@ -25,16 +26,18 @@ import { DIVISIONS, divisionOf, isDivision, type Division } from "@/lib/division
 export const Route = createFileRoute("/tournaments/")({
   head: () => ({
     meta: [
-      { title: "Турниры — TrueDotaLeague" },
+      { title: "Турниры по Dota 2 в Казахстане — TrueDotaLeague" },
       {
         name: "description",
-        content: "Все турниры лиги по Dota 2: анонсы, открытая регистрация, идущие турниры и итоги.",
+        content: "Турниры по Dota 2 в Казахстане: анонсы, открытая регистрация команд, сетки, расписание и итоги лиги TrueDotaLeague.",
       },
       { property: "og:title", content: "Турниры TrueDotaLeague" },
       { property: "og:description", content: "Каталог турниров лиги: регистрация команд, расписание и результаты." },
       { property: "og:type", content: "website" },
+      ...seoUrl("/tournaments").meta,
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: seoUrl("/tournaments").links,
   }),
   validateSearch: (search: Record<string, unknown>): { division?: Division } =>
     isDivision(search.division) ? { division: search.division } : {},

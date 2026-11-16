@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/my-team")({
         content: "Создание команды и заявки на турниры лиги по Dota 2.",
       },
       { property: "og:type", content: "website" },
+      NOINDEX,
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),

@@ -1,2 +1,16 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /applications
+Disallow: /auth
+Disallow: /auth-discord
+Disallow: /profile
+Disallow: /my-team
+Disallow: /join/
+Disallow: /create
+Disallow: /tournaments/new
+Disallow: /draft
+Disallow: /road-to-ti
+Disallow: /api/
+
+Sitemap: https://truedotaleague.kz/sitemap.xml

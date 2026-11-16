@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Shield, Users } from "lucide-react";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/join/$token")({
       { property: "og:title", content: "Приглашение в команду — TrueDotaLeague" },
       { property: "og:description", content: "Капитан приглашает вас в команду по Dota 2. Войдите через Discord и вступите." },
       { property: "og:type", content: "website" },
+      NOINDEX,
       { name: "twitter:card", content: "summary" },
     ],
   }),

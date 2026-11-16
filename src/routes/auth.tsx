@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/auth")({
       { property: "og:title", content: "Вход через Discord — TrueDotaLeague" },
       { property: "og:description", content: "Вход в TrueDotaLeague через Discord. Турниры, сетки и TDL points." },
       { property: "og:type", content: "website" },
+      NOINDEX,
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),

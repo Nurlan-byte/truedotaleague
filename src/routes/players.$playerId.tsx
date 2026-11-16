@@ -1,27 +1,29 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { seoPlayer, seoUrl } from "@/lib/seo";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink, History, Shield, Swords, TrendingUp, Trophy, UserSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogo } from "@/components/TeamLogo";
 
 export const Route = createFileRoute("/players/$playerId")({
-  head: () => ({
-    meta: [
-      { title: "Профиль участника — TrueDotaLeague" },
-      {
-        name: "description",
-        content:
-          "Публичный профиль участника TrueDotaLeague: никнейм, рейтинг MMR, роль на линии, команда и описание игрока.",
-      },
-      { property: "og:title", content: "Профиль участника — TrueDotaLeague" },
-      {
-        property: "og:description",
-        content: "Никнейм, MMR, позиция, команда и описание игрока лиги по Дота 2.",
-      },
-      { property: "og:type", content: "profile" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  loader: async ({ params }) => ({ seo: await seoPlayer(params.playerId) }),
+  head: ({ params, loaderData }) => {
+    const title = loaderData?.seo?.nickname ? `${loaderData.seo.nickname} — игрок Dota 2 | TrueDotaLeague` : "Игрок Dota 2 — TrueDotaLeague";
+    const description = `${loaderData?.seo?.nickname ?? "Игрок"} — профиль игрока Dota 2 лиги TrueDotaLeague: рейтинг, команда и история турниров.`;
+    const url = seoUrl(`/players/${params.playerId}`);
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "profile" },
+        ...url.meta,
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: url.links,
+    };
+  },
   component: PlayerPage,
 });
 

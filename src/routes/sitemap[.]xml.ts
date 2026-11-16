@@ -1,8 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
 
-// TODO: replace with your project URL once a project name or custom domain is set.
-const BASE_URL = "";
+import { supabase } from "@/integrations/supabase/client";
+import { SITE_URL as BASE_URL } from "@/lib/seo";
+
+const PAGE = 1000;
+
+/** Paginated public id list; throws on query failure so we never serve a partial sitemap. */
+async function allIds(table: "tournaments" | "teams"): Promise<string[]> {
+  const ids: string[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase.from(table).select("id").order("created_at").range(from, from + PAGE - 1);
+    if (error) throw new Error(`sitemap ${table}: ${error.message}`);
+    ids.push(...(data ?? []).map((r) => r.id));
+    if (!data || data.length < PAGE) return ids;
+  }
+}
 
 interface SitemapEntry {
   path: string;
@@ -21,7 +34,11 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/archive", changefreq: "weekly", priority: "0.7" },
           { path: "/regulations", changefreq: "monthly", priority: "0.6" },
           { path: "/teams", changefreq: "weekly", priority: "0.5" },
+          { path: "/rating", changefreq: "weekly", priority: "0.5" },
         ];
+        const [tournaments, teams] = await Promise.all([allIds("tournaments"), allIds("teams")]);
+        for (const id of tournaments) entries.push({ path: `/tournaments/${id}`, changefreq: "daily", priority: "0.8" });
+        for (const id of teams) entries.push({ path: `/teams/${id}`, changefreq: "weekly", priority: "0.4" });
 
         const urls = entries.map((e) =>
           [

@@ -28,6 +28,26 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "https://truedotaleague.kz/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "SportsOrganization",
+              name: "TrueDotaLeague",
+              alternateName: "TDL",
+              url: "https://truedotaleague.kz/",
+              sport: "Dota 2",
+              areaServed: "KZ",
+              sameAs: ["https://discord.gg/ZJBzeKcjvU"],
+            },
+            { "@type": "WebSite", name: "TrueDotaLeague", url: "https://truedotaleague.kz/", inLanguage: "ru" },
+          ],
+        }),
+      },
+    ],
   }),
   component: HomePage,
 });

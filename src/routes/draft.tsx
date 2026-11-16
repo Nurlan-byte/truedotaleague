@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { DraftApp } from "@/components/DraftApp";
 
 export const Route = createFileRoute("/draft")({
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/draft")({
       { property: "og:title", content: "Immortal Draft — TrueDotaLeague" },
       { property: "og:description", content: "Драфт игроков Immortal Draft: капитаны по очереди выбирают игроков в составы." },
       { property: "og:type", content: "website" },
+      NOINDEX,
       { name: "twitter:card", content: "summary" },
     ],
   }),

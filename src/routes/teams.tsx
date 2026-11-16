@@ -1,4 +1,5 @@
 import { removeDiscordPosts } from "@/lib/discord-notify.functions";
+import { seoUrl } from "@/lib/seo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,12 +15,14 @@ export const Route = createFileRoute("/teams")({
   head: () => ({
     meta: [
       { title: "Команды лиги — TrueDotaLeague" },
-      { name: "description", content: "Все команды лиги TrueDotaLeague по Dota 2 и их составы." },
+      { name: "description", content: "Команды Dota 2 из Казахстана в лиге TrueDotaLeague: составы, рейтинги игроков и результаты турниров." },
       { property: "og:title", content: "Команды TrueDotaLeague" },
       { property: "og:description", content: "Команды лиги по Dota 2: теги, логотипы и составы игроков." },
       { property: "og:type", content: "website" },
+      ...seoUrl("/teams").meta,
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: seoUrl("/teams").links,
   }),
   component: TeamsPage,
 });

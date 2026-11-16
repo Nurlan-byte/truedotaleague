@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { Route as RouteIcon } from "lucide-react";
 import { TeamLogo } from "@/components/TeamLogo";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/road-to-ti")({
         content: "Гонка команд лиги за слот на The International по сумме TDL points.",
       },
       { property: "og:type", content: "website" },
+      NOINDEX,
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),

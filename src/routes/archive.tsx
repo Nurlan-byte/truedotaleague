@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { seoUrl } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Archive, Medal, Search } from "lucide-react";
@@ -15,8 +16,10 @@ export const Route = createFileRoute("/archive")({
       { property: "og:title", content: "Архив турниров TrueDotaLeague" },
       { property: "og:description", content: "История турниров лиги: сетки, результаты и победители." },
       { property: "og:type", content: "website" },
+      ...seoUrl("/archive").meta,
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: seoUrl("/archive").links,
   }),
   component: ArchivePage,
 });

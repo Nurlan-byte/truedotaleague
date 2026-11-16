@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { seoTeam, seoUrl } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Crown, History, Shield, TrendingUp, Trophy, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,16 +7,24 @@ import { TeamLogo } from "@/components/TeamLogo";
 import { LoadingPanel } from "@/components/league";
 
 export const Route = createFileRoute("/teams_/$teamId")({
-  head: () => ({
-    meta: [
-      { title: "Команда — TrueDotaLeague" },
-      { name: "description", content: "Карточка команды TrueDotaLeague: состав, рейтинги игроков и история турниров." },
-      { property: "og:title", content: "Команда TrueDotaLeague" },
-      { property: "og:description", content: "Состав команды, рейтинги игроков и результаты в турнирах лиги по Dota 2." },
-      { property: "og:type", content: "profile" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
+  loader: async ({ params }) => ({ seo: await seoTeam(params.teamId) }),
+  head: ({ params, loaderData }) => {
+    const title = loaderData?.seo ? `${loaderData.seo.name} [${loaderData.seo.tag}] — команда Dota 2 | TrueDotaLeague` : "Команда Dota 2 — TrueDotaLeague";
+    const description = `${loaderData?.seo?.name ?? "Команда"} — команда Dota 2 лиги TrueDotaLeague: состав, рейтинги игроков и история турниров.`;
+    const url = seoUrl(`/teams/${params.teamId}`);
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "profile" },
+        ...url.meta,
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: url.links,
+    };
+  },
   component: TeamPage,
 });
 

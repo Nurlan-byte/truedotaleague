@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { seoTournament, seoUrl } from "@/lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { BookOpen, CalendarClock, MapPin, Medal, Trophy, Users, Wifi } from "lucide-react";
@@ -27,16 +28,24 @@ import { isStaffQuery } from "@/lib/league-admin";
 export const Route = createFileRoute("/tournaments/$tournamentId")({
   validateSearch: (search: Record<string, unknown>): { apply?: boolean } =>
     search.apply === true || search.apply === "1" || search.apply === 1 ? { apply: true } : {},
-  head: () => ({
-    meta: [
-      { title: "Турнир — TrueDotaLeague" },
-      { name: "description", content: "Страница турнира лиги по Dota 2: участники, расписание, сетка и итоги." },
-      { property: "og:title", content: "Турнир TrueDotaLeague" },
-      { property: "og:description", content: "Участники, расписание матчей, сетка плей-офф и итоговые места турнира." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  loader: async ({ params }) => ({ seo: await seoTournament(params.tournamentId) }),
+  head: ({ params, loaderData }) => {
+    const title = loaderData?.seo ? `${loaderData.seo.title} — турнир Dota 2 | TrueDotaLeague` : "Турнир по Dota 2 — TrueDotaLeague";
+    const description = loaderData?.seo?.description || `${loaderData?.seo?.title ?? "Турнир"} — турнир по Dota 2 в Казахстане: участники, расписание, сетка и итоги на TrueDotaLeague.`;
+    const url = seoUrl(`/tournaments/${params.tournamentId}`);
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        ...url.meta,
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: url.links,
+    };
+  },
   component: TournamentPage,
 });
 

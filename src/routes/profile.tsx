@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { NOINDEX } from "@/lib/seo";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ImagePlus, Save, Trophy, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/profile")({
         content: "Заполните никнейм, MMR, позицию и расскажите о себе другим игрокам лиги.",
       },
       { property: "og:type", content: "profile" },
+      NOINDEX,
       { name: "twitter:card", content: "summary" },
     ],
   }),
