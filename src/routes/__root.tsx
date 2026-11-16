@@ -86,6 +86,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "author", content: "Bracketa" },
+      { name: "google-site-verification", content: "dpRtVBgsGo2xm3fOQKsOOtvtQ92hQZzO84V78bA2wMw" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
