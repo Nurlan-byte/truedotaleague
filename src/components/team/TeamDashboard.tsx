@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
   ArrowDownUp,
@@ -119,6 +119,7 @@ export function TeamDashboard({
   const mainMmr = main.reduce((s, m) => s + (mmrOf(m) ?? 0), 0);
   const [rename, setRename] = useState(false);
   const [transfer, setTransfer] = useState(false);
+  const logoInput = useRef<HTMLInputElement>(null);
 
   const freeSlot = (bench: boolean) => {
     const used = new Set(members.map((m) => m.position));
@@ -138,6 +139,17 @@ export function TeamDashboard({
 
   return (
     <div className="mt-5 space-y-5">
+      <input
+        ref={logoInput}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (f) uploadLogo(f);
+        }}
+      />
       {/* Шапка команды */}
       <section className="panel overflow-hidden">
         <div className="bg-hero p-5 text-navy-foreground">
@@ -166,20 +178,8 @@ export function TeamDashboard({
                     <DropdownMenuItem onSelect={() => setRename(true)}>
                       <Pencil className="size-4" /> Название и тег
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <label className="cursor-pointer">
-                        <ImagePlus className="size-4" /> Загрузить логотип
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp"
-                          className="hidden"
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            e.target.value = "";
-                            if (f) uploadLogo(f);
-                          }}
-                        />
-                      </label>
+                    <DropdownMenuItem onSelect={() => setTimeout(() => logoInput.current?.click(), 0)}>
+                      <ImagePlus className="size-4" /> Загрузить логотип
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={() => setTransfer(true)}
