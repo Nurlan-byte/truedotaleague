@@ -434,6 +434,41 @@ export type Database = {
           },
         ]
       }
+      profile_photos: {
+        Row: {
+          caption: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string
+          profile_id: string
+        }
+        Insert: {
+          caption?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url: string
+          profile_id: string
+        }
+        Update: {
+          caption?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_photos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_verifications: {
         Row: {
           profile_id: string
@@ -1064,6 +1099,10 @@ export type Database = {
     }
     Functions: {
       accept_invite: { Args: { p_invite_id: string }; Returns: undefined }
+      add_profile_photo: {
+        Args: { p_caption: string; p_image_url: string; p_profile_id: string }
+        Returns: string
+      }
       admin_delete_team: { Args: { p_team_id: string }; Returns: undefined }
       admin_delete_tournament: {
         Args: { p_expected_version: number; p_id: string }
@@ -1161,6 +1200,7 @@ export type Database = {
       }
       decline_invite: { Args: { p_invite_id: string }; Returns: undefined }
       delete_draft_tournament: { Args: { p_id: string }; Returns: undefined }
+      delete_profile_photo: { Args: { p_photo_id: string }; Returns: undefined }
       finish_tournament: {
         Args: { p_id: string; p_placements: Json; p_reason?: string }
         Returns: {

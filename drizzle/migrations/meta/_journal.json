@@ -113,6 +113,13 @@
       "when": 1794491122327,
       "tag": "0015_admin_delete_tournament",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795112472808,
+      "tag": "0016_profile_photos",
+      "breakpoints": true
     }
   ]
 }

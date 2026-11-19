@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink, History, Shield, Swords, TrendingUp, Trophy, UserSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { TeamLogo } from "@/components/TeamLogo";
+import { ProfilePhotos } from "@/components/profile/ProfilePhotos";
 
 export const Route = createFileRoute("/players/$playerId")({
   loader: async ({ params }) => ({ seo: await seoPlayer(params.playerId) }),
@@ -386,6 +387,7 @@ function PlayerPage() {
           </div>
         </div>
       )}
+      {row && <ProfilePhotos profileId={playerId} />}
     </main>
   );
 }
