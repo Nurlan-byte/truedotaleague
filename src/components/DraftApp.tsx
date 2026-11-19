@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   type Captain, type DraftState, type Player, ORG, TEAM_COLORS, availablePlayers, currentTurn, initialState,
   parseBulk, pick, resultsCsv, resultsText, rosterOf, skip, slotsPerTeam, uid, undo, validate,
@@ -179,6 +180,8 @@ function Setup({ s, setS }: SP) {
   const need = slots * s.captains.length;
 
   return (
+    <div className="space-y-4">
+    <SitePlayers s={s} setS={setS} />
     <div className="grid gap-4 2xl:grid-cols-[1fr_1fr_360px]">
       {/* Captains */}
       <section className="panel p-4">
@@ -313,6 +316,7 @@ function Setup({ s, setS }: SP) {
           </section>
         )}
       </aside>
+    </div>
     </div>
   );
 }
@@ -565,6 +569,68 @@ function History({ s, compact }: { s: DraftState; compact?: boolean }) {
           );
         })}
         {!items.length && <p className="py-4 text-center text-sm text-muted-foreground">Пиков пока нет</p>}
+      </ul>
+    </section>
+  );
+}
+
+type SiteProfile = { id: string; nickname: string; avatar_url: string | null; competitive_rating: number | null; mmr: number | null };
+
+function SitePlayers({ s, setS }: SP) {
+  const [list, setList] = useState<SiteProfile[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const load = () => {
+    setErr(null);
+    supabase.from("profiles").select("id,nickname,avatar_url,competitive_rating,mmr").order("nickname").limit(2000)
+      .then(({ data, error }) => { if (error) setErr("Не удалось загрузить игроков сайта"); else setList((data ?? []) as SiteProfile[]); });
+  };
+  useEffect(load, []);
+  const pid = (id: string) => `site:${id}`;
+  const inPlayers = new Set(s.players.map((p) => p.id));
+  const inCaps = new Set(s.captains.map((c) => c.id));
+  const rating = (p: SiteProfile) => p.competitive_rating ?? p.mmr ?? undefined;
+  const asPlayer = (p: SiteProfile) => setS((st) => st.players.some((x) => x.id === pid(p.id)) || st.captains.some((c) => c.id === pid(p.id)) ? st
+    : { ...st, players: [...st.players, { id: pid(p.id), name: p.nickname || "Игрок", rating: rating(p) }] });
+  const asCaptain = (p: SiteProfile) => setS((st) => st.captains.some((c) => c.id === pid(p.id)) ? st : {
+    ...st,
+    players: st.players.filter((x) => x.id !== pid(p.id)),
+    captains: [...st.captains, { id: pid(p.id), name: p.nickname || "Капитан", team: `Команда ${p.nickname || st.captains.length + 1}`, color: TEAM_COLORS[st.captains.length % TEAM_COLORS.length]! }],
+  });
+  const addAll = () => setS((st) => {
+    const have = new Set([...st.players.map((x) => x.id), ...st.captains.map((c) => c.id)]);
+    const add = shown.filter((p) => !have.has(pid(p.id))).map((p) => ({ id: pid(p.id), name: p.nickname || "Игрок", rating: rating(p) }));
+    return { ...st, players: [...st.players, ...add] };
+  });
+  const shown = (list ?? []).filter((p) => !q.trim() || (p.nickname ?? "").toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <section className="panel p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-xl font-bold">Игроки сайта <span className="text-primary">{list?.length ?? "…"}</span></h2>
+        <div className="flex gap-2">
+          <button className="btn" onClick={load}>Обновить</button>
+          <button className="btn btn-primary" onClick={addAll} disabled={!shown.length}>Добавить всех найденных</button>
+        </div>
+      </div>
+      <p className="mb-2 text-xs text-muted-foreground">Выберите капитанов (👑) и добавьте игроков в пул драфта (+). Рейтинг берётся из Competitive Rating.</p>
+      <input className="field" placeholder="Поиск по нику" value={q} onChange={(e) => setQ(e.target.value)} />
+      {err && <p className="mt-2 text-sm text-destructive">{err}</p>}
+      <ul className="mt-3 grid max-h-[360px] gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
+        {shown.map((p) => {
+          const isCap = inCaps.has(pid(p.id)); const isPl = inPlayers.has(pid(p.id));
+          return (
+            <li key={p.id} className="flex items-center gap-2 rounded-md border border-border bg-background p-2">
+              {p.avatar_url ? <img src={p.avatar_url} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" loading="lazy" /> : <div className="h-8 w-8 shrink-0 rounded-full bg-muted" />}
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold">{p.nickname || "—"}</div>
+                <div className="text-xs text-muted-foreground">{rating(p) ?? "без рейтинга"}{isCap ? " · капитан" : isPl ? " · в пуле" : ""}</div>
+              </div>
+              <button className="btn px-2 py-1 text-xs" disabled={isCap} onClick={() => asCaptain(p)} title="Сделать капитаном">👑</button>
+              <button className="btn px-2 py-1 text-xs" disabled={isCap || isPl} onClick={() => asPlayer(p)} title="В пул игроков">+</button>
+            </li>
+          );
+        })}
+        {list && !shown.length && <p className="py-4 text-sm text-muted-foreground">Никого не найдено</p>}
       </ul>
     </section>
   );
