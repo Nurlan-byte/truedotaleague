@@ -198,7 +198,7 @@ function HomePage() {
 
       {/* HALL OF CHAMPIONS */}
       <section>
-        <SectionHead eyebrow="Hall of champions" title="История чемпионов" action={<Link to="/archive" className={linkMore}>Архив <ArrowRight className="size-4" /></Link>} />
+        <SectionHead eyebrow="Hall of champions" title="История чемпионов" action={<Link to="/champions" className={linkMore}>Зал славы <ArrowRight className="size-4" /></Link>} />
         {champions.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
             Завершённых турниров пока нет — первый чемпион появится здесь после финала.

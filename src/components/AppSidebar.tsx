@@ -19,7 +19,7 @@ const items = [
   { title: "Турниры", url: "/tournaments", icon: Radio },
   { title: "Команды", url: "/teams", icon: Shield },
   { title: "Рейтинг", url: "/rating", icon: BarChart3 },
-  { title: "Чемпионы", url: "/archive", icon: Crown },
+  { title: "Чемпионы", url: "/champions", icon: Crown },
   { title: "Правила", url: "/regulations", icon: BookOpen },
   { title: "Моя команда", url: "/my-team", icon: ShieldPlus },
   { title: "Профиль", url: "/profile", icon: UserRound },

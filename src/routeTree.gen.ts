@@ -15,6 +15,7 @@ import { Route as ApplicationsRouteImport } from './routes/applications'
 import { Route as ArchiveRouteImport } from './routes/archive'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthDiscordRouteImport } from './routes/auth-discord'
+import { Route as ChampionsRouteImport } from './routes/champions'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DraftRouteImport } from './routes/draft'
 import { Route as LiveRouteImport } from './routes/live'
@@ -65,6 +66,11 @@ const AuthRoute = AuthRouteImport.update({
 const AuthDiscordRoute = AuthDiscordRouteImport.update({
   id: '/auth-discord',
   path: '/auth-discord',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChampionsRoute = ChampionsRouteImport.update({
+  id: '/champions',
+  path: '/champions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CreateRoute = CreateRouteImport.update({
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/archive': typeof ArchiveRoute
   '/auth': typeof AuthRoute
   '/auth-discord': typeof AuthDiscordRoute
+  '/champions': typeof ChampionsRoute
   '/create': typeof CreateRoute
   '/draft': typeof DraftRoute
   '/live': typeof LiveRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/archive': typeof ArchiveRoute
   '/auth': typeof AuthRoute
   '/auth-discord': typeof AuthDiscordRoute
+  '/champions': typeof ChampionsRoute
   '/create': typeof CreateRoute
   '/draft': typeof DraftRoute
   '/live': typeof LiveRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/archive': typeof ArchiveRoute
   '/auth': typeof AuthRoute
   '/auth-discord': typeof AuthDiscordRoute
+  '/champions': typeof ChampionsRoute
   '/create': typeof CreateRoute
   '/draft': typeof DraftRoute
   '/live': typeof LiveRoute
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/archive'
     | '/auth'
     | '/auth-discord'
+    | '/champions'
     | '/create'
     | '/draft'
     | '/live'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/archive'
     | '/auth'
     | '/auth-discord'
+    | '/champions'
     | '/create'
     | '/draft'
     | '/live'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/archive'
     | '/auth'
     | '/auth-discord'
+    | '/champions'
     | '/create'
     | '/draft'
     | '/live'
@@ -361,6 +373,7 @@ export interface RootRouteChildren {
   ArchiveRoute: typeof ArchiveRoute
   AuthRoute: typeof AuthRoute
   AuthDiscordRoute: typeof AuthDiscordRoute
+  ChampionsRoute: typeof ChampionsRoute
   CreateRoute: typeof CreateRoute
   DraftRoute: typeof DraftRoute
   LiveRoute: typeof LiveRoute
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       path: '/auth-discord'
       fullPath: '/auth-discord'
       preLoaderRoute: typeof AuthDiscordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/champions': {
+      id: '/champions'
+      path: '/champions'
+      fullPath: '/champions'
+      preLoaderRoute: typeof ChampionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/create': {
@@ -595,6 +615,7 @@ const rootRouteChildren: RootRouteChildren = {
   ArchiveRoute: ArchiveRoute,
   AuthRoute: AuthRoute,
   AuthDiscordRoute: AuthDiscordRoute,
+  ChampionsRoute: ChampionsRoute,
   CreateRoute: CreateRoute,
   DraftRoute: DraftRoute,
   LiveRoute: LiveRoute,
