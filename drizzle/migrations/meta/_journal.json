@@ -141,6 +141,13 @@
       "when": 1795189885660,
       "tag": "0019_profiles_public_read",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795190045317,
+      "tag": "0020_profiles_anon_read_roster_only",
+      "breakpoints": true
     }
   ]
 }
