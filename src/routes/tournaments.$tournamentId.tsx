@@ -234,10 +234,16 @@ function TournamentPage() {
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
             {t.tournament_participants.map((p) => (
-              <li key={p.id} className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-white/50 px-3 py-2 text-sm">
-                <TeamLogo name={p.team_name} logo={p.logo_url ?? undefined} size="md" />
-                <span className="truncate font-medium text-foreground">{p.team_name}</span>
-                {p.team_tag && <span className="text-xs font-semibold text-primary">[{p.team_tag}]</span>}
+              <li key={p.id}>
+                <Link
+                  to="/teams/$teamId"
+                  params={{ teamId: p.team_id }}
+                  className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-white/50 px-3 py-2 text-sm transition-colors hover:border-primary/40 hover:bg-primary/5"
+                >
+                  <TeamLogo name={p.team_name} logo={p.logo_url ?? undefined} size="md" />
+                  <span className="truncate font-medium text-foreground">{p.team_name}</span>
+                  {p.team_tag && <span className="text-xs font-semibold text-primary">[{p.team_tag}]</span>}
+                </Link>
               </li>
             ))}
           </ul>
@@ -270,12 +276,18 @@ function TournamentPage() {
             {placements.map((p) => {
               const snap = t.tournament_participants.find((x) => x.team_id === p.team_id);
               return (
-                <li key={p.id} className="flex items-center gap-2 text-sm">
-                  <Medal className={`size-4 ${placeColor(p.place)}`} />
-                  <span className="w-6 font-bold text-muted-foreground">{p.place}</span>
-                  <TeamLogo name={p.team_name} logo={snap?.logo_url ?? undefined} />
-                  <span className="flex-1 truncate text-foreground">{p.team_name}</span>
-                  <span className="font-bold text-foreground">+{p.points} TDL</span>
+                <li key={p.id}>
+                  <Link
+                    to="/teams/$teamId"
+                    params={{ teamId: p.team_id }}
+                    className="flex items-center gap-2 rounded-lg px-1 py-0.5 text-sm transition-colors hover:bg-primary/5"
+                  >
+                    <Medal className={`size-4 ${placeColor(p.place)}`} />
+                    <span className="w-6 font-bold text-muted-foreground">{p.place}</span>
+                    <TeamLogo name={p.team_name} logo={snap?.logo_url ?? undefined} />
+                    <span className="flex-1 truncate text-foreground">{p.team_name}</span>
+                    <span className="font-bold text-foreground">+{p.points} TDL</span>
+                  </Link>
                 </li>
               );
             })}
