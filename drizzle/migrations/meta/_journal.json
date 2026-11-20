@@ -120,6 +120,13 @@
       "when": 1795112472808,
       "tag": "0016_profile_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795189509562,
+      "tag": "0017_team_members_public_read_grant",
+      "breakpoints": true
     }
   ]
 }
