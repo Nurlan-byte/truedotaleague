@@ -106,7 +106,7 @@ export async function fetchDiscordGuildProfile(
     const titles: string[] = [];
     for (const r of roles) {
       if (!mine.has(r.id)) continue;
-      const m = /^competitive rating\s+(\d+)/i.exec(r.name.trim());
+      const m = /^comp[a-z]*\s*rating\s*:?\s*(\d+)/i.exec(r.name.trim());
       if (m) best = Math.max(best ?? 0, Number(m[1]));
       else titles.push(r.name);
     }
