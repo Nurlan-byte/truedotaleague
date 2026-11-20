@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { myTeamsQuery, regulationQuery } from "@/lib/league-api";
+import { useServerFn } from "@tanstack/react-start";
+import { refreshTeamRatings } from "@/lib/discord-rating.functions";
 import { formatLeagueDate, rpcErrorText } from "@/lib/league";
 
 type Props = {
@@ -29,8 +31,11 @@ export function ApplyDialog({ tournamentId, title, open, onOpenChange }: Props) 
     if (!teamId && teams.data?.[0]) setTeamId(teams.data[0].id);
   }, [teams.data, teamId]);
 
+  const syncRatings = useServerFn(refreshTeamRatings);
   const submit = useMutation({
     mutationFn: async () => {
+      // Свежие рейтинги из Discord перед проверкой допуска.
+      try { await syncRatings({ data: { teamId } }); } catch { /* проверка ниже */ }
       const { data, error } = await supabase.rpc("submit_application", {
         p_tournament_id: tournamentId,
         p_team_id: teamId,
