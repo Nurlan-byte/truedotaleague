@@ -1,0 +1,2 @@
+GRANT SELECT (id, nickname, avatar_url, created_at, updated_at, bio, mmr, role_position, profile_url, team_name, team_role, looking_for_team, competitive_rating, titles) ON public.profiles TO anon, authenticated;
+GRANT ALL ON public.profiles TO service_role;

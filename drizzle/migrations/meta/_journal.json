@@ -127,6 +127,13 @@
       "when": 1795189509562,
       "tag": "0017_team_members_public_read_grant",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795189696717,
+      "tag": "0018_restore_profiles_public_column_grants",
+      "breakpoints": true
     }
   ]
 }
