@@ -8,6 +8,7 @@ import { BracketView } from "@/components/BracketView";
 import { GroupStage } from "@/components/GroupStage";
 import { MatchSchedule } from "@/components/MatchSchedule";
 import { TeamLogo } from "@/components/TeamLogo";
+import { ConfirmedTeams } from "@/components/tournament/ConfirmedTeams";
 import { LoadingPanel, SafeMarkdown, StatusBadge, TournamentImage } from "@/components/league";
 import { useMyApplications } from "@/hooks/use-my-applications";
 import { tournamentQuery } from "@/lib/league-api";
@@ -232,21 +233,7 @@ function TournamentPage() {
         {accepted === 0 ? (
           <p className="text-sm text-muted-foreground">Подтверждённых команд пока нет.</p>
         ) : (
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {t.tournament_participants.map((p) => (
-              <li key={p.id}>
-                <Link
-                  to="/teams/$teamId"
-                  params={{ teamId: p.team_id }}
-                  className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-white/50 px-3 py-2 text-sm transition-colors hover:border-primary/40 hover:bg-primary/5"
-                >
-                  <TeamLogo name={p.team_name} logo={p.logo_url ?? undefined} size="md" />
-                  <span className="truncate font-medium text-foreground">{p.team_name}</span>
-                  {p.team_tag && <span className="text-xs font-semibold text-primary">[{p.team_tag}]</span>}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <ConfirmedTeams participants={t.tournament_participants} />
         )}
       </Section>
 
