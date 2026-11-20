@@ -134,6 +134,13 @@
       "when": 1795189696717,
       "tag": "0018_restore_profiles_public_column_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795189885660,
+      "tag": "0019_profiles_public_read",
+      "breakpoints": true
     }
   ]
 }

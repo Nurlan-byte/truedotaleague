@@ -1,0 +1,1 @@
+CREATE POLICY "Public profile fields are viewable by everyone" ON public.profiles FOR SELECT TO anon USING (true);
