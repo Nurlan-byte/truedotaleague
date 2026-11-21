@@ -17,6 +17,7 @@ import { useAdmin } from "@/hooks/use-admin";
 const items = [
   { title: "Главная", url: "/", icon: Home },
   { title: "Турниры", url: "/tournaments", icon: Radio },
+  { title: "Freedom League", url: "/freedom-league", icon: Crown },
   { title: "Команды", url: "/teams", icon: Shield },
   { title: "Рейтинг", url: "/rating", icon: BarChart3 },
   { title: "Чемпионы", url: "/champions", icon: Crown },

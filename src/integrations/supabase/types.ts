@@ -1236,6 +1236,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      generate_freedom_calendar: {
+        Args: { p_matches: Json; p_tournament_id: string }
+        Returns: number
+      }
       generate_structure: {
         Args: {
           p_confirm_reset?: boolean
@@ -1260,6 +1264,10 @@ export type Database = {
       }
       import_legacy_team: { Args: { p: Json }; Returns: string }
       import_legacy_tournament: { Args: { p: Json }; Returns: Json }
+      initialize_freedom_season: {
+        Args: { p_image_url: string }
+        Returns: string
+      }
       invite_player: {
         Args: { p_team_id: string; p_user_id: string }
         Returns: string

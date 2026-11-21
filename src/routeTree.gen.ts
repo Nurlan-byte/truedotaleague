@@ -18,6 +18,7 @@ import { Route as AuthDiscordRouteImport } from './routes/auth-discord'
 import { Route as ChampionsRouteImport } from './routes/champions'
 import { Route as CreateRouteImport } from './routes/create'
 import { Route as DraftRouteImport } from './routes/draft'
+import { Route as FreedomLeagueRouteImport } from './routes/freedom-league'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as MyTeamRouteImport } from './routes/my-team'
 import { Route as PlayersRouteImport } from './routes/players'
@@ -81,6 +82,11 @@ const CreateRoute = CreateRouteImport.update({
 const DraftRoute = DraftRouteImport.update({
   id: '/draft',
   path: '/draft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreedomLeagueRoute = FreedomLeagueRouteImport.update({
+  id: '/freedom-league',
+  path: '/freedom-league',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LiveRoute = LiveRouteImport.update({
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/champions': typeof ChampionsRoute
   '/create': typeof CreateRoute
   '/draft': typeof DraftRoute
+  '/freedom-league': typeof FreedomLeagueRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/champions': typeof ChampionsRoute
   '/create': typeof CreateRoute
   '/draft': typeof DraftRoute
+  '/freedom-league': typeof FreedomLeagueRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/champions': typeof ChampionsRoute
   '/create': typeof CreateRoute
   '/draft': typeof DraftRoute
+  '/freedom-league': typeof FreedomLeagueRoute
   '/live': typeof LiveRoute
   '/my-team': typeof MyTeamRoute
   '/players': typeof PlayersRouteWithChildren
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/champions'
     | '/create'
     | '/draft'
+    | '/freedom-league'
     | '/live'
     | '/my-team'
     | '/players'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/champions'
     | '/create'
     | '/draft'
+    | '/freedom-league'
     | '/live'
     | '/my-team'
     | '/players'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/champions'
     | '/create'
     | '/draft'
+    | '/freedom-league'
     | '/live'
     | '/my-team'
     | '/players'
@@ -376,6 +388,7 @@ export interface RootRouteChildren {
   ChampionsRoute: typeof ChampionsRoute
   CreateRoute: typeof CreateRoute
   DraftRoute: typeof DraftRoute
+  FreedomLeagueRoute: typeof FreedomLeagueRoute
   LiveRoute: typeof LiveRoute
   MyTeamRoute: typeof MyTeamRoute
   PlayersRoute: typeof PlayersRouteWithChildren
@@ -459,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/draft'
       fullPath: '/draft'
       preLoaderRoute: typeof DraftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/freedom-league': {
+      id: '/freedom-league'
+      path: '/freedom-league'
+      fullPath: '/freedom-league'
+      preLoaderRoute: typeof FreedomLeagueRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/live': {
@@ -618,6 +638,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChampionsRoute: ChampionsRoute,
   CreateRoute: CreateRoute,
   DraftRoute: DraftRoute,
+  FreedomLeagueRoute: FreedomLeagueRoute,
   LiveRoute: LiveRoute,
   MyTeamRoute: MyTeamRoute,
   PlayersRoute: PlayersRouteWithChildren,

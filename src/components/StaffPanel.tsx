@@ -33,6 +33,7 @@ import {
   usersWithRolesQuery,
 } from "@/lib/league-admin";
 import { doubleSizeOk, finalPlacements, groupPlacements, PLACE_POINTS, stageName } from "@/lib/tournament";
+import { FREEDOM_KEY, freedomCalendar, freedomTable, isBo2 } from "@/lib/freedom";
 
 type Props = { t: TournamentDetail; isAdmin: boolean; isStaff: boolean; userId: string };
 
@@ -114,6 +115,7 @@ export function StaffPanel({ t, isAdmin, isStaff, userId }: Props) {
   };
 
   const s = t.status;
+  const isFreedom = t.legacy_id === FREEDOM_KEY;
   return (
     <div className="space-y-5">
       {dialog}
@@ -173,10 +175,12 @@ export function StaffPanel({ t, isAdmin, isStaff, userId }: Props) {
       )}
 
       {isAdmin && s !== "finished" && s !== "cancelled" && (
-        <Box title="Группы и сетка">
+        <Box title={isFreedom ? "Календарь лиги" : "Группы и сетка"}>
           <p className="text-sm text-muted-foreground">Строится из принятых команд ({vm.teams.length}).</p>
           <div className="flex flex-wrap items-center gap-2">
-            {t.format === "groups_playoff" || t.format === "round_robin" ? (
+            {isFreedom ? <Button disabled={run.isPending || t.matches.length > 0 || (s !== "registration_closed" && s !== "live") || vm.teams.length < 2} onClick={() => {
+              run.mutate(() => supabase.rpc("generate_freedom_calendar", { p_tournament_id: t.id, p_matches: freedomCalendar(vm.teams.map(team => team.id)) }));
+            }}>Сформировать все туры и расписание</Button> : t.format === "groups_playoff" || t.format === "round_robin" ? (
               <>
                 <input
                   type="number"
@@ -191,6 +195,7 @@ export function StaffPanel({ t, isAdmin, isStaff, userId }: Props) {
             ) : null}
             {t.format !== "round_robin" && <button className={btnGhost} onClick={() => generate("bracket")}>Сформировать сетку</button>}
           </div>
+          {isFreedom && <p className="text-sm text-muted-foreground">После закрытия регистрации: каждый с каждым, два тура в день в 12:00 и 14:00 (UTC+5), параллельные матчи. Время можно изменить ниже.</p>}
         </Box>
       )}
 
@@ -443,6 +448,7 @@ function AuditHistory({ tournamentId }: { tournamentId: string }) {
 
 /** Места из сетки/групп → id команд. Только команды, сыгравшие хотя бы один матч. */
 function computePlacements(t: TournamentDetail): string[] {
+  if (t.legacy_id === FREEDOM_KEY) return freedomTable(t.tournament_participants, t.matches).map(row => row.team_id);
   const vm = toViewModel(t.tournament_participants, t.matches, t.groups);
   const byName = (n: string) => vm.teams.find((x) => x.name === n)?.id;
   const ordered: string[] = [];
@@ -481,6 +487,7 @@ function FinishDialog({ t, open, onOpenChange }: { t: TournamentDetail; open: bo
   };
 
   const submit = async () => {
+    if (t.legacy_id === FREEDOM_KEY && (!t.matches.length || t.matches.some(m => !isBo2(m.score_a, m.score_b)))) return toast.error("Сначала внесите результаты всех матчей сезона");
     if (list.length < 1) return toast.error("Добавьте хотя бы победителя");
     if (correction && !reason.trim()) return toast.error("Укажите причину исправления");
     setBusy(true);
