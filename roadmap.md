@@ -1,7 +1,7 @@
 # Roadmap
 - [x] Copy the compact Challonge reference bracket presentation while preserving official results and score controls
 - [x] Verify reference layout, mobile score entry and winner/loser advancement in a temporary draft; remove draft
-- [ ] Import Challonge results / conditional final reset only if user confirms copying tournament data and format
+- [x] Import the four published Challonge results via audited score RPCs and verify the real tournament UI after reload
 - [x] Amateur #2: correct official bracket links and enable staff score entry directly in bracket
 - [x] Verify score saving and winner/loser advancement in a temporary draft through the UI; draft removed, live results unchanged
 - [x] Freedom League: отдельная страница, афиша, регистрация и реальные участники
