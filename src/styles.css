@@ -274,3 +274,28 @@
 }
 .bracket-scroll:active { cursor: grabbing; }
 .bracket-scroll a, .bracket-scroll input { cursor: pointer; }
+
+/* Reference bracket palette stays independent of the site's light/dark shell. */
+.challonge-bracket {
+  --bracket-canvas: oklch(0.29 0 0);
+  --bracket-row: oklch(0.45 0 0);
+  --bracket-seed: oklch(0.55 0 0);
+  --bracket-text: oklch(0.95 0 0);
+  --bracket-secondary: oklch(0.73 0 0);
+  --bracket-line: oklch(0.89 0 0);
+  --bracket-heading: oklch(0.32 0 0);
+  --bracket-winner: oklch(0.73 0.17 45);
+  --bracket-winner-text: oklch(0.25 0 0);
+  background: var(--bracket-canvas);
+}
+.bracket-heading { background: var(--bracket-heading); color: var(--bracket-text); letter-spacing: 0; }
+.bracket-connectors { color: var(--bracket-line); }
+.bracket-match-number { color: var(--bracket-secondary); }
+.bracket-row { background: var(--bracket-row); color: var(--bracket-text); }
+.bracket-row-first { border-bottom: 1px solid var(--bracket-canvas); }
+.bracket-team { color: var(--bracket-text); }
+.bracket-team:hover { text-decoration: underline; }
+.bracket-placeholder { color: var(--bracket-secondary); }
+.bracket-seed, .bracket-score { background: var(--bracket-seed); color: var(--bracket-winner-text); }
+.bracket-score:hover { background: var(--bracket-secondary); }
+.bracket-score-winner, .bracket-score-winner:hover { background: var(--bracket-winner); color: var(--bracket-winner-text); }

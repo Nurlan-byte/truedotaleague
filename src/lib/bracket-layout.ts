@@ -1,9 +1,9 @@
 import { isDouble, type Match } from "./tournament";
 
-export const MATCH_WIDTH = 248;
-export const MATCH_HEIGHT = 80;
-const COLUMN = 304;
-const STEP = 120;
+export const MATCH_WIDTH = 200;
+export const MATCH_HEIGHT = 44;
+const COLUMN = 244;
+const STEP = 64;
 export type BracketNode = { match: Match; x: number; y: number };
 export type BracketEdge = { from: BracketNode; to: BracketNode; side: "A" | "B"; loser?: boolean };
 
@@ -12,7 +12,7 @@ export function layoutBracket(matches: Match[]) {
   const nodes: BracketNode[] = [];
   const edges: BracketEdge[] = [];
   const headings: { x: number; y: number; match: Match }[] = [];
-  let sectionY = 48;
+  let sectionY = 40;
   let maxColumns = 0;
   const double = isDouble(matches);
   for (const bracket of ["upper", "lower"] as const) {
@@ -23,7 +23,7 @@ export function layoutBracket(matches: Match[]) {
     rounds.forEach((round, column) => {
       const current = list.filter((m) => m.round === round).sort((a, b) => a.order - b.order);
       const first = current[0];
-      if (first) headings.push({ x: column * COLUMN, y: sectionY - 40, match: first });
+      if (first) headings.push({ x: column * COLUMN, y: sectionY - 36, match: first });
       const next = current.map((match, index) => {
         const feeders = previous.length === current.length
           ? previous.slice(index, index + 1)
@@ -37,15 +37,16 @@ export function layoutBracket(matches: Match[]) {
       });
       previous = next;
     });
-    if (list.length) sectionY = bottom + 96;
+    if (list.length) sectionY = bottom + 76;
     maxColumns = Math.max(maxColumns, rounds.length);
   }
   const grand = matches.find((m) => m.bracket === "grand");
   if (double && grand) {
     const finals = ["upper", "lower"].map((b) => nodes.filter((n) => (n.match.bracket ?? "upper") === b).sort((a, b) => b.match.round - a.match.round)[0]).filter((n): n is BracketNode => !!n);
-    const node = { match: grand, x: maxColumns * COLUMN, y: finals.reduce((sum, n) => sum + n.y, 0) / Math.max(1, finals.length) };
+    const upperFinal = finals.find((n) => (n.match.bracket ?? "upper") === "upper");
+    const node = { match: grand, x: maxColumns * COLUMN, y: (upperFinal?.y ?? 40) + STEP / 2 };
     nodes.push(node);
-    headings.push({ x: node.x, y: node.y - 40, match: grand });
+    headings.push({ x: node.x, y: 4, match: grand });
     finals.forEach((from, i) => edges.push({ from, to: node, side: i === 0 ? "A" : "B" }));
     maxColumns++;
   }

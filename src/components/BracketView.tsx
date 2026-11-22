@@ -2,9 +2,10 @@ import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { matchWinner, stageName, type Match, type Team } from "@/lib/tournament";
 import { layoutBracket, MATCH_HEIGHT, MATCH_WIDTH } from "@/lib/bracket-layout";
-import { TeamLogo } from "@/components/TeamLogo";
 import { Button } from "@/components/ui/button";
 import { Maximize, Minimize, RotateCcw, Trophy, ZoomIn, ZoomOut } from "lucide-react";
+
+const COLUMN_WIDTH = MATCH_WIDTH + 44;
 
 type Props = {
   highlight?: string[];
@@ -25,9 +26,11 @@ export function BracketView({ matches, teams, onScore, readOnly = false, highlig
   const teamOf = (id: string | null) => teams.find((t) => t.id === id);
   const final = matches.find((m) => m.bracket === "grand") ?? matches.filter((m) => (m.bracket ?? "upper") === "upper").sort((a, b) => b.round - a.round)[0];
   const champion = final ? teamOf(matchWinner(final)) : undefined;
-  const bracketOrder = { upper: 0, lower: 1, grand: 2 };
-  const numbered = [...matches].sort((a, b) => bracketOrder[a.bracket ?? "upper"] - bracketOrder[b.bracket ?? "upper"] || a.round - b.round || a.order - b.order);
+  const phase = (m: Match) => m.bracket === "grand" ? Infinity : m.bracket === "lower" ? m.round + 0.5 : m.round === 1 ? 0 : 2 * m.round - 2;
+  const numbered = [...matches].sort((a, b) => phase(a) - phase(b) || a.order - b.order);
   const numbers = new Map(numbered.map((m, index) => [m.id, index + 1]));
+  const seeds = new Map(teams.map((team, index) => [team.id, index + 1]));
+  const heading = (m: Match) => m.bracket === "grand" ? "Финал" : m.bracket === "lower" ? `Раунд нижней сетки ${m.round}` : matches.some((match) => match.bracket === "grand") ? (m.round === Math.max(...matches.filter((match) => (match.bracket ?? "upper") === "upper").map((match) => match.round)) ? "Полуфиналы" : `Раунд ${m.round}`) : stageName(m, matches);
   const placeholder = (match: Match, side: "A" | "B") => {
     const feeder = layout.edges.find((e) => e.to.match.id === match.id && e.side === side);
     if (feeder) return `${feeder.loser ? "Проигравший" : "Победитель"} матча ${numbers.get(feeder.from.match.id)}`;
@@ -49,7 +52,7 @@ export function BracketView({ matches, teams, onScore, readOnly = false, highlig
         </div>
       </div>
       <div ref={scrollRef} role="region" aria-label="Турнирная сетка" tabIndex={0}
-        className={`bracket-scroll min-w-0 overflow-auto rounded-lg border border-border bg-muted/40 ${expanded ? "flex-1" : "max-h-[720px]"}`}
+        className={`bracket-scroll challonge-bracket min-w-0 overflow-auto ${expanded ? "flex-1" : "max-h-[720px]"}`}
         onKeyDown={(e) => { if (e.key === "Escape") setExpanded(false); }}
         onPointerDown={(e) => {
           if (e.pointerType !== "mouse" || e.button !== 0 || (e.target as HTMLElement).closest("a,input,button")) return;
@@ -59,33 +62,34 @@ export function BracketView({ matches, teams, onScore, readOnly = false, highlig
         }}
         onPointerMove={(e) => { const d = drag.current; if (d) { e.currentTarget.scrollLeft = d.left - e.clientX + d.x; e.currentTarget.scrollTop = d.top - e.clientY + d.y; } }}
         onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }}>
-        <div className="relative m-4" style={{ width: layout.width * zoom, height: layout.height * zoom }}>
+        <div className="relative m-5" style={{ width: layout.width * zoom, height: layout.height * zoom }}>
           <div className="absolute left-0 top-0 origin-top-left" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
-            <svg className="pointer-events-none absolute inset-0 text-muted-foreground/50" width={layout.width} height={layout.height} aria-hidden="true">
+            <svg className="bracket-connectors pointer-events-none absolute inset-0" width={layout.width} height={layout.height} aria-hidden="true">
               {layout.edges.filter((edge) => !edge.loser).map(({ from, to, side }) => {
                 const x = from.x + MATCH_WIDTH;
                 const y = from.y + MATCH_HEIGHT / 2;
-                const targetY = to.y + (side === "A" ? 20 : 60);
-                const bend = to.x - 24;
+                const targetY = to.y + (side === "A" ? MATCH_HEIGHT / 4 : MATCH_HEIGHT * 3 / 4);
+                const bend = to.x - 12;
                 return <path key={`${from.match.id}-${to.match.id}`} d={`M ${x} ${y} H ${bend} V ${targetY} H ${to.x}`} fill="none" stroke="currentColor" strokeWidth="1.5" />;
               })}
             </svg>
-            {layout.headings.map(({ x, y, match }) => <h3 key={`heading-${match.id}`} className="absolute flex h-7 items-center border-b border-border text-xs font-bold text-muted-foreground" style={{ left: x, top: y, width: MATCH_WIDTH }}>{stageName(match, matches)}</h3>)}
+            {layout.headings.map(({ x, y, match }) => <h3 key={`heading-${match.id}`} className="bracket-heading absolute flex h-6 items-center justify-center text-xs font-medium" style={{ left: x, top: y, width: COLUMN_WIDTH }}>{heading(match)}</h3>)}
             {layout.nodes.map(({ match: m, x, y }) => {
               const winner = matchWinner(m);
               return <div key={m.id} className="absolute" style={{ left: x, top: y, width: MATCH_WIDTH }}>
-                <span className="absolute -top-4 left-0 text-[10px] tabular-nums text-muted-foreground">#{numbers.get(m.id)}</span>
-                <div className={`overflow-hidden rounded-md border bg-card shadow-sm ${highlight.some((h) => h === m.teamA || h === m.teamB) ? "border-primary ring-1 ring-primary" : "border-input"}`}>
+                <span className="bracket-match-number absolute -left-4 top-3 text-[10px] tabular-nums">{numbers.get(m.id)}</span>
+                <div className={`bracket-match overflow-hidden rounded-[2px] ${highlight.some((h) => h === m.teamA || h === m.teamB) ? "ring-1 ring-primary" : ""}`}>
                   {(["A", "B"] as const).map((side) => {
                     const id = side === "A" ? m.teamA : m.teamB;
                     const score = side === "A" ? m.scoreA : m.scoreB;
                     const team = teamOf(id);
                     const won = !!id && winner === id;
                     const name = team?.name ?? (id ? "Команда" : placeholder(m, side));
-                    const content = <><TeamLogo name={team?.name ?? ""} logo={team?.logo} /><span className={`min-w-0 flex-1 truncate text-xs ${won ? "font-bold" : "font-medium"}`} title={name}>{name}</span></>;
-                    return <div key={side} className={`flex h-[39px] items-center ${side === "A" ? "border-b border-border" : ""} ${won ? "bg-primary/10" : ""}`}>
-                      {id ? <Link to="/teams/$teamId" params={{ teamId: team?.rosterId ?? id }} className="flex min-w-0 flex-1 items-center gap-2 px-2 text-foreground hover:text-primary">{content}</Link> : <div className="min-w-0 flex-1 truncate px-3 text-xs italic text-muted-foreground" title={name}>{name}</div>}
-                      {onEditMatch && m.teamA && m.teamB ? <Button variant="ghost" aria-label={`Результат матча ${numbers.get(m.id)}: ${name}`} title="Ввести результат матча" onClick={() => onEditMatch(m.id)} className={`h-full w-9 shrink-0 rounded-none border-l border-border p-0 text-sm font-bold tabular-nums ${won ? "bg-primary text-primary-foreground" : "bg-muted/60 text-primary"}`}>{score ?? "—"}</Button> : readOnly ? <span className={`flex h-full w-9 shrink-0 items-center justify-center border-l border-border text-sm font-bold tabular-nums ${won ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground"}`}>{score ?? "—"}</span> : <input aria-label={`${name}: счёт`} inputMode="numeric" disabled={!id} value={score ?? ""} onChange={(e) => onScore?.(m.id, side, e.target.value)} className="mr-1 w-8 rounded border border-input bg-background text-center text-sm text-foreground disabled:opacity-40" />}
+                    const scoreClass = `bracket-score flex h-full w-7 shrink-0 items-center justify-center rounded-none p-0 text-xs font-medium tabular-nums ${won ? "bracket-score-winner" : ""}`;
+                    return <div key={side} className={`bracket-row flex h-[22px] items-center ${side === "A" ? "bracket-row-first" : ""}`}>
+                      <span className="bracket-seed flex h-full w-6 shrink-0 items-center justify-center text-[10px] tabular-nums">{id ? seeds.get(id) : ""}</span>
+                      {id ? <Link to="/teams/$teamId" params={{ teamId: team?.rosterId ?? id }} className="bracket-team min-w-0 flex-1 truncate px-1.5 text-xs" title={name}>{name}</Link> : <div className="bracket-placeholder min-w-0 flex-1 truncate px-1.5 text-[10px] italic" title={name}>{name}</div>}
+                      {onEditMatch && m.teamA && m.teamB ? <Button variant="ghost" aria-label={`Результат матча ${numbers.get(m.id)}: ${name}`} title="Ввести результат матча" onClick={() => onEditMatch(m.id)} className={scoreClass}>{score ?? ""}</Button> : readOnly ? <span className={scoreClass}>{score ?? ""}</span> : <input aria-label={`${name}: счёт`} inputMode="numeric" disabled={!id} value={score ?? ""} onChange={(e) => onScore?.(m.id, side, e.target.value)} className={`${scoreClass} border-0 text-center outline-none disabled:opacity-40`} />}
                     </div>;
                   })}
                 </div>
