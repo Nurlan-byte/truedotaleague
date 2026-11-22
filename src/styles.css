@@ -266,3 +266,11 @@
     display: none !important;
   }
 }
+
+.bracket-scroll {
+  cursor: grab;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.bracket-scroll:active { cursor: grabbing; }
+.bracket-scroll a, .bracket-scroll input { cursor: pointer; }
