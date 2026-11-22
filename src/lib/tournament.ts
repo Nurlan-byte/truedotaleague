@@ -76,6 +76,11 @@ export type Match = {
   scheduledAt?: string | null;
   /** Часть сетки: верхняя, нижняя или гранд-финал (Double Elimination). */
   bracket?: Bracket;
+  /** Official advancement links, including losers moving into the lower bracket. */
+  nextMatchId?: string | null;
+  nextMatchSlot?: "a" | "b" | null;
+  loserNextMatchId?: string | null;
+  loserNextMatchSlot?: "a" | "b" | null;
 };
 
 export type Bracket = "upper" | "lower" | "grand";

@@ -12,9 +12,10 @@ type Props = {
   teams: Team[];
   onScore?: (id: string, side: "A" | "B", value: string) => void;
   readOnly?: boolean;
+  onEditMatch?: (id: string) => void;
 };
 
-export function BracketView({ matches, teams, onScore, readOnly = false, highlight = [] }: Props) {
+export function BracketView({ matches, teams, onScore, readOnly = false, highlight = [], onEditMatch }: Props) {
   const [zoom, setZoom] = useState(1);
   const [expanded, setExpanded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -24,10 +25,12 @@ export function BracketView({ matches, teams, onScore, readOnly = false, highlig
   const teamOf = (id: string | null) => teams.find((t) => t.id === id);
   const final = matches.find((m) => m.bracket === "grand") ?? matches.filter((m) => (m.bracket ?? "upper") === "upper").sort((a, b) => b.round - a.round)[0];
   const champion = final ? teamOf(matchWinner(final)) : undefined;
-  const numbers = new Map(matches.map((m, index) => [m.id, index + 1]));
+  const bracketOrder = { upper: 0, lower: 1, grand: 2 };
+  const numbered = [...matches].sort((a, b) => bracketOrder[a.bracket ?? "upper"] - bracketOrder[b.bracket ?? "upper"] || a.round - b.round || a.order - b.order);
+  const numbers = new Map(numbered.map((m, index) => [m.id, index + 1]));
   const placeholder = (match: Match, side: "A" | "B") => {
     const feeder = layout.edges.find((e) => e.to.match.id === match.id && e.side === side);
-    if (feeder) return `Победитель матча ${numbers.get(feeder.from.match.id)}`;
+    if (feeder) return `${feeder.loser ? "Проигравший" : "Победитель"} матча ${numbers.get(feeder.from.match.id)}`;
     return (match.bracket ?? "upper") === "lower" ? "Из верхней сетки" : match.round === 1 ? "Свободный слот" : "Ожидание соперника";
   };
 
@@ -59,7 +62,7 @@ export function BracketView({ matches, teams, onScore, readOnly = false, highlig
         <div className="relative m-4" style={{ width: layout.width * zoom, height: layout.height * zoom }}>
           <div className="absolute left-0 top-0 origin-top-left" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
             <svg className="pointer-events-none absolute inset-0 text-muted-foreground/50" width={layout.width} height={layout.height} aria-hidden="true">
-              {layout.edges.map(({ from, to, side }) => {
+              {layout.edges.filter((edge) => !edge.loser).map(({ from, to, side }) => {
                 const x = from.x + MATCH_WIDTH;
                 const y = from.y + MATCH_HEIGHT / 2;
                 const targetY = to.y + (side === "A" ? 20 : 60);
@@ -82,7 +85,7 @@ export function BracketView({ matches, teams, onScore, readOnly = false, highlig
                     const content = <><TeamLogo name={team?.name ?? ""} logo={team?.logo} /><span className={`min-w-0 flex-1 truncate text-xs ${won ? "font-bold" : "font-medium"}`} title={name}>{name}</span></>;
                     return <div key={side} className={`flex h-[39px] items-center ${side === "A" ? "border-b border-border" : ""} ${won ? "bg-primary/10" : ""}`}>
                       {id ? <Link to="/teams/$teamId" params={{ teamId: team?.rosterId ?? id }} className="flex min-w-0 flex-1 items-center gap-2 px-2 text-foreground hover:text-primary">{content}</Link> : <div className="min-w-0 flex-1 truncate px-3 text-xs italic text-muted-foreground" title={name}>{name}</div>}
-                      {readOnly ? <span className={`flex h-full w-9 shrink-0 items-center justify-center border-l border-border text-sm font-bold tabular-nums ${won ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground"}`}>{score ?? "—"}</span> : <input aria-label={`${name}: счёт`} inputMode="numeric" disabled={!id} value={score ?? ""} onChange={(e) => onScore?.(m.id, side, e.target.value)} className="mr-1 w-8 rounded border border-input bg-background text-center text-sm text-foreground disabled:opacity-40" />}
+                      {onEditMatch && m.teamA && m.teamB ? <Button variant="ghost" aria-label={`Результат матча ${numbers.get(m.id)}: ${name}`} title="Ввести результат матча" onClick={() => onEditMatch(m.id)} className={`h-full w-9 shrink-0 rounded-none border-l border-border p-0 text-sm font-bold tabular-nums ${won ? "bg-primary text-primary-foreground" : "bg-muted/60 text-primary"}`}>{score ?? "—"}</Button> : readOnly ? <span className={`flex h-full w-9 shrink-0 items-center justify-center border-l border-border text-sm font-bold tabular-nums ${won ? "bg-primary text-primary-foreground" : "bg-muted/60 text-muted-foreground"}`}>{score ?? "—"}</span> : <input aria-label={`${name}: счёт`} inputMode="numeric" disabled={!id} value={score ?? ""} onChange={(e) => onScore?.(m.id, side, e.target.value)} className="mr-1 w-8 rounded border border-input bg-background text-center text-sm text-foreground disabled:opacity-40" />}
                     </div>;
                   })}
                 </div>

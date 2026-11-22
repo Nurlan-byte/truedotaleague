@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Amateur #2: correct official bracket links and enable staff score entry directly in bracket
+- [x] Verify score saving and winner/loser advancement in a temporary draft through the UI; draft removed, live results unchanged
 - [x] Freedom League: отдельная страница, афиша, регистрация и реальные участники
 - [x] Freedom League: таблица 3/1/0, круговой календарь Bo2 и управление матчами
 - [x] Freedom League: тесты правил и проверка страницы на телефоне (подача реальной заявки не проверена: у проверочного капитана 1 игрок)

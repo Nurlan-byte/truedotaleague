@@ -9,6 +9,7 @@ import { GroupStage } from "@/components/GroupStage";
 import { MatchSchedule } from "@/components/MatchSchedule";
 import { TeamLogo } from "@/components/TeamLogo";
 import { ConfirmedTeams } from "@/components/tournament/ConfirmedTeams";
+import { MatchScoreDialog } from "@/components/tournament/MatchScoreDialog";
 import { LoadingPanel, SafeMarkdown, StatusBadge, TournamentImage } from "@/components/league";
 import { useMyApplications } from "@/hooks/use-my-applications";
 import { tournamentQuery } from "@/lib/league-api";
@@ -69,6 +70,7 @@ function TournamentPage() {
   const { data: t, isLoading, error } = useQuery({ ...tournamentQuery(tournamentId), refetchInterval: 15000 });
   const { user, byTournament, rejectReason, teams: myTeams } = useMyApplications();
   const [applyOpen, setApplyOpen] = useState(false);
+  const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const { isAdmin } = useAdmin();
   const staff = useQuery(isStaffQuery(tournamentId, user?.id));
   const isStaff = isAdmin || !!staff.data;
@@ -253,7 +255,7 @@ function TournamentPage() {
 
       {vm.bracket.length > 0 && (
         <Section title="Плей-офф">
-          <BracketView matches={vm.bracket} teams={vm.teams} readOnly highlight={highlight} />
+          <BracketView matches={vm.bracket} teams={vm.teams} readOnly highlight={highlight} {...(user && isStaff ? { onEditMatch: setEditingMatchId } : {})} />
         </Section>
       )}
 
@@ -283,6 +285,11 @@ function TournamentPage() {
       )}
 
       <ApplyDialog tournamentId={t.id} title={t.title} open={applyOpen} onOpenChange={setApplyOpen} />
+      {user && isStaff && editingMatchId && (() => {
+        const match = t.matches.find((m) => m.id === editingMatchId);
+        if (!match?.team_a_id || !match.team_b_id) return null;
+        return <MatchScoreDialog key={match.id} match={match} nameA={vm.teams.find((team) => team.id === match.team_a_id)?.name ?? "Команда A"} nameB={vm.teams.find((team) => team.id === match.team_b_id)?.name ?? "Команда B"} onClose={() => setEditingMatchId(null)} />;
+      })()}
     </div>
   );
 }

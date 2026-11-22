@@ -151,6 +151,10 @@ export function toViewModel(participants: ParticipantRow[], matches: MatchRow[],
       scoreB: m.score_b,
       scheduledAt: m.scheduled_at,
       bracket: (m.bracket ?? "upper") as Match["bracket"],
+      nextMatchId: m.next_match_id,
+      nextMatchSlot: m.next_match_slot === "a" || m.next_match_slot === "b" ? m.next_match_slot : null,
+      loserNextMatchId: m.loser_next_match_id,
+      loserNextMatchSlot: m.loser_next_match_slot === "a" || m.loser_next_match_slot === "b" ? m.loser_next_match_slot : null,
     }));
   const groupMatches: GroupMatch[] = matches
     .filter((m) => m.stage === "group" && m.group_id && m.team_a_id && m.team_b_id)
