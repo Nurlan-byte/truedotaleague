@@ -1,8 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { divisionOf } from "@/lib/divisions";
 
 const SITE = "https://truedotaleague.kz";
+
+// У каждого дивизиона свой Discord-канал; без отдельного вебхука — канал Amateur.
+function webhookFor(title: string | null | undefined): string | undefined {
+  const div = title ? divisionOf(title) : null;
+  const specific = div ? process.env[`DISCORD_WEBHOOK_${div.toUpperCase()}_URL`] : undefined;
+  return specific || process.env["DISCORD_WEBHOOK_AMATEUR_URL"] || process.env["DISCORD_WEBHOOK_URL"];
+}
+async function titleOf(sb: any, id: string | null | undefined): Promise<string | null> {
+  if (!id) return null;
+  const { data } = await sb.from("tournaments").select("title").eq("id", id).maybeSingle();
+  return data?.title ?? null;
+}
 
 const input = z.object({
   kind: z.enum(["team_created", "application_submitted", "application_accepted"]),
@@ -16,9 +29,6 @@ export const notifyDiscord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
-    // Команды и заявки публикуются в канал TDL Amateur.
-    const url = process.env["DISCORD_WEBHOOK_AMATEUR_URL"] || process.env["DISCORD_WEBHOOK_URL"];
-    if (!url) return { ok: false };
     const { supabase, userId } = context;
     let staffAccepted = false;
     if (data.kind === "application_accepted") {
@@ -105,11 +115,13 @@ export const notifyDiscord = createServerFn({ method: "POST" })
       title = `${t?.title ?? "Турнир"} — новая команда ✅`;
       link = `${SITE}/tournaments/${data.tournamentId}`;
     }
+    const url = webhookFor(await titleOf(supabase, data.tournamentId));
+    if (!url) return { ok: false };
     const res = await fetch(`${url}${url.includes("?") ? "&" : "?"}wait=true`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        username: "TDL Amateur League",
+        username: "TrueDotaLeague",
         allowed_mentions: { parse: [] },
         embeds: [
           {
@@ -156,14 +168,20 @@ export const removeDiscordPosts = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: posts, error: postsError } = await supabaseAdmin.from("discord_posts").select("id, message_id").eq("tournament_id", data.tournamentId);
       if (postsError) throw postsError;
+      // Турнир уже удалён — название недоступно; пробуем все каналы.
       const url = process.env["DISCORD_WEBHOOK_AMATEUR_URL"] || process.env["DISCORD_WEBHOOK_URL"];
+      const urls = [...new Set([url, ...["RISING", "CHALLENGER", "FREEDOM"].map((d) => process.env[`DISCORD_WEBHOOK_${d}_URL`])].filter((u): u is string => !!u))];
       if (!posts?.length) return { removed: 0, failed: false };
-      if (!url) return { removed: 0, failed: true };
+      if (!urls.length) return { removed: 0, failed: true };
       let removed = 0;
       for (const post of posts) {
         try {
-          const response = await fetch(`${url.split("?")[0]}/messages/${post.message_id}`, { method: "DELETE", signal: AbortSignal.timeout(10000) });
-          if (response.ok || response.status === 404) {
+          let done = false;
+          for (const u of urls) {
+            const response = await fetch(`${u.split("?")[0]}/messages/${post.message_id}`, { method: "DELETE", signal: AbortSignal.timeout(10000) });
+            if (response.ok) { done = true; break; }
+          }
+          if (done) {
             const { error: deleteError } = await supabaseAdmin.from("discord_posts").delete().eq("id", post.id);
             if (!deleteError) removed++;
           }
@@ -171,8 +189,6 @@ export const removeDiscordPosts = createServerFn({ method: "POST" })
       }
       return { removed, failed: removed !== posts.length };
     }
-    const url = process.env["DISCORD_WEBHOOK_AMATEUR_URL"] || process.env["DISCORD_WEBHOOK_URL"];
-    if (!url) return { removed: 0 };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let teamId = data.teamId;
     if (!teamId && data.applicationId) {
@@ -193,10 +209,11 @@ export const removeDiscordPosts = createServerFn({ method: "POST" })
       .in("status", ["pending", "accepted"]);
     const active = new Set((apps ?? []).map((a) => a.tournament_id));
     const stale = posts.filter((p) => !team || (p.tournament_id && !active.has(p.tournament_id)));
-    const base = url.split("?")[0];
     let removed = 0;
     for (const p of stale) {
-      const r = await fetch(`${base}/messages/${p.message_id}`, { method: "DELETE" });
+      const url = webhookFor(await titleOf(supabaseAdmin, p.tournament_id));
+      if (!url) continue;
+      const r = await fetch(`${url.split("?")[0]}/messages/${p.message_id}`, { method: "DELETE" });
       if (r.ok || r.status === 404) {
         await supabaseAdmin.from("discord_posts").delete().eq("id", p.id);
         removed++;
