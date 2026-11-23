@@ -14,7 +14,7 @@ import { DIVISIONS, divisionOf, mmrLimitText } from "@/lib/divisions";
 const DISCORD_URL = "https://discord.gg/ZJBzeKcjvU";
 const TITLE = "TrueDotaLeague — турниры по Dota 2 в Казахстане";
 const DESC =
-  "Соревновательная платформа по Dota 2 в Казахстане: три дивизиона, регулярные турниры, регистрация команд и рейтинг TDL Points.";
+  "Турниры Dota 2 в Казахстане: Amateur Cup, Rising Cup, Challenger Cup и основная TDL Freedom League. Регистрация команд, сетки и результаты.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -105,7 +105,7 @@ function HomePage() {
               TrueDotaLeague — соревновательная платформа по Dota 2 в Казахстане. Участвуй в регулярных турнирах,
               собирай команду, зарабатывай TDL Points и докажи своё мастерство.
             </p>
-            <p className="mt-3 text-sm font-semibold text-sky">Три дивизиона. Тысячи возможностей. Один путь к чемпионству.</p>
+            <p className="mt-3 text-sm font-semibold text-sky">Три кубка. Одна основная лига. Один путь к чемпионству.</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link to="/tournaments" className="inline-flex items-center justify-center gap-2 rounded-full bg-navy-foreground px-6 py-3 text-sm font-bold text-navy shadow-lg transition-transform hover:scale-[1.03] active:scale-95">
                 <Trophy className="size-4" /> Смотреть турниры
@@ -142,9 +142,9 @@ function HomePage() {
 
       {/* DIVISIONS */}
       <section>
-        <SectionHead eyebrow="Дивизионы" title="Три дивизиона TDL" />
+        <SectionHead eyebrow="Турниры TDL" title="Три кубка TrueDotaLeague" />
         <div className="grid gap-4 md:grid-cols-3">
-          {DIVISIONS.map((d, i) => (
+          {DIVISIONS.filter((d) => d.id !== "freedom").map((d, i) => (
             <Link
               key={d.id}
               to="/tournaments"
@@ -162,7 +162,7 @@ function HomePage() {
                 ))}
               </ul>
               <span className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-primary">
-                Турниры дивизиона <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                Смотреть турниры <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </span>
             </Link>
           ))}
@@ -170,6 +170,19 @@ function HomePage() {
       </section>
 
       {/* NEXT TOURNAMENT */}
+      <section>
+        <SectionHead eyebrow="Основная лига" title="TDL Freedom League" />
+        <div className="grid items-center gap-6 border-y border-border py-6 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <div>
+            <p className="text-base font-semibold text-foreground">Круговой сезон · Матчи Bo2 · Без ограничений MMR</p>
+            <p className="mt-2 text-sm text-muted-foreground">Регистрация команд, турнирная таблица и календарь матчей основной лиги TrueDotaLeague.</p>
+          </div>
+          <Link to="/freedom-league" className={linkMore}>
+            Открыть лигу <ArrowRight className="size-4" />
+          </Link>
+        </div>
+      </section>
+
       <section>
         <SectionHead eyebrow="Next tournament" title="Ближайший турнир" action={<Link to="/tournaments" className={linkMore}>Все <ArrowRight className="size-4" /></Link>} />
         {catalog.isLoading ? (
@@ -192,7 +205,7 @@ function HomePage() {
           title="Рейтинг TDL"
           action={<Link to="/rating" className={linkMore}>Полный рейтинг <ArrowRight className="size-4" /></Link>}
         />
-        <p className="-mt-3 mb-4 text-sm text-muted-foreground">TDL Points разыгрываются в TDL Freedom.</p>
+        <p className="-mt-3 mb-4 text-sm text-muted-foreground">TDL Points разыгрываются в TDL Freedom League.</p>
         {ranking.isLoading ? <div className="h-40 animate-pulse rounded-2xl bg-muted" /> : <LeaderboardTable rows={ranking.data ?? []} catalog={list} limit={10} />}
       </section>
 

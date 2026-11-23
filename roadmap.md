@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Rename competition sections to Amateur Cup, Rising Cup, Challenger Cup and main TDL Freedom League; preserve existing events and rules
+- [x] Verify new cup filters and mobile presentation (19 tests; Rising Cup filter/reload and main league navigation; 375px)
 - [x] Copy the compact Challonge reference bracket presentation while preserving official results and score controls
 - [x] Verify reference layout, mobile score entry and winner/loser advancement in a temporary draft; remove draft
 - [x] Import the four published Challonge results via audited score RPCs and verify the real tournament UI after reload

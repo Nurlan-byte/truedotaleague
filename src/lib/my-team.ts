@@ -41,8 +41,8 @@ export type LeagueRule = { id: string; name: string; teamMax: number | null; pla
 
 /** League limits (Competitive Rating). Freedom has no limit. */
 export const LEAGUE_RULES: LeagueRule[] = [
-  { id: "amateur", name: "TDL Amateur League", teamMax: 16500, playerMax: 4500 },
-  { id: "challenger", name: "TDL Challenger League", teamMax: 26500, playerMax: null },
+  { id: "amateur", name: "Amateur Cup", teamMax: 16500, playerMax: 4500 },
+  { id: "challenger", name: "Challenger Cup", teamMax: 26500, playerMax: null },
   { id: "freedom", name: "TDL Freedom League", teamMax: null, playerMax: null },
 ];
 

@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { divisionOf, mmrLimitText, winLoss } from "./divisions";
+import { divisionOf, isDivision, mmrLimitText, winLoss } from "./divisions";
 
 describe("divisions", () => {
+  it.each([
+    ["Amateur Cup", "amateur"],
+    ["Rising Cup", "rising"],
+    ["Challenger Cup", "challenger"],
+    ["TDL Freedom League", "freedom"],
+  ])("classifies %s in its own competition filter", (title, division) => {
+    expect(divisionOf(title)).toBe(division);
+    expect(isDivision(division)).toBe(true);
+  });
+  it("does not assign an unconfirmed MMR limit to Rising Cup", () => {
+    expect(mmrLimitText("rising")).toBeNull();
+  });
   it("detects division by title", () => {
     expect(divisionOf("TDL Amateur #3")).toBe("amateur");
     expect(divisionOf("TDL Challenger Cup")).toBe("challenger");

@@ -22,6 +22,7 @@ import {
 } from "@/lib/league";
 import { setReturnTo } from "@/lib/return-to";
 import { DIVISIONS, divisionOf, isDivision, type Division } from "@/lib/divisions";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/tournaments/")({
   head: () => ({
@@ -29,10 +30,10 @@ export const Route = createFileRoute("/tournaments/")({
       { title: "Турниры по Dota 2 в Казахстане — TrueDotaLeague" },
       {
         name: "description",
-        content: "Турниры по Dota 2 в Казахстане: анонсы, открытая регистрация команд, сетки, расписание и итоги лиги TrueDotaLeague.",
+        content: "Amateur Cup, Rising Cup, Challenger Cup и TDL Freedom League: регистрация команд, сетки, расписание и результаты Dota 2 в Казахстане.",
       },
       { property: "og:title", content: "Турниры TrueDotaLeague" },
-      { property: "og:description", content: "Каталог турниров лиги: регистрация команд, расписание и результаты." },
+      { property: "og:description", content: "Amateur Cup, Rising Cup, Challenger Cup и основная TDL Freedom League: регистрация, расписание и результаты." },
       { property: "og:type", content: "website" },
       ...seoUrl("/tournaments").meta,
       { name: "twitter:card", content: "summary_large_image" },
@@ -108,17 +109,19 @@ function CatalogPage() {
         </select>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Дивизион">
+      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Кубки и лига">
         {[{ id: undefined, name: "Все" }, ...DIVISIONS].map((d) => (
-          <button
+          <Button
             key={d.name}
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => nav({ search: d.id ? { division: d.id } : {} })}
             aria-pressed={division === d.id}
             className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${division === d.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-primary"}`}
           >
             {d.name}
-          </button>
+          </Button>
         ))}
       </div>
 

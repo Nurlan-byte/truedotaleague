@@ -11,7 +11,7 @@ export const Route = createFileRoute("/rating")({
       { title: "Рейтинг команд TDL Points — TrueDotaLeague" },
       { name: "description", content: "Полный рейтинг команд TrueDotaLeague по TDL Points: победы, поражения и сыгранные турниры." },
       { property: "og:title", content: "Рейтинг команд TrueDotaLeague" },
-      { property: "og:description", content: "Таблица команд лиги по TDL Points, разыгрываемым в TDL Freedom." },
+      { property: "og:description", content: "Таблица команд лиги по TDL Points, разыгрываемым в TDL Freedom League." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -29,7 +29,7 @@ function RatingPage() {
       <h1 className="mt-1 flex items-center gap-2 text-3xl text-foreground sm:text-4xl">
         <BarChart3 className="size-7 text-primary" /> Рейтинг TDL Points
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">Разыгрывается в TDL Freedom. 1 место — 50, 2 — 25, 3 — 12, 4 — 6 очков.</p>
+      <p className="mt-2 text-sm text-muted-foreground">Разыгрывается в TDL Freedom League. 1 место — 50, 2 — 25, 3 — 12, 4 — 6 очков.</p>
       <div className="mt-6">
         {ranking.isLoading ? (
           <LoadingPanel text="Загружаем рейтинг…" />

@@ -1,26 +1,33 @@
-export type Division = "amateur" | "challenger" | "freedom";
+export type Division = "amateur" | "rising" | "challenger" | "freedom";
 
 export const DIVISIONS: { id: Division; name: string; tagline: string; teamMmr: number | null; points: string[] }[] = [
   {
     id: "amateur",
-    name: "TDL Amateur",
+    name: "Amateur Cup",
     tagline: "Для начинающих и любителей",
     teamMmr: 16500,
     points: ["До 16 500 MMR на команду", "Максимум 4 500 MMR на игрока", "Контроль смурфов", "Соревновательные матчи"],
   },
   {
+    id: "rising",
+    name: "Rising Cup",
+    tagline: "Новый кубок TrueDotaLeague",
+    teamMmr: null,
+    points: ["Командные соревнования", "Регистрация команд", "Турнирная сетка и результаты"],
+  },
+  {
     id: "challenger",
-    name: "TDL Challenger",
+    name: "Challenger Cup",
     tagline: "Для опытных игроков",
     teamMmr: 26500,
     points: ["До 26 500 MMR на команду", "Более высокий уровень конкуренции", "Командные соревнования", "Рейтинговые очки"],
   },
   {
     id: "freedom",
-    name: "TDL Freedom",
-    tagline: "Открытый дивизион",
+    name: "TDL Freedom League",
+    tagline: "Основная лига TDL",
     teamMmr: null,
-    points: ["Без ограничений MMR", "Сильнейшие команды", "Высокая конкуренция", "Открытые турниры"],
+    points: ["Без ограничений MMR", "Круговой сезон", "Матчи Bo2", "Таблица и календарь"],
   },
 ];
 
@@ -28,19 +35,21 @@ export const DIVISIONS: { id: Division; name: string; tagline: string; teamMmr: 
 export function divisionOf(title: string): Division | null {
   const t = title.toLowerCase();
   if (t.includes("amateur") || t.includes("амат")) return "amateur";
+  if (t.includes("rising") || t.includes("райзинг")) return "rising";
   if (t.includes("challenger") || t.includes("челленд")) return "challenger";
   if (t.includes("freedom") || t.includes("фридом")) return "freedom";
   return null;
 }
 
 export function mmrLimitText(division: Division | null): string | null {
-  if (!division) return null;
-  const d = DIVISIONS.find((x) => x.id === division)!;
+  if (!division || division === "rising") return null;
+  const d = DIVISIONS.find((x) => x.id === division);
+  if (!d) return null;
   return d.teamMmr ? `до ${d.teamMmr.toLocaleString("ru-RU")} MMR на команду` : "Без ограничений MMR";
 }
 
 export function isDivision(v: unknown): v is Division {
-  return v === "amateur" || v === "challenger" || v === "freedom";
+  return v === "amateur" || v === "rising" || v === "challenger" || v === "freedom";
 }
 
 type M = { team_a_id: string | null; team_b_id: string | null; score_a: number | null; score_b: number | null };
