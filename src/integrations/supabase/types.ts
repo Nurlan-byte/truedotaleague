@@ -150,6 +150,36 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_roster_messages: {
+        Row: {
+          lock_token: string | null
+          locked_until: string | null
+          message_id: string | null
+          team_ids: string[]
+          tournament_id: string
+          updated_at: string
+          webhook_key: string | null
+        }
+        Insert: {
+          lock_token?: string | null
+          locked_until?: string | null
+          message_id?: string | null
+          team_ids?: string[]
+          tournament_id: string
+          updated_at?: string
+          webhook_key?: string | null
+        }
+        Update: {
+          lock_token?: string | null
+          locked_until?: string | null
+          message_id?: string | null
+          team_ids?: string[]
+          tournament_id?: string
+          updated_at?: string
+          webhook_key?: string | null
+        }
+        Relationships: []
+      }
       draft_publications: {
         Row: {
           id: number
@@ -1164,6 +1194,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      claim_discord_roster: {
+        Args: { p_token: string; p_tournament_id: string }
+        Returns: boolean
       }
       create_team: { Args: { p_name: string; p_tag: string }; Returns: string }
       decide_application: {

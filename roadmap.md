@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Discord: единый обновляемый список принятых команд каждого турнира; принятие, снятие и удаление без отдельных карточек
+- [x] Проверено: Rising Cup — Aura и AliAqs с составами в одном посте; повторное обновление сохраняет message_id, отдельный дубль удалён; 7 тестов
 - [x] Rename competition sections to Amateur Cup, Rising Cup, Challenger Cup and main TDL Freedom League; preserve existing events and rules
 - [x] Verify new cup filters and mobile presentation (19 tests; Rising Cup filter/reload and main league navigation; 375px)
 - [x] Copy the compact Challonge reference bracket presentation while preserving official results and score controls

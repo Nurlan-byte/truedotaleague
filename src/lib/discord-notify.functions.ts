@@ -3,8 +3,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { divisionOf } from "@/lib/divisions";
 
-const SITE = "https://truedotaleague.kz";
-
 // У каждого дивизиона свой Discord-канал; без отдельного вебхука — канал Amateur.
 function webhookFor(title: string | null | undefined): string | undefined {
   const div = title ? divisionOf(title) : null;
@@ -24,130 +22,27 @@ const input = z.object({
   tournamentId: z.string().uuid().optional(),
 });
 
-// Отправляет уведомление в Discord-канал лиги. Данные берутся из базы, не от клиента.
+// Только принятие заявки меняет публичный список; отправка заявки не публикует команду.
 export const notifyDiscord = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => input.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    let staffAccepted = false;
-    if (data.kind === "application_accepted") {
-      if (!data.applicationId) return { ok: false };
-      const { data: acc } = await supabase
-        .from("applications")
-        .select("team_id, tournament_id, status")
-        .eq("id", data.applicationId)
-        .maybeSingle();
-      if (!acc || acc.status !== "accepted") return { ok: false };
-      const { data: staff } = await supabase.rpc("is_staff_for", { _tournament_id: acc.tournament_id, _uid: userId });
-      if (!staff) return { ok: false };
-      data.teamId = acc.team_id;
-      data.tournamentId = acc.tournament_id;
-      staffAccepted = true;
-    }
-    if (!data.teamId) return { ok: false };
-
-    const { data: team } = await supabase
-      .from("teams")
-      .select("id, name, tag, owner_id, logo_url")
-      .eq("id", data.teamId)
-      .maybeSingle();
-    if (!team) return { ok: false };
-    if (!staffAccepted && team.owner_id !== userId) {
-      const { data: cap } = await supabase
-        .from("team_captains")
-        .select("user_id")
-        .eq("team_id", data.teamId)
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (!team || !cap) return { ok: false };
-    }
-    // Свежий рейтинг из Discord перед публикацией состава.
-    {
-      const { data: ids } = await supabase.from("team_members").select("profile_id").eq("team_id", team.id);
-      const { syncGuildProfiles } = await import("@/lib/discord.server");
-      await syncGuildProfiles((ids ?? []).map((m) => m.profile_id).filter((x): x is string => !!x));
-    }
-    const { data: members } = await supabase
-      .from("team_members")
-      .select("nickname, role, mmr, position, profile_id, profiles(nickname, competitive_rating, mmr)")
-      .eq("team_id", team.id)
-      .order("position");
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("nickname")
-      .eq("id", userId)
-      .maybeSingle();
-
-    const teamLabel = `${team.name}${team.tag ? ` [${team.tag}]` : ""}`;
-    const players = (members ?? []).map((m) => {
-      const p = m.profiles as { nickname: string | null; competitive_rating: number | null; mmr: number | null } | null;
-      const name = p?.nickname || m.nickname || "Игрок";
-      const rating = p?.competitive_rating ?? m.mmr ?? p?.mmr ?? null;
-      return { name, rating, role: m.role, captain: !!m.profile_id && m.profile_id === team.owner_id };
-    });
-    // Общий MMR — по основной пятёрке, как в списке команд лиги.
-    const total = players.slice(0, 5).reduce((s, p) => s + (p.rating ?? 0), 0);
-    const roster = players
-      .map((p, i) => `${p.name} \`${p.rating ?? "—"}\`${p.captain ? " ⭐" : ""}${i >= 5 ? " (замена)" : ""}`)
-      .join("\n");
-    const block = `🏅 ***${team.name}*** \`${total} ммр\`\n${roster}`;
-    void profile;
-    const fields: { name: string; value: string; inline?: boolean }[] = [];
-    let title = `🛡️ Новая команда: ${teamLabel}`;
-    let link = `${SITE}/teams`;
-
-    if (data.kind === "application_submitted" || data.kind === "application_accepted") {
-      if (!data.tournamentId) return { ok: false };
-      const { data: app } = await supabase
-        .from("applications")
-        .select("id")
-        .eq("team_id", team.id)
-        .eq("tournament_id", data.tournamentId)
-        .eq("status", data.kind === "application_accepted" ? "accepted" : "pending")
-        .maybeSingle();
-      if (!app) return { ok: false };
-      const { data: t } = await supabase
-        .from("tournaments")
-        .select("title")
-        .eq("id", data.tournamentId)
-        .maybeSingle();
-      title = `${t?.title ?? "Турнир"} — новая команда ✅`;
-      link = `${SITE}/tournaments/${data.tournamentId}`;
-    }
-    const url = webhookFor(await titleOf(supabase, data.tournamentId));
-    if (!url) return { ok: false };
-    const res = await fetch(`${url}${url.includes("?") ? "&" : "?"}wait=true`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        username: "TrueDotaLeague",
-        allowed_mentions: { parse: [] },
-        embeds: [
-          {
-            title: title.slice(0, 250),
-            url: link,
-            color: 0x3b82f6,
-            description: block.slice(0, 3500),
-            fields,
-            timestamp: new Date().toISOString(),
-            footer: { text: "TrueDotaLeague" },
-          },
-        ],
-      }),
-    });
-    if (res.ok) {
-      const msg = (await res.json().catch(() => null)) as { id?: string } | null;
-      if (msg?.id) {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await supabaseAdmin.from("discord_posts").insert({
-          team_id: team.id,
-          tournament_id: data.tournamentId ?? null,
-          message_id: msg.id,
-        });
-      }
-    }
-    return { ok: res.ok };
+    if (data.kind !== "application_accepted" || !data.applicationId) return { ok: false };
+    const { data: application, error } = await context.supabase.from("applications")
+      .select("team_id, tournament_id, status").eq("id", data.applicationId).maybeSingle();
+    if (error) throw error;
+    if (!application || application.status !== "accepted") return { ok: false };
+    const { data: staff, error: staffError } = await context.supabase.rpc("is_staff_for", { _tournament_id: application.tournament_id, _uid: context.userId });
+    if (staffError) throw staffError;
+    if (!staff) throw new Error("forbidden");
+    const { data: members, error: memberError } = await context.supabase.from("team_members").select("profile_id").eq("team_id", application.team_id);
+    if (memberError) throw memberError;
+    const { syncGuildProfiles } = await import("@/lib/discord.server");
+    await syncGuildProfiles((members ?? []).map((m) => m.profile_id).filter((id): id is string => !!id));
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { syncTournamentRoster } = await import("@/lib/discord-roster.server");
+    await syncTournamentRoster(supabaseAdmin, application.tournament_id);
+    return { ok: true };
   });
 
 const removeInput = z.object({ teamId: z.string().uuid().optional(), applicationId: z.string().uuid().optional(), tournamentId: z.string().uuid().optional() });
@@ -166,6 +61,8 @@ export const removeDiscordPosts = createServerFn({ method: "POST" })
       if (readError) throw readError;
       if (tournament) return { removed: 0, failed: false };
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { syncTournamentRoster } = await import("@/lib/discord-roster.server");
+      await syncTournamentRoster(supabaseAdmin, data.tournamentId);
       const { data: posts, error: postsError } = await supabaseAdmin.from("discord_posts").select("id, message_id").eq("tournament_id", data.tournamentId);
       if (postsError) throw postsError;
       // Турнир уже удалён — название недоступно; пробуем все каналы.
@@ -200,6 +97,11 @@ export const removeDiscordPosts = createServerFn({ method: "POST" })
       .from("discord_posts")
       .select("id, tournament_id, message_id")
       .eq("team_id", teamId);
+    const { syncTournamentRoster } = await import("@/lib/discord-roster.server");
+    const { data: summaries, error: summaryError } = await supabaseAdmin.from("discord_roster_messages").select("tournament_id").contains("team_ids", [teamId]);
+    if (summaryError) throw summaryError;
+    // Пересобираем общий список по принятым заявкам — не удаляем сообщение остальных команд.
+    for (const summary of summaries ?? []) await syncTournamentRoster(supabaseAdmin, summary.tournament_id);
     if (!posts?.length) return { removed: 0 };
     const { data: team } = await supabaseAdmin.from("teams").select("id").eq("id", teamId).maybeSingle();
     const { data: apps } = await supabaseAdmin
